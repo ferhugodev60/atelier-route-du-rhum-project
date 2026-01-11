@@ -15,7 +15,6 @@ const Navbar: React.FC = () => {
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
 
-    // Bloquer le scroll du corps de la page quand le menu mobile est ouvert
     useEffect(() => {
         if (isMobileMenuOpen) {
             document.body.style.overflow = 'hidden';
@@ -31,8 +30,6 @@ const Navbar: React.FC = () => {
         { name: 'Avis', href: '#testimonials' },
         { name: 'Contact', href: '#contact' },
     ];
-
-    // --- ANIMATIONS (VARIANTS) ---
 
     const containerVariants: Variants = {
         hidden: { opacity: 0, y: -10 },
@@ -71,7 +68,7 @@ const Navbar: React.FC = () => {
             <div className="fixed w-full z-50 px-4 py-4 md:px-8 pointer-events-none">
                 <nav
                     className={`
-                        max-w-7xl mx-auto flex items-center justify-between
+                        relative max-w-7xl mx-auto flex items-center justify-between
                         transition-all duration-500 ease-in-out pointer-events-auto
                         ${isScrolled
                         ? 'bg-rhum-green/80 backdrop-blur-xl py-3 px-6 rounded-sm shadow-[0_10px_40px_rgba(0,0,0,0.4)] border border-white/5'
@@ -79,10 +76,38 @@ const Navbar: React.FC = () => {
                     }
                     `}
                 >
-                    {/* LOGO */}
-                    <a href="#home" className="relative group flex-shrink-0">
-                        <div className={`absolute -inset-3 bg-rhum-gold/15 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ease-in-out`}></div>
+                    {/* --- MOBILE : BURGER (À GAUCHE) --- */}
+                    <div className="flex lg:hidden flex-1 justify-start">
+                        <button
+                            className="flex flex-col justify-center items-center w-10 h-10 gap-1.5 focus:outline-none z-[70]"
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Menu"
+                        >
+                            <motion.span
+                                animate={isMobileMenuOpen ? { rotate: 45, y: 8, backgroundColor: "#D4AF37" } : { rotate: 0, y: 0, backgroundColor: "#D4AF37" }}
+                                className="w-6 h-0.5 block"
+                            />
+                            <motion.span
+                                animate={isMobileMenuOpen ? { opacity: 0, x: 10 } : { opacity: 1, x: 0 }}
+                                className="w-6 h-0.5 bg-rhum-gold block"
+                            />
+                            <motion.span
+                                animate={isMobileMenuOpen ? { rotate: -45, y: -8, backgroundColor: "#D4AF37" } : { rotate: 0, y: 0, backgroundColor: "#D4AF37" }}
+                                className="w-6 h-0.5 block"
+                            />
+                        </button>
+                    </div>
 
+                    {/* --- LOGO (CENTRE SUR MOBILE / GAUCHE SUR DESKTOP) --- */}
+                    <a
+                        href="#home"
+                        className={`
+                            group flex-shrink-0 z-10 transition-all duration-500
+                            absolute left-1/2 -translate-x-1/2 
+                            lg:static lg:translate-x-0
+                        `}
+                    >
+                        <div className="absolute -inset-3 bg-rhum-gold/15 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000 ease-in-out"></div>
                         <img
                             src={logo}
                             alt="Logo L'Atelier de la Route du Rhum"
@@ -92,7 +117,7 @@ const Navbar: React.FC = () => {
                         />
                     </a>
 
-                    {/* NAVIGATION CENTRALE (Desktop) */}
+                    {/* --- DESKTOP : NAVIGATION CENTRALE --- */}
                     <div className="hidden lg:flex items-center gap-2">
                         {navLinks.map((link) => (
                             <a
@@ -105,11 +130,12 @@ const Navbar: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* ACTIONS DROITE (Desktop) */}
-                    <div className="hidden md:flex items-center gap-6">
+                    {/* --- ACTIONS DROITE (DESKTOP & MOBILE ACCOUNT) --- */}
+                    <div className="flex flex-1 lg:flex-none justify-end items-center gap-6">
+                        {/* Desktop Only */}
                         <button
                             onClick={() => setCurrentLang(currentLang === 'FR' ? 'EN' : 'FR')}
-                            className="text-rhum-cream text-[10px] font-bold tracking-tighter hover:text-rhum-gold transition-colors border-b border-rhum-gold/30 pb-0.5"
+                            className="hidden lg:block text-rhum-cream text-[10px] font-bold tracking-tighter hover:text-rhum-gold transition-colors border-b border-rhum-gold/30 pb-0.5"
                         >
                             {currentLang}
                         </button>
@@ -117,7 +143,7 @@ const Navbar: React.FC = () => {
                         <button
                             onClick={() => setIsLoginModalOpen(true)}
                             className={`
-                                relative overflow-hidden px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300
+                                hidden lg:block relative overflow-hidden px-6 py-2 text-[10px] font-black uppercase tracking-widest transition-all duration-300
                                 ${isScrolled
                                 ? 'bg-rhum-gold text-rhum-green hover:bg-white rounded-sm shadow-sm'
                                 : 'border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green rounded-sm shadow-none'
@@ -126,39 +152,30 @@ const Navbar: React.FC = () => {
                         >
                             <span className="relative z-10">SE CONNECTER</span>
                         </button>
+
+                        {/* MOBILE ONLY : ICÔNE ACCOUNT (À DROITE) */}
+                        <button
+                            onClick={() => setIsLoginModalOpen(true)}
+                            className="lg:hidden text-rhum-gold p-1 hover:scale-110 transition-transform"
+                            aria-label="Mon compte"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
+                        </button>
                     </div>
 
-                    {/* MOBILE TOGGLE (Burger Morphing) */}
-                    <button
-                        className="lg:hidden flex flex-col justify-center items-center w-10 h-10 gap-1.5 focus:outline-none z-[60]"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        aria-label="Menu"
-                    >
-                        <motion.span
-                            animate={isMobileMenuOpen ? { rotate: 45, y: 8, backgroundColor: "#D4AF37" } : { rotate: 0, y: 0, backgroundColor: "#D4AF37" }}
-                            className="w-6 h-0.5 block"
-                        />
-                        <motion.span
-                            animate={isMobileMenuOpen ? { opacity: 0, x: 10 } : { opacity: 1, x: 0 }}
-                            className="w-6 h-0.5 bg-rhum-gold block"
-                        />
-                        <motion.span
-                            animate={isMobileMenuOpen ? { rotate: -45, y: -8, backgroundColor: "#D4AF37" } : { rotate: 0, y: 0, backgroundColor: "#D4AF37" }}
-                            className="w-6 h-0.5 block"
-                        />
-                    </button>
-
                     {/* --- MENU MOBILE DÉROULANT --- */}
-                    <AnimatePresence>
+                    <AnimatePresence mode="wait">
                         {isMobileMenuOpen && (
                             <>
-                                {/* NOUVEAU : Overlay de flou arrière-plan pour l'accessibilité */}
                                 <motion.div
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     exit={{ opacity: 0 }}
                                     onClick={() => setIsMobileMenuOpen(false)}
-                                    className="fixed inset-0 bg-black/60 backdrop-blur-md z-[-1] lg:hidden pointer-events-auto"
+                                    className="fixed inset-0 bg-black/60 backdrop-blur-md z-[55] lg:hidden pointer-events-auto"
                                 />
 
                                 <motion.div
@@ -166,7 +183,7 @@ const Navbar: React.FC = () => {
                                     initial="hidden"
                                     animate="visible"
                                     exit="exit"
-                                    className="absolute top-full left-0 right-0 mt-3 px-2 lg:hidden pointer-events-auto"
+                                    className="absolute top-full left-0 right-0 mt-3 px-2 lg:hidden pointer-events-auto z-[60]"
                                 >
                                     <div className="bg-rhum-green border border-white/10 rounded-sm p-8 shadow-2xl flex flex-col gap-6 text-center">
                                         {navLinks.map((link) => (
