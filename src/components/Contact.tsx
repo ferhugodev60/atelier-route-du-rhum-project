@@ -13,12 +13,11 @@ const Contact: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-16">
-                    {/* Formulaire de Contact - Padding réduit (p-6) */}
+                    {/* Formulaire de Contact */}
                     <div className="bg-white p-6 md:p-12 shadow-xl rounded-sm border border-gray-100">
                         <form className="space-y-5 md:space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5 md:gap-6">
                                 <div>
-                                    {/* Labels plus petits et plus fins sur mobile */}
                                     <label className="block text-[10px] md:text-xs uppercase tracking-widest font-bold mb-1 md:mb-2">Nom</label>
                                     <input type="text" className="w-full border-b border-gray-300 py-1.5 md:py-2 text-sm md:text-base focus:border-rhum-gold outline-none transition-colors bg-transparent" placeholder="Votre nom" />
                                 </div>
@@ -78,18 +77,19 @@ const Contact: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Carte réduite sur mobile */}
+                        {/* Carte avec Marqueur (Flèche) */}
                         <div className="mt-10 md:mt-12 h-48 md:h-64 bg-gray-200 rounded-sm grayscale hover:grayscale-0 transition-all duration-700 overflow-hidden relative border border-gray-100 shadow-inner">
                             <iframe
-                                title="Carte Atelier de la Route du Rhum"
-                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2593.633446862521!2d2.82283347688001!3d49.41584996131494!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e7d73ed355563f%3A0xbe537f8688f1e389!2sAtelier%20de%20la%20Route%20du%20Rhum!5e0!3m2!1sfr!2sfr!4v1704988000000!5m2!1sfr!2sfr"
+                                // URL d'intégration exacte pour l'Atelier de la Route du Rhum
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2596.5056637482813!2d2.82351537682285!3d49.41629486111162!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e7d73eb355563f%3A0xbe537f8688f1e389!2sAtelier%20de%20la%20Route%20du%20Rhum!5e0!3m2!1sfr!2sfr!4v1736618581024!5m2!1sfr!2sfr"
                                 width="100%"
                                 height="100%"
                                 style={{ border: 0 }}
-                                allowFullScreen=""
+                                allowFullScreen={true}
                                 loading="lazy"
                                 referrerPolicy="no-referrer-when-downgrade"
-                                className="absolute inset-0 w-full h-full"
+                                title="Localisation de l'Atelier de la Route du Rhum à Compiègne"
+                                className="absolute inset-0"
                             ></iframe>
                         </div>
                     </div>
