@@ -24,7 +24,7 @@ const Workshops: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="group relative bg-[#081c15] border border-rhum-gold/30 rounded-sm overflow-hidden flex flex-col shadow-xl shadow-rhum-gold/5 hover:shadow-rhum-gold/20 transition-all duration-500"
+                        className="group relative bg-[#081c15] rounded-sm overflow-hidden flex flex-col shadow-xl shadow-rhum-gold/5 hover:shadow-rhum-gold/20 transition-all duration-500"
                     >
                         <div className="relative h-48 md:h-64 overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-t from-[#081c15] via-[#081c15]/60 to-transparent z-10"></div>
@@ -69,7 +69,7 @@ const Workshops: React.FC = () => {
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6, delay: 0.2 }}
-                        className="group relative bg-[#081c15] border border-rhum-gold/30 rounded-sm overflow-hidden flex flex-col shadow-xl shadow-rhum-gold/5 hover:shadow-rhum-gold/20 transition-all duration-500"
+                        className="group relative bg-[#081c15] rounded-sm overflow-hidden flex flex-col shadow-xl shadow-rhum-gold/5 hover:shadow-rhum-gold/20 transition-all duration-500"
                     >
                         <div className="relative h-48 md:h-64 overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-t from-[#081c15] via-[#081c15]/60 to-transparent z-10"></div>
