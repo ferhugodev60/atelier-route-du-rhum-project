@@ -80,19 +80,17 @@ const Contact: React.FC = () => {
 
                         {/* Carte réduite sur mobile */}
                         <div className="mt-10 md:mt-12 h-48 md:h-64 bg-gray-200 rounded-sm grayscale hover:grayscale-0 transition-all duration-700 overflow-hidden relative border border-gray-100 shadow-inner">
-                            <div className="absolute inset-0 flex items-center justify-center bg-rhum-green/5">
-                                <div className="text-center p-4">
-                                    <p className="font-serif italic text-rhum-green text-sm md:text-base mb-2">Au cœur de Compiègne</p>
-                                    <a
-                                        href="https://www.google.com/maps/search/?api=1&query=12+rue+des+Cordeliers+60200+Compiegne"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[10px] uppercase tracking-widest text-rhum-gold font-bold hover:underline"
-                                    >
-                                        Ouvrir dans Google Maps
-                                    </a>
-                                </div>
-                            </div>
+                            <iframe
+                                title="Carte Atelier de la Route du Rhum"
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2593.633446862521!2d2.82283347688001!3d49.41584996131494!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x47e7d73ed355563f%3A0xbe537f8688f1e389!2sAtelier%20de%20la%20Route%20du%20Rhum!5e0!3m2!1sfr!2sfr!4v1704988000000!5m2!1sfr!2sfr"
+                                width="100%"
+                                height="100%"
+                                style={{ border: 0 }}
+                                allowFullScreen=""
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                className="absolute inset-0 w-full h-full"
+                            ></iframe>
                         </div>
                     </div>
                 </div>
