@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+/* Vos styles personnalisés et imports de polices en dessous */
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap');
+
+@theme {
+    /* En v4, vos variables se mettent directement ici dans le CSS ! */
+    --color-rhum-green: #1A3025;
+    --color-rhum-gold: #C5A059;
+    --color-rhum-cream: #FDFCF8;
+
+    --font-serif: "Playfair Display", serif;
+    --font-sans: Montserrat, sans-serif;
+}
+
+body {
+    background-color: var(--color-rhum-cream);
+    color: var(--color-rhum-green);
+    font-family: var(--font-sans);
+}
+
+html {
+    scroll-behavior: smooth;
+}
+
+.bg-gradient-to-b {
+    position: relative;
+}
+
+.bg-gradient-to-b::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0.03;
+    pointer-events: none;
+    background-image: url("https://www.transparenttextures.com/patterns/stardust.png"); /* Texture subtile */
+}
