@@ -1,5 +1,7 @@
 import React from 'react';
 import { motion, Transition } from 'framer-motion';
+// Importation du logo officiel
+import logoImg from '../assets/logo/logo.png';
 
 interface HeroProps {
     title?: string;
@@ -13,7 +15,7 @@ const Hero: React.FC<HeroProps> = ({
                                        title = "Devenez l'Alchimiste",
                                        subtitle = "Entrez dans l’antre du Druide à Compiègne. Maîtrisez l’art de l’assemblage et créez votre propre nectar artisanal.",
                                        ctaPrimaryLabel = "Réserver mon atelier",
-                                       backgroundImage = "https://lh3.googleusercontent.com/gps-cs-s/AG0ilSzteO5ijNpJCeICoy4tQK3Tf8L2B6IZfOmM8Df-zzLV_GkK149i1JfrKdbV8uXc__7WXcBI78LRir2WRu8j9zlfxRoIp1-7x_mSxfh1SbpFnwIY-MZ6HqwrlZ93F1dZn79B60A=s1360-w1360-h1020-rw"
+                                       ctaSecondaryLabel = "Découvrir nos bouteilles",
                                    }) => {
 
     const bounceTransition: Transition = {
@@ -26,20 +28,33 @@ const Hero: React.FC<HeroProps> = ({
     };
 
     return (
-        <section className="relative h-screen w-full overflow-hidden flex items-center justify-center text-center bg-rhum-green">
-            <div className="absolute inset-0 bg-black/75 z-10" />
+        <section
+            className="relative h-screen w-full overflow-hidden flex items-center justify-center text-center"
+            /* NOUVEAU : Fond uniforme esthétique avec un dégradé radial pour donner de la profondeur */
+            style={{
+                background: `radial-gradient(circle, #1a2e26 0%, #0a1a14 100%)`
+            }}
+        >
+            {/* Un léger grain peut être ajouté en overlay pour texture si souhaité,
+                ici nous restons sur un dégradé pur et profond */}
+            <div className="absolute inset-0 bg-black/20 z-10" />
 
-            <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{ backgroundImage: `url(${backgroundImage})` }}
-            />
-
-            <div className="relative z-20 px-4 max-w-4xl mx-auto mt-0 md:mt-[-60px]">
+            <div className="relative z-20 px-4 max-w-4xl mx-auto mt-0 md:mt-[-20px]">
                 <motion.div
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.8, delay: 0.2 }}
                 >
+                    {/* LOGO EN GRAND */}
+                    <div className="mb-8 md:mb-12">
+                        <img
+                            src={logoImg}
+                            alt="Logo L'Atelier de la Route du Rhum"
+                            className="h-32 md:h-56 mx-auto drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]"
+                        />
+                    </div>
+
+                    {/* Créateur de saveurs encadré */}
                     <div className="flex items-center justify-center gap-3 md:gap-4 mb-4 md:mb-6">
                         <div className="h-px w-6 md:w-16 bg-rhum-gold opacity-70"></div>
                         <p className="text-rhum-gold font-sans tracking-[0.3em] md:tracking-[0.4em] uppercase text-[9px] md:text-xs font-bold">
@@ -48,7 +63,7 @@ const Hero: React.FC<HeroProps> = ({
                         <div className="h-px w-6 md:w-16 bg-rhum-gold opacity-70"></div>
                     </div>
 
-                    <h1 className="text-3xl md:text-7xl font-serif text-white mb-6 md:mb-8 leading-tight drop-shadow-lg">
+                    <h1 className="text-3xl md:text-7xl font-serif text-white mb-6 md:mb-8 leading-tight drop-shadow-lg italic">
                         {title}
                     </h1>
 
@@ -56,17 +71,24 @@ const Hero: React.FC<HeroProps> = ({
                         {subtitle}
                     </p>
 
-                    <div className="flex justify-center items-center">
-                        <a href="#workshops" className="no-underline">
-                            {/* CTA AJUSTÉ : Suppression du w-full, ajout de px-12 pour une largeur contenue */}
-                            <button className="px-12 md:px-14 py-3.5 md:py-4 bg-rhum-gold hover:bg-white text-rhum-green font-black rounded-sm transition-all duration-300 shadow-[0_4px_20px_rgba(212,175,55,0.3)] hover:shadow-[0_4px_25px_rgba(255,255,255,0.4)] uppercase tracking-widest text-[10px] md:text-xs transform hover:-translate-y-1">
+                    {/* DEUX CTA CÔTE À CÔTE */}
+                    <div className="flex flex-col md:flex-row justify-center items-center gap-4 md:gap-6">
+                        <a href="#workshops" className="no-underline w-full md:w-auto">
+                            <button className="w-full px-10 md:px-14 py-3.5 md:py-4 bg-rhum-gold hover:bg-white text-rhum-green font-black rounded-sm transition-all duration-300 uppercase tracking-widest text-[10px] md:text-xs">
                                 {ctaPrimaryLabel}
+                            </button>
+                        </a>
+
+                        <a href="#menu" className="no-underline w-full md:w-auto">
+                            <button className="w-full px-10 md:px-14 py-3.5 md:py-4 bg-transparent border border-white/50 hover:border-rhum-gold hover:bg-rhum-gold/10 text-white font-bold rounded-sm transition-all duration-300 uppercase tracking-widest text-[10px] md:text-xs backdrop-blur-sm">
+                                {ctaSecondaryLabel}
                             </button>
                         </a>
                     </div>
                 </motion.div>
             </div>
 
+            {/* Bouton Explorer */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -75,7 +97,7 @@ const Hero: React.FC<HeroProps> = ({
             >
                 <a href="#about" className="group flex flex-col items-center gap-2 md:gap-3 no-underline">
                     <span className="text-rhum-gold/70 text-[8px] md:text-[9px] uppercase tracking-[0.5em] font-bold group-hover:text-rhum-gold transition-colors">
-                        Explorer
+                        Explorer l'atelier
                     </span>
 
                     <div className="w-12 h-12 md:w-14 md:h-14 rounded-full border border-rhum-gold/30 flex items-center justify-center group-hover:bg-rhum-gold/10 group-hover:border-rhum-gold/60 transition-all duration-300 backdrop-blur-sm shadow-lg shadow-black/20">

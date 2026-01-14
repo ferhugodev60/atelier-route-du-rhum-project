@@ -60,7 +60,7 @@ const WorkshopMenu: React.FC = () => {
                                         </div>
                                         <span className="text-xs text-rhum-gold font-bold uppercase tracking-tighter">Durée : 2h30</span>
                                     </div>
-                                    <span className="font-serif text-xl italic whitespace-nowrap">120€</span>
+                                    <span className="font-serif text-xl italic whitespace-nowrap">140€</span>
                                 </li>
                             </ul>
                         </div>

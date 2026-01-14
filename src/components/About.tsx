@@ -45,9 +45,13 @@ const About: React.FC = () => {
                     </div>
 
                     <div className="mt-10">
-                        <button className="text-rhum-green font-bold border-b-2 border-rhum-gold pb-1 hover:text-rhum-gold transition-colors duration-300">
+                        {/* Lien de redirection vers la section #workshops */}
+                        <a
+                            href="#workshops"
+                            className="inline-block text-rhum-green font-bold border-b-2 border-rhum-gold pb-1 hover:text-rhum-gold transition-colors duration-300 no-underline"
+                        >
                             En savoir plus sur nos ateliers
-                        </button>
+                        </a>
                     </div>
                 </div>
 
