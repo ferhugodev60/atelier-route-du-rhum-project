@@ -40,46 +40,45 @@ const Workshops: React.FC = () => {
             image: "https://images.unsplash.com/photo-1541250848049-b4f71413cc3f?q=80&w=1000&auto=format&fit=crop"
         },
         mixologie: {
-            title: "Niveau 4 : L'Atelier Mixologie",
+            title: "Niveau 4 : L'Atelier XXL Mixologie",
             price: "420€",
             duration: "8h00",
             availability: "Uniquement du Mardi au Jeudi (10h - 20h)",
             desc: "L'art ultime du service et du cocktail.",
-            fullDesc: "Une immersion totale de 8 heures (de 10h à 20h, incluant 2h de pause repas). Maîtrisez les techniques de bar professionnelles, les textures et la présentation pour transformer vos rhums en cocktails d'exception. Attention : cet atelier XXL est réservable uniquement du mardi au jeudi.",
+            fullDesc: "Une immersion totale de 8 heures (10h-20h, avec 2h de repas). Maîtrisez les techniques de bar professionnelles pour transformer vos rhums en cocktails d'exception. Uniquement du mardi au jeudi.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
         }
     };
 
     return (
-        <section id="workshops" className="py-24 bg-white px-6">
+        <section id="workshops" className="py-16 md:py-24 bg-white px-4 md:px-6">
             <div className="max-w-6xl mx-auto">
-                <div className="text-center mb-20">
-                    <h2 className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-sm mb-4 font-bold">Nos Formules</h2>
-                    <h3 className="text-4xl md:text-5xl font-serif text-rhum-green italic">La Carte de l'Atelier</h3>
+                <div className="text-center mb-12 md:mb-20">
+                    <h2 className="text-rhum-gold font-sans tracking-[0.2em] uppercase text-xs md:text-sm mb-3 md:mb-4 font-bold">Nos Formules</h2>
+                    <h3 className="text-3xl md:text-5xl font-serif text-rhum-green italic">La Carte de l'Atelier</h3>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-stretch">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-stretch">
 
                     {/* --- ATELIER DÉCOUVERTE --- */}
                     <div className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/20 shadow-2xl">
-                        <div className="relative h-64 overflow-hidden">
+                        <div className="relative h-48 md:h-64 overflow-hidden">
                             <div className="absolute inset-0 bg-gradient-to-t from-[#081c15] via-transparent to-transparent z-10" />
                             <img src={imgDiscovery} alt="Atelier Découverte" className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110" />
                         </div>
-                        <div className="p-10 flex flex-col flex-grow">
-                            {/* Prix aligné face au titre */}
-                            <div className="flex justify-between items-baseline mb-6">
-                                <h4 className="text-3xl font-serif italic text-rhum-cream">L'Atelier Découverte</h4>
-                                <span className="text-4xl font-serif text-rhum-gold">60€</span>
+                        <div className="p-6 md:p-10 flex flex-col flex-grow">
+                            <div className="flex justify-between items-center mb-4 md:mb-6 gap-2">
+                                <h4 className="text-xl md:text-3xl font-serif italic text-rhum-cream leading-tight">L'Atelier Découverte</h4>
+                                <span className="text-2xl md:text-4xl font-serif text-rhum-gold whitespace-nowrap">60€</span>
                             </div>
-                            <div className="flex gap-6 mb-8 text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
-                                <span>⏱ 1h30</span>
-                                <span>📜 Valable 30 jours après achat</span>
+                            <div className="flex flex-wrap gap-x-4 gap-y-2 mb-6 md:mb-8 text-[9px] md:text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
+                                <span className="flex items-center gap-1">⏱ 1h30</span>
+                                <span className="flex items-center gap-1">📜 Valable 30 jours</span>
                             </div>
-                            <p className="text-rhum-cream/70 italic text-lg mb-10 leading-relaxed">
+                            <p className="text-rhum-cream/70 italic text-base md:text-lg mb-8 md:mb-10 leading-relaxed">
                                 Une initiation parfaite pour découvrir les bases de l'assemblage sous les conseils du Druide de Compiègne.
                             </p>
-                            <button className="mt-auto w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-lg">
+                            <button className="mt-auto w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-white transition-all shadow-lg">
                                 Réserver l'atelier
                             </button>
                         </div>
@@ -87,37 +86,31 @@ const Workshops: React.FC = () => {
 
                     {/* --- ATELIER CONCEPTION --- */}
                     <div className="flex flex-col bg-[#081c15] rounded-sm border border-rhum-gold/40 shadow-2xl">
-                        <div className="p-10 md:p-12 flex flex-col h-full">
-                            <div className="flex justify-between items-baseline mb-8">
-                                <h4 className="text-3xl font-serif italic text-rhum-cream">L'Atelier Conception</h4>
-                                <span className="text-rhum-gold font-sans text-[10px] uppercase tracking-widest font-bold opacity-60">Par Étapes</span>
+                        <div className="p-6 md:p-12 flex flex-col h-full">
+                            <div className="flex justify-between items-baseline mb-6 md:mb-8">
+                                <h4 className="text-xl md:text-3xl font-serif italic text-rhum-cream">L'Atelier Conception</h4>
+                                <span className="text-rhum-gold font-sans text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60">Par Étapes</span>
                             </div>
 
-                            <div className="flex gap-6 mb-10 text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
+                            <div className="flex gap-4 mb-8 md:mb-10 text-[9px] md:text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
                                 <span>📜 Valable 6 mois après achat</span>
                             </div>
 
-                            <ul className="space-y-4 mb-10 flex-grow">
+                            <ul className="space-y-4 mb-8 md:mb-10 flex-grow">
                                 {Object.keys(workshopDetails).map((key, index) => {
-                                    // On récupère l'objet correspondant à la clé
                                     const item = workshopDetails[key as keyof typeof workshopDetails];
-
                                     return (
-                                        <li key={key} className="flex justify-between items-center border-b border-white/5 pb-4 group">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-4">
-                                                    <span className="text-rhum-gold font-black text-lg opacity-50">{index + 1}.</span>
-                                                    {/* On extrait le nom après le ":" */}
-                                                    <span className="text-rhum-cream text-lg italic">{item.title.split(': ')[1]}</span>
+                                        <li key={key} className="flex justify-between items-center border-b border-white/5 pb-3 md:pb-4 group gap-2">
+                                            <div className="flex flex-col min-w-0">
+                                                <div className="flex items-center gap-2 md:gap-4 overflow-hidden">
+                                                    <span className="text-rhum-gold font-black text-base md:text-lg opacity-50 flex-shrink-0">{index + 1}.</span>
+                                                    <span className="text-rhum-cream text-base md:text-lg italic truncate">{item.title.split(': ')[1]}</span>
                                                 </div>
-                                                <div className="text-[10px] text-rhum-gold/60 uppercase tracking-widest ml-10">
+                                                <div className="text-[9px] md:text-[10px] text-rhum-gold/60 uppercase tracking-widest ml-6 md:ml-10">
                                                     {item.duration} — {item.price}
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={() => setActiveDetail(item)}
-                                                className="text-[9px] uppercase tracking-widest text-rhum-gold border border-rhum-gold/30 px-4 py-2 hover:bg-rhum-gold/10 transition-all"
-                                            >
+                                            <button onClick={() => setActiveDetail(item)} className="text-[8px] md:text-[9px] uppercase tracking-widest text-rhum-gold border border-rhum-gold/30 px-3 md:px-4 py-1.5 md:py-2 hover:bg-rhum-gold hover:text-rhum-green transition-all flex-shrink-0">
                                                 Détails
                                             </button>
                                         </li>
@@ -125,44 +118,44 @@ const Workshops: React.FC = () => {
                                 })}
                             </ul>
 
-                            <div className="bg-rhum-gold/10 p-6 border border-rhum-gold/30 rounded-sm">
-                                <p className="text-[10px] text-rhum-gold font-bold uppercase tracking-[0.2em] leading-relaxed text-center">
-                                    ✦ Progression obligatoire : le niveau précédent doit être validé pour accéder au suivant ✦
+                            <div className="bg-rhum-gold/10 p-4 md:p-6 border border-rhum-gold/30 rounded-sm">
+                                <p className="text-[8px] md:text-[10px] text-rhum-gold font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] leading-relaxed text-center">
+                                    ✦ Progression obligatoire : le niveau précédent doit être validé ✦
                                 </p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* --- GRANDE MODAL --- */}
+                {/* --- GRANDE MODAL MOBILE-READY --- */}
                 <AnimatePresence>
                     {activeDetail && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-12 backdrop-blur-md">
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 md:p-12 backdrop-blur-md">
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setActiveDetail(null)} className="absolute inset-0 bg-black/95" />
-                            <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 50 }} className="relative bg-[#0a1a14] border border-rhum-gold/30 max-w-5xl w-full max-h-[90vh] overflow-y-auto rounded-sm shadow-2xl flex flex-col md:flex-row">
-                                <div className="w-full md:w-1/2 h-64 md:h-auto overflow-hidden border-b md:border-b-0 md:border-r border-rhum-gold/20">
+                            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-[#0a1a14] border border-rhum-gold/30 max-w-5xl w-full max-h-[95vh] md:max-h-[90vh] overflow-y-auto rounded-sm shadow-2xl flex flex-col md:flex-row">
+                                <div className="w-full md:w-1/2 h-48 sm:h-64 md:h-auto overflow-hidden border-b md:border-b-0 md:border-r border-rhum-gold/20">
                                     <img src={activeDetail.image} alt={activeDetail.title} className="w-full h-full object-cover opacity-70" />
                                 </div>
-                                <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col">
-                                    <button onClick={() => setActiveDetail(null)} className="absolute top-6 right-8 text-rhum-gold text-3xl">×</button>
-                                    <h5 className="text-3xl md:text-5xl font-serif italic text-white mb-6 leading-tight">{activeDetail.title}</h5>
+                                <div className="w-full md:w-1/2 p-6 md:p-16 flex flex-col">
+                                    <button onClick={() => setActiveDetail(null)} className="absolute top-4 right-6 text-rhum-gold text-2xl md:text-3xl hover:scale-110 transition-transform">×</button>
+                                    <p className="text-rhum-gold text-[9px] md:text-[10px] uppercase tracking-[0.3em] md:tracking-[0.4em] font-bold mb-3 md:mb-4">Détails de l'Atelier</p>
+                                    <h5 className="text-xl md:text-5xl font-serif italic text-white mb-4 md:mb-6 leading-tight">{activeDetail.title}</h5>
 
-                                    <div className="flex flex-col gap-2 mb-8">
-                                        <div className="flex gap-8 text-rhum-gold font-serif text-2xl">
+                                    <div className="flex flex-col gap-2 mb-6 md:mb-8">
+                                        <div className="flex flex-wrap gap-4 md:gap-8 text-rhum-gold font-serif text-lg md:text-2xl">
                                             <span>Tarif : {activeDetail.price}</span>
                                             <span>Durée : {activeDetail.duration}</span>
                                         </div>
-                                        {/* Affichage de la disponibilité spécifique si elle existe */}
                                         {activeDetail.availability && (
-                                            <p className="text-rhum-gold/80 text-[11px] uppercase tracking-widest font-bold">
+                                            <p className="text-rhum-gold/80 text-[10px] md:text-[11px] uppercase tracking-widest font-bold italic">
                                                 📅 {activeDetail.availability}
                                             </p>
                                         )}
                                     </div>
 
-                                    <div className="w-16 h-px bg-rhum-gold/30 mb-8" />
-                                    <p className="text-rhum-cream/90 text-lg leading-relaxed mb-10 italic font-sans">"{activeDetail.fullDesc}"</p>
-                                    <button className="mt-auto w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-xs hover:bg-white transition-all shadow-xl">
+                                    <div className="w-12 md:w-16 h-px bg-rhum-gold/30 mb-6 md:mb-8" />
+                                    <p className="text-rhum-cream/90 text-sm md:text-lg leading-relaxed mb-8 md:mb-10 italic font-sans">"{activeDetail.fullDesc}"</p>
+                                    <button className="mt-auto w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-white transition-all shadow-xl">
                                         Réserver cette étape
                                     </button>
                                 </div>
