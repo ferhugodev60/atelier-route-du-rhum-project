@@ -3,7 +3,7 @@ import { revealVariants } from '../../utils/animations';
 import { PropsWithChildren } from 'react';
 
 interface ScrollRevealProps extends PropsWithChildren {
-    delay?: number; // Permet de décaler l'apparition si besoin
+    delay?: number;
     width?: "fit-content" | "100%";
 }
 
@@ -19,10 +19,17 @@ export default function ScrollReveal({
             whileInView="visible"
             viewport={{
                 once: true,
-                margin: "-100px",
-                amount: 0.2
+                margin: "0px 0px -50px 0px",
+                amount: 0.1
             }}
-            transition={{ delay }}
+            /* On fusionne le délai avec les variantes sans écraser la durée/ease
+               définis dans utils/animations.ts
+            */
+            transition={{
+                delay,
+                duration: 0.8,
+                ease: [0.22, 1, 0.36, 1]
+            }}
             style={{ width }}
         >
             {children}
