@@ -1,4 +1,3 @@
-// src/data/workshops.ts
 export interface WorkshopDetail {
     title: string;
     desc: string;
