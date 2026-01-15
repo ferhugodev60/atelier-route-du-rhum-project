@@ -69,10 +69,16 @@ export default function WorkshopModal({ detail, onClose }: WorkshopModalProps) {
                             {detail.title}
                         </h5>
 
-                        <div className="flex items-center gap-4 text-rhum-gold font-bold tracking-widest text-base md:text-lg">
-                            <span>{detail.price}</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-rhum-gold/30 shrink-0" />
-                            <span className="text-white/60 font-normal uppercase text-[11px] md:text-xs tracking-[0.2em]">
+                        <div className="flex items-center gap-4 md:gap-5">
+                            <span className="text-2xl md:text-3xl font-serif text-rhum-gold leading-none">
+                                {detail.price}
+                            </span>
+
+                            {/* POINT : Centré par le flex parent */}
+                            <span className="w-1.5 h-1.5 rounded-full bg-rhum-gold/30 shrink-0" aria-hidden="true" />
+
+                            {/* DURÉE : Taille augmentée et leading-none pour l'équilibre */}
+                            <span className="text-white/60 font-sans font-normal uppercase text-[14px] md:text-base tracking-[0.2em] leading-none">
                                 {detail.duration}
                             </span>
                         </div>
@@ -91,15 +97,34 @@ export default function WorkshopModal({ detail, onClose }: WorkshopModalProps) {
                         "{detail.fullDesc}"
                     </p>
 
-                    <button className="w-full bg-rhum-gold text-rhum-green py-6 font-black uppercase tracking-[0.3em] text-xs hover:bg-white transition-all shadow-xl rounded-sm">
-                        RÉSERVER DÈS MAINTENANT
-                    </button>
+                    <div className="mt-auto space-y-6">
+                        <button className="w-full bg-rhum-gold text-rhum-green py-6 font-black uppercase tracking-[0.3em] text-[11px] md:text-xs hover:bg-white transition-all shadow-xl rounded-sm">
+                            RÉSERVER DÈS MAINTENANT
+                        </button>
 
-                    {/* Safe area pour éviter que le bouton soit caché par la barre iPhone */}
+                        <div className="flex flex-col items-center gap-4">
+                            <div className="flex items-center gap-2 text-white/40">
+                                <svg className="w-3 h-3 md:w-4 md:h-4" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                                </svg>
+                                <span className="text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-medium">
+                                    Paiement 100% sécurisé via Stripe
+                                </span>
+                            </div>
+
+                            {/* Logos de paiement minimalistes */}
+                            <div className="flex items-center gap-6 opacity-30 grayscale transition-opacity">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/b/ba/Stripe_Logo%2C_revised_2016.svg" alt="Stripe" className="h-4 md:h-5 invert" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Visa_Inc._logo.svg" alt="Visa" className="h-3 md:h-4 invert" />
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6 md:h-8 invert" />
+                            </div>
+                        </div>
+                    </div>
+
                     <div className="h-10 md:hidden" />
                 </div>
             </motion.div>
         </div>,
-        document.body // C'est ici que la magie opère : la modale est injectée dans le body
+        document.body
     );
 }

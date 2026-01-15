@@ -14,7 +14,7 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         title: "Niveau 1 : L'Atelier Fruits",
         price: "140€",
         duration: "2h30",
-        included: "Bouteille 1L de Rhum arrangé — Valable 6 mois",
+        included: "Bouteille d'1L de Rhum arrangé",
         desc: "L'équilibre parfait entre sucre et puissance.",
         fullDesc: "Apprenez à travailler les fruits frais de saison pour créer une macération harmonieuse sous les conseils de Nabil Ziani.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
@@ -23,7 +23,7 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         title: "Niveau 2 : L'Epicothèque",
         price: "170€",
         duration: "3h",
-        included: "Boîte de 10 flacons (gustatif, informatif et olfactif) — Valable 6 mois",
+        included: "Boîte de 10 flacons (gustatif, informatif et olfactif)",
         desc: "Le caractère et la structure de votre nectar.",
         fullDesc: "Plongez dans l'univers des épices rares pour donner une structure unique et boisée à votre rhum.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
@@ -32,7 +32,7 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         title: "Niveau 3 : L'Atelier Plantes - Pharmatech",
         price: "210€",
         duration: "4h",
-        included: "Pharmatech (10 flacons gustatif, informatif et olfactif) — Valable 6 mois",
+        included: "Pharmatech (10 flacons gustatif, informatif et olfactif)",
         desc: "L'exploration botanique et florale.",
         fullDesc: "Utilisez des herbes aromatiques et des plantes pour apporter des notes florales complexes à votre signature d'alchimiste.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
