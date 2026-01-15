@@ -5,7 +5,7 @@ import ScrollReveal from './components/animations/ScrollReveal.tsx';
 const Sections = {
     Hero: lazy(() => import('./components/sections/Hero')),
     About: lazy(() => import('./components/sections/About')),
-    Workshops: lazy(() => import('./components/sections/Workshops')),
+    Workshops: lazy(() => import('./components/sections/Workshops/Workshops.tsx')),
     Testimonials: lazy(() => import('./components/sections/Testimonials')),
     Contact: lazy(() => import('./components/sections/Contact')),
 };
