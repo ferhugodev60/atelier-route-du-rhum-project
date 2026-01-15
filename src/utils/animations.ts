@@ -1,5 +1,9 @@
-import { Variants } from 'framer-motion';
+import { Variants, TargetAndTransition } from 'framer-motion';
 
+/**
+ * Variantes pour les révélations au scroll (ScrollReveal)
+ *
+ */
 export const revealVariants: Variants = {
     hidden: {
         opacity: 0,
@@ -17,6 +21,10 @@ export const revealVariants: Variants = {
     }
 };
 
+/**
+ * Variantes spécifiques pour le Hero (entrée immédiate)
+ *
+ */
 export const heroVariants: Variants = {
     hidden: {
         opacity: 0,
@@ -33,15 +41,16 @@ export const heroVariants: Variants = {
     }
 };
 
-// Version optimisée du bounce (Typage strict 2026)
-export const bounceAnimation: Variants = {
-    animate: {
-        y: [0, 6, 0],
-        transition: {
-            duration: 1.5,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeOut"
-        }
+/**
+ * Animation de rebond (Bounce)
+ * Typage TargetAndTransition pour éviter l'erreur TS2339 en 2026
+ */
+export const bounceAnimation: TargetAndTransition = {
+    y: [0, 6, 0],
+    transition: {
+        duration: 1.5,
+        repeat: Infinity,
+        repeatType: "reverse",
+        ease: "easeOut"
     }
 };
