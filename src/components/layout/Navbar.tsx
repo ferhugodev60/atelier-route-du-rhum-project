@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useScroll } from '../../hooks/useScroll';
-import { LoginModal } from '../ui'; // Utilisation du barrel file
+import { LoginModal } from '../ui';
 
 const NAV_LINKS = [
     { name: 'Accueil', href: '#home' },

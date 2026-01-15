@@ -2,14 +2,19 @@
 
 @import "tailwindcss";
 
+@utility bg-radial-dark {
+    background: radial-gradient(circle, #1a2e26 0%, #0a1a14 100%);
+}
+
 @theme {
-    /* En v4, vos variables se mettent directement ici dans le CSS ! */
     --color-rhum-green: #1A3025;
     --color-rhum-gold: #C5A059;
     --color-rhum-cream: #FDFCF8;
 
     --font-serif: "Playfair Display", serif;
     --font-sans: Montserrat, sans-serif;
+
+    --shadow-custom: 0 15px 35px rgba(0,0,0,0.6);
 }
 
 body {
