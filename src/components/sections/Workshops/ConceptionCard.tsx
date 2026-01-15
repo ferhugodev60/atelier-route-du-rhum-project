@@ -8,7 +8,7 @@ export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
     return (
         <article className="flex flex-col bg-[#081c15] rounded-sm border border-rhum-gold/40 shadow-2xl p-6 md:p-12">
             <header className="flex justify-between items-baseline mb-4">
-                <h4 className="text-xl md:text-3xl font-serif italic text-rhum-cream leading-tight">
+                <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight">
                     L'Atelier Conception
                 </h4>
                 <span className="text-rhum-gold font-sans text-[9px] md:text-[10px] uppercase tracking-widest font-bold opacity-60">

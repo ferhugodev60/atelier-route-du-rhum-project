@@ -14,7 +14,7 @@ export default function WorkshopCard() {
             </div>
             <div className="p-6 md:p-10 flex flex-col flex-grow">
                 <div className="flex justify-between items-center mb-4 md:mb-6">
-                    <h4 className="text-xl md:text-3xl font-serif italic text-rhum-cream leading-tight">L'Atelier Découverte</h4>
+                    <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight">L'Atelier Découverte</h4>
                     <span className="text-2xl md:text-4xl font-serif text-rhum-gold">60€</span>
                 </div>
                 <div className="flex flex-wrap gap-x-4 gap-y-2 mb-6 text-[9px] md:text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
@@ -22,7 +22,7 @@ export default function WorkshopCard() {
                     <span>📜 Valable 30 jours après achat</span>
                 </div>
                 <p className="text-rhum-cream/70 italic text-base md:text-lg mb-8 leading-relaxed">
-                    Une initiation parfaite pour découvrir les bases de l'assemblage sous les conseils du Druide.
+                    "Une initiation parfaite pour découvrir les bases de l'assemblage sous les conseils du Druide."
                 </p>
                 <button className="mt-auto w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-white transition-all shadow-lg rounded-sm">
                     RÉSERVER L'ATELIER
