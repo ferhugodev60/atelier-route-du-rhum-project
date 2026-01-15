@@ -1,39 +1,47 @@
-import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import About from './components/About';
-import Workshops from './components/Workshops';
-import WorkshopMenu from './components/WorkshopMenu';
-import Testimonials from './components/Testimonials';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
-import ScrollReveal from './components/ScrollReveal';
+import { Suspense, lazy } from 'react';
+import { Navbar, Footer } from './components/layout';
+import ScrollReveal from './components/animations/ScrollReveal.tsx';
 
-const App: React.FC = () => {
+const Sections = {
+    Hero: lazy(() => import('./components/sections/Hero')),
+    About: lazy(() => import('./components/sections/About')),
+    Workshops: lazy(() => import('./components/sections/Workshops')),
+    Testimonials: lazy(() => import('./components/sections/Testimonials')),
+    Contact: lazy(() => import('./components/sections/Contact')),
+};
+
+export default function App() {
     return (
-        <div className="min-h-screen bg-rhum-cream font-sans">
+        <div className="min-h-screen bg-rhum-cream font-sans text-rhum-green">
             <Navbar />
+
             <main>
-                <section id="home"><Hero /></section>
+                <Suspense fallback={<div className="h-screen bg-rhum-cream" aria-hidden="true" />}>
 
-                <ScrollReveal>
-                    <section id="about"><About /></section>
-                </ScrollReveal>
+                    <section id="home">
+                        <Sections.Hero />
+                    </section>
 
-                <ScrollReveal>
-                    <section id="workshops"><Workshops /></section>
-                </ScrollReveal>
+                    <section id="about">
+                        <ScrollReveal><Sections.About /></ScrollReveal>
+                    </section>
 
-                <ScrollReveal>
-                    <section id="testimonials"><Testimonials /></section>
-                </ScrollReveal>
+                    <section id="workshops">
+                        <ScrollReveal><Sections.Workshops /></ScrollReveal>
+                    </section>
 
-                <ScrollReveal>
-                    <section id="contact"><Contact /></section>
-                </ScrollReveal>
+                    <section id="testimonials">
+                        <ScrollReveal><Sections.Testimonials /></ScrollReveal>
+                    </section>
+
+                    <section id="contact">
+                        <ScrollReveal><Sections.Contact /></ScrollReveal>
+                    </section>
+
+                </Suspense>
             </main>
+
             <Footer />
         </div>
     );
-};
-
-export default App;
+}

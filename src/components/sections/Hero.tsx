@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion, Transition } from 'framer-motion';
 // Importation du logo officiel
-import logoImg from '../assets/logo/logo.png';
+import logoImg from '../../assets/logo/logo.png';
 
 interface HeroProps {
     title?: string;
@@ -63,7 +63,7 @@ const Hero: React.FC<HeroProps> = ({
                         <div className="h-px w-6 md:w-16 bg-rhum-gold opacity-70"></div>
                     </div>
 
-                    <h1 className="text-3xl md:text-7xl font-serif text-white mb-6 md:mb-8 leading-tight drop-shadow-lg italic">
+                    <h1 className="text-3xl md:text-7xl font-serif text-white mb-6 md:mb-8 leading-tight drop-shadow-lg">
                         {title}
                     </h1>
 

@@ -1,7 +1,6 @@
-@import "tailwindcss";
-
-/* Vos styles personnalisés et imports de polices en dessous */
 @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700&family=Playfair+Display:wght@700&display=swap');
+
+@import "tailwindcss";
 
 @theme {
     /* En v4, vos variables se mettent directement ici dans le CSS ! */
@@ -33,5 +32,5 @@ html {
     inset: 0;
     opacity: 0.03;
     pointer-events: none;
-    background-image: url("https://www.transparenttextures.com/patterns/stardust.png"); /* Texture subtile */
+    background-image: url("https://www.transparenttextures.com/patterns/stardust.png");
 }

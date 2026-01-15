@@ -1,5 +1,5 @@
 import React from 'react';
-import aboutImg from '../assets/images/image1.jpg';
+import aboutImg from '../../assets/images/image1.jpg';
 import menuImg from "../assets/images/Menu.webp";
 
 const About: React.FC = () => {

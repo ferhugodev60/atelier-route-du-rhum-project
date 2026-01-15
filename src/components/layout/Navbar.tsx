@@ -1,27 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import LoginModal from './LoginModal';
+import { useScroll } from '../../hooks/useScroll';
+import { LoginModal } from '../ui'; // Utilisation du barrel file
 
-const Navbar: React.FC = () => {
-    const [isScrolled, setIsScrolled] = useState(false);
+const NAV_LINKS = [
+    { name: 'Accueil', href: '#home' },
+    { name: "L'Atelier", href: '#about' },
+    { name: 'Nos Formules', href: '#workshops' },
+    { name: 'Avis', href: '#testimonials' },
+    { name: 'Contact', href: '#contact' },
+];
+
+export default function Navbar() {
+    const isScrolled = useScroll(50);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-    const [currentLang, setCurrentLang] = useState('FR');
+    const [currentLang, setCurrentLang] = useState<'FR' | 'EN'>('FR');
 
-    useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 50);
-        window.addEventListener('scroll', handleScroll);
-        return () => window.removeEventListener('scroll', handleScroll);
-    }, []);
-
-    // Navigation regroupée pour l'Atelier au 12 rue des Cordeliers
-    const navLinks = [
-        { name: 'Accueil', href: '#home' },
-        { name: "L'Atelier", href: '#about' },
-        { name: 'Nos Formules', href: '#workshops' },
-        { name: 'Avis', href: '#testimonials' },
-        { name: 'Contact', href: '#contact' },
-    ];
+    const toggleLang = () => setCurrentLang(prev => prev === 'FR' ? 'EN' : 'FR');
 
     return (
         <>
@@ -34,61 +30,59 @@ const Navbar: React.FC = () => {
             >
                 <div className="max-w-7xl mx-auto px-8 md:px-16 flex justify-between items-center">
 
-                    {/* --- GAUCHE : SÉLECTEUR DE LANGUE DISCRET --- */}
+                    {/* Langue */}
                     <div className="flex-shrink-0">
                         <button
-                            onClick={() => setCurrentLang(currentLang === 'FR' ? 'EN' : 'FR')}
-                            className="text-rhum-cream text-[10px] font-black tracking-widest hover:text-rhum-gold transition-colors"
+                            onClick={toggleLang}
+                            className="text-rhum-cream text-[10px] font-black tracking-widest hover:text-rhum-gold transition-colors uppercase"
                         >
                             {currentLang} <span className="opacity-30 ml-1">/ {currentLang === 'FR' ? 'EN' : 'FR'}</span>
                         </button>
                     </div>
 
-                    {/* --- DROITE : TOUTE LA NAVIGATION REGROUPÉE --- */}
                     <div className="flex items-center gap-10">
-                        {/* Liens Desktop regroupés */}
+                        {/* Desktop Nav */}
                         <div className="hidden lg:flex items-center gap-10">
-                            {navLinks.map((link) => (
+                            {NAV_LINKS.map((link) => (
                                 <a
                                     key={link.name}
                                     href={link.href}
                                     className="text-rhum-cream hover:text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold transition-all relative group"
                                 >
                                     {link.name}
-                                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-rhum-gold transition-all group-hover:w-full"></span>
+                                    <span className="absolute -bottom-1 left-0 w-0 h-px bg-rhum-gold transition-all group-hover:w-full" />
                                 </a>
                             ))}
                         </div>
 
-                        {/* Bouton de connexion - Style Pilule */}
+                        {/* Login Button */}
                         <button
                             onClick={() => setIsLoginModalOpen(true)}
-                            className={`
-                                relative overflow-hidden px-8 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 rounded-full
-                                ${isScrolled
-                                ? 'bg-rhum-gold text-rhum-green hover:bg-white shadow-lg'
-                                : 'border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green'
-                            }
-                            `}
+                            className={`px-8 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-300 rounded-full ${
+                                isScrolled
+                                    ? 'bg-rhum-gold text-rhum-green hover:bg-white shadow-lg'
+                                    : 'border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green'
+                            }`}
                         >
                             SE CONNECTER
                         </button>
 
-                        {/* Mobile Burger (uniquement sur mobile) */}
+                        {/* Burger Menu */}
                         <button
-                            className="lg:hidden text-rhum-gold p-2"
+                            className="lg:hidden text-rhum-gold p-2 focus:outline-none"
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            aria-label="Menu"
                         >
                             <div className="space-y-1.5">
-                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`}></span>
-                                <span className={`block w-6 h-0.5 bg-rhum-gold ${isMobileMenuOpen ? 'opacity-0' : ''}`}></span>
-                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`}></span>
+                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                                <span className={`block w-6 h-0.5 bg-rhum-gold ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
                             </div>
                         </button>
                     </div>
                 </div>
 
-                {/* --- MENU MOBILE --- */}
+                {/* Mobile Menu */}
                 <AnimatePresence>
                     {isMobileMenuOpen && (
                         <motion.div
@@ -98,7 +92,7 @@ const Navbar: React.FC = () => {
                             className="absolute top-full left-0 w-full bg-rhum-green border-t border-white/5 overflow-hidden lg:hidden"
                         >
                             <div className="flex flex-col p-10 gap-8 text-center">
-                                {navLinks.map((link) => (
+                                {NAV_LINKS.map((link) => (
                                     <a
                                         key={link.name}
                                         href={link.href}
@@ -117,6 +111,4 @@ const Navbar: React.FC = () => {
             <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} />
         </>
     );
-};
-
-export default Navbar;
+}
