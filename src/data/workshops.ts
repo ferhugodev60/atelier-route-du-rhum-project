@@ -44,4 +44,4 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
     }
 };
 
-export const IMG_DISCOVERY = "https://images.unsplash.com/photo-1550985616-10810253b84d?q=80&w=1000&auto=format&fit=crop";
+export const IMG_DISCOVERY = "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop";

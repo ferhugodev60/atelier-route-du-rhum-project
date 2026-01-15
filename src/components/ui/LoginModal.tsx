@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLogin } from '../../hooks/useAuth';
-import logo from '../../assets/logo/logo.png';
 
 interface LoginModalProps {
     isOpen: boolean;
