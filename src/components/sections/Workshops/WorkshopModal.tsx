@@ -56,7 +56,9 @@ export default function WorkshopModal({ detail, onClose }: WorkshopModalProps) {
                         className="w-full h-full object-cover opacity-50"
                         loading="eager"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent md:bg-gradient-to-r md:from-black" />
+                    {/* AJOUT : Dégradé noir profond UNIQUEMENT sur mobile (hidden md:block sur celui de droite) */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a14] via-transparent to-transparent md:hidden" />
+                    <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-transparent hidden md:block" />
                 </div>
 
                 {/* Section Contenu (60% de l'écran sur mobile) */}
