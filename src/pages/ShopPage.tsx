@@ -1,5 +1,8 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom';
+
+// Imports des données et composants décomposés
 import { BOTTLES, Bottle } from '../data/bottles';
 import ProductCard from '../components/shop/ProductCard';
 import ShopFilters from '../components/shop/ShopFilters';
@@ -28,7 +31,6 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
         }));
     };
 
-    // Déclenchement de l'ajout via la prop parent
     const handleAddToCart = (bottle: Bottle) => {
         const qty = quantities[bottle.id] || 1;
         onAddToCart(bottle, qty);
@@ -45,23 +47,52 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
     }, [activeCat, activeFlavor, sortOrder]);
 
     return (
-        <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] pt-24 pb-20 px-6">
+        <motion.main
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="min-h-screen bg-[#0a1a14] pt-20 md:pt-32 pb-20 px-4 md:px-6" // Padding réduit sur mobile
+        >
             <div className="max-w-7xl mx-auto">
-                <div className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[10px] uppercase tracking-widest mb-12 transition-colors group">
-                </div>
 
-                <header className="text-center mb-16 relative">
+                {/* Navigation discrète */}
+                <Link to="/" className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[9px] uppercase tracking-widest mb-8 transition-colors group">
+                    <span className="group-hover:-translate-x-1 transition-transform">←</span> Accueil
+                </Link>
+
+                {/* Header compacté pour mobile */}
+                <header className="text-center mb-10 md:mb-16 relative">
                     <div className="inline-block relative">
-                        <h1 className="text-4xl md:text-7xl font-serif text-rhum-gold tracking-[0.2em] uppercase mb-6">NOS BOUTEILLES</h1>
+                        {/* Taille de police adaptative : text-2xl sur mobile vs text-7xl sur desktop */}
+                        <h1 className="text-2xl md:text-7xl font-serif text-rhum-gold tracking-[0.2em] uppercase mb-2 md:mb-6">
+                            NOS BOUTEILLES
+                        </h1>
+                        <motion.span
+                            key={processedBottles.length}
+                            initial={{ opacity: 0, scale: 0.5 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="absolute -top-3 -right-8 md:-right-16 bg-rhum-gold/10 border border-rhum-gold/30 text-rhum-gold text-[8px] md:text-[11px] font-bold py-0.5 px-2 rounded-full tracking-widest"
+                        >
+                            {processedBottles.length}
+                        </motion.span>
                     </div>
-                    <p className="text-rhum-cream/70 font-sans max-w-2xl mx-auto italic text-sm md:text-lg mt-4 leading-relaxed">
-                        "Découvrez nos bouteilles de fabrication artisanale française aux saveurs uniques."
+                    <p className="text-rhum-cream/60 font-sans max-w-xl mx-auto italic text-[11px] md:text-lg mt-3 md:mt-4 leading-relaxed px-2">
+                        "Découvrez nos bouteilles de **fabrication artisanale française** aux saveurs uniques."
                     </p>
                 </header>
 
-                <ShopFilters categories={CATEGORIES} activeCat={activeCat} onCatChange={setActiveCat} flavors={FLAVORS} activeFlavor={activeFlavor} onFlavorChange={setActiveFlavor} onSortChange={setSortOrder} />
+                {/* Composant de filtres optimisé par ailleurs pour le responsive */}
+                <ShopFilters
+                    categories={CATEGORIES}
+                    activeCat={activeCat}
+                    onCatChange={setActiveCat}
+                    flavors={FLAVORS}
+                    activeFlavor={activeFlavor}
+                    onFlavorChange={setActiveFlavor}
+                    onSortChange={setSortOrder}
+                />
 
-                <motion.div layout className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24">
+                {/* Grille de produits avec espacements resserrés sur mobile */}
+                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 md:gap-x-12 md:gap-y-24">
                     <AnimatePresence mode="popLayout">
                         {processedBottles.map((bottle) => (
                             <ProductCard
