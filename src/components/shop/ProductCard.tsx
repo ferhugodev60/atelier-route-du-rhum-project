@@ -20,19 +20,27 @@ export default function ProductCard({
                                     }: ProductCardProps) {
     return (
         <motion.div layout className="group flex flex-col">
-            {/* 1. RÉDUCTION DU CONTENEUR IMAGE */}
-            {/* On utilise aspect-[4/5] sur mobile au lieu de 3/4 pour gagner de la hauteur */}
-            <div className="relative aspect-[4/5] md:aspect-[3/4] bg-black/40 rounded-sm overflow-hidden mb-3 md:mb-8 border border-white/5">
-                <button onClick={onToggleSelect} className="w-full h-full relative block">
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a14]/60 to-transparent z-10" />
+            {/* CONTENEUR IMAGE : Ratio fixe 4/5 sur mobile */}
+            <div className="relative aspect-[4/5] md:aspect-[3/4] bg-[#0a1a14] rounded-sm overflow-hidden mb-3 md:mb-8 border border-white/5 shadow-2xl">
+
+                {/* Zone cliquable qui remplit tout le conteneur */}
+                <button onClick={onToggleSelect} className="absolute inset-0 w-full h-full block z-0">
+                    {/* IMAGE : Forcée à remplir tout le cadre */}
                     <img
                         src={bottle.image}
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110"
+                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
                         alt={bottle.name}
                     />
+
+                    {/* DÉGRADÉS DE LISIBILITÉ : On utilise des opacités plus douces */}
+                    {/* Dégradé du bas pour le nom/prix */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a14]/90 via-transparent to-transparent z-10" />
+
+                    {/* Dégradé du haut TRÈS SUBTIL pour le badge (plus de h-1/3 qui coupait l'image) */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-transparent to-transparent z-10 h-20" />
                 </button>
 
-                {/* Overlay de description adapté */}
+                {/* Overlay de description (Modale interne) */}
                 <AnimatePresence>
                     {isSelected && (
                         <motion.div
@@ -58,21 +66,26 @@ export default function ProductCard({
                     )}
                 </AnimatePresence>
 
-                {/* Badge de stock plus petit */}
+                {/* BADGE DE STOCK : Positionné précisément sur l'image */}
                 <div className={`absolute top-3 right-3 z-20 transition-opacity duration-300 ${isSelected ? 'opacity-0' : 'opacity-100'}`}>
-                    <span className={`text-[7px] uppercase tracking-[0.1em] px-1.5 py-0.5 border ${bottle.stock === 'Limité' ? 'border-red-500/50 text-red-400 bg-red-500/10' : 'border-rhum-gold/30 text-rhum-gold bg-black/40'}`}>
+                    <span className={`
+                        text-[7px] md:text-[8px] uppercase tracking-[0.15em] px-2 py-0.5 border backdrop-blur-md font-bold
+                        ${bottle.stock === 'Limité'
+                        ? 'border-red-500/60 text-red-400 bg-black/60 shadow-[0_0_15px_rgba(239,68,68,0.2)]'
+                        : 'border-rhum-gold/60 text-rhum-gold bg-black/60 shadow-[0_0_15px_rgba(197,163,114,0.1)]'}
+                    `}>
                         {bottle.stock}
                     </span>
                 </div>
             </div>
 
-            {/* 2. TYPOGRAPHIE AFFINÉE */}
+            {/* TYPOGRAPHIE : Nom et Prix */}
             <div className="flex justify-between items-baseline mb-2 md:mb-6 px-1">
                 <h3 className="text-base md:text-2xl font-serif text-white truncate mr-2">{bottle.name}</h3>
                 <span className="text-sm md:text-xl font-serif text-rhum-gold shrink-0">{bottle.price}€</span>
             </div>
 
-            {/* 3. CONTRÔLES COMPRESSÉS */}
+            {/* CONTRÔLES : Quantité */}
             <div className="flex items-center gap-2 mb-2 md:mb-4">
                 <div className="flex-1 flex items-center justify-between border border-rhum-gold/10 p-0.5 rounded-sm bg-black/10">
                     <button

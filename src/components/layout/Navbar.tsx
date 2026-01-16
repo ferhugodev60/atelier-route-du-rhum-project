@@ -14,7 +14,7 @@ const NAV_LINKS = [
     { name: 'Accueil', href: '/#home', isExternal: false },
     { name: "L'Atelier", href: '/#about', isExternal: false },
     { name: 'Nos Ateliers', href: '/#workshops', isExternal: false },
-    { name: 'La Boutique', href: '/boutique', isExternal: true },
+    { name: 'Nos bouteilles', href: '/boutique', isExternal: true },
     { name: 'Contact', href: '/#contact', isExternal: false },
 ];
 

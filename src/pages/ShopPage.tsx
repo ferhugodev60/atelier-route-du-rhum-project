@@ -64,17 +64,9 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
                         <h1 className="text-2xl md:text-7xl font-serif text-rhum-gold tracking-[0.2em] uppercase mb-2 md:mb-6">
                             NOS BOUTEILLES
                         </h1>
-                        <motion.span
-                            key={processedBottles.length}
-                            initial={{ opacity: 0, scale: 0.5 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="absolute -top-3 -right-8 md:-right-16 bg-rhum-gold/10 border border-rhum-gold/30 text-rhum-gold text-[8px] md:text-[11px] font-bold py-0.5 px-2 rounded-full tracking-widest"
-                        >
-                            {processedBottles.length}
-                        </motion.span>
                     </div>
                     <p className="text-rhum-cream/60 font-sans max-w-xl mx-auto italic text-[11px] md:text-lg mt-3 md:mt-4 leading-relaxed px-2">
-                        "Découvrez nos bouteilles de **fabrication artisanale française** aux saveurs uniques."
+                        "Découvrez nos bouteilles de fabrication artisanale française aux saveurs uniques."
                     </p>
                 </header>
 
