@@ -24,18 +24,18 @@ export default function ShopBanner() {
             <div className="relative z-20 p-8 md:p-16 max-w-4xl">
                 <header>
                     <h4 className="font-serif text-2xl md:text-4xl mb-6 italic text-rhum-gold uppercase tracking-[0.3em] drop-shadow-md">
-                        Boutique & Cadeaux
+                        ACHAT DE BOUTEILLES
                     </h4>
                     <div className="w-16 md:w-24 h-px bg-rhum-gold/40 mx-auto mb-8" />
                 </header>
 
                 <p className="max-w-2xl mx-auto text-sm md:text-lg text-white font-sans opacity-100 mb-10 leading-relaxed tracking-wide">
-                    Découvrez nos bouteilles artisanales aux saveurs uniques et nos cartes cadeaux pour offrir une escale sensorielle inoubliable au cœur de Compiègne.
+                    Découvrez nos bouteilles de fabrication artisanale française aux saveurs uniques.
                 </p>
 
                 {/* CTA en majuscules avec tracking renforcé */}
                 <button className="px-10 md:px-14 py-4 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-white hover:text-rhum-green transition-all shadow-2xl active:scale-95 rounded-sm">
-                    CONSULTER LA BOUTIQUE
+                    Découvrir la collection
                 </button>
             </div>
 

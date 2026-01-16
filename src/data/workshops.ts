@@ -20,16 +20,16 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
     },
     epices: {
-        title: "Niveau 2 : L'Epicothèque",
+        title: "Niveau 2 : L'Atelier Épices",
         price: "170€",
         duration: "3h",
-        included: "Boîte de 10 flacons (gustatif, informatif et olfactif)",
+        included: "Epicothèque : Boîte de 10 flacons (gustatif, informatif et olfactif)",
         desc: "Le caractère et la structure de votre nectar.",
         fullDesc: "Plongez dans l'univers des épices rares pour donner une structure unique et boisée à votre rhum.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
     },
     plantes: {
-        title: "Niveau 3 : L'Atelier Plantes - Pharmatech",
+        title: "Niveau 3 : L'Atelier Plantes",
         price: "210€",
         duration: "4h",
         included: "Pharmatech (10 flacons gustatif, informatif et olfactif)",
@@ -41,7 +41,8 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         title: "Niveau 4 : L'Atelier Mixologie",
         price: "420€",
         duration: "8h",
-        included: "Conception de 6 recettes de 25cl — Repas inclus",
+        included: "Conception de 6 recettes de 25cl",
+        availability: "Mardi au Jeudi de 10h à 20h (Repas de 2h inclus)",
         desc: "L'art ultime du service et du cocktail.",
         fullDesc: "Une immersion complète de 8 heures pour maîtriser les techniques de bar professionnelles et créer vos propres cocktails signatures.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
