@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 import { BOTTLES, Bottle } from '../data/bottles';
 import ProductCard from '../components/shop/ProductCard';
 import ShopFilters from '../components/shop/ShopFilters';
@@ -9,7 +8,6 @@ import ShopReassurance from '../components/shop/ShopReassurance';
 const CATEGORIES = ["Tous", "Rhum Arrangé", "Signature", "Plantes"];
 const FLAVORS = ["Tous", "Fruité", "Épicé", "Boisé"];
 
-// Interface pour recevoir la fonction d'ajout du parent
 interface ShopPageProps {
     onAddToCart: (bottle: Bottle, qty: number) => void;
 }
@@ -49,9 +47,8 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
     return (
         <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] pt-24 pb-20 px-6">
             <div className="max-w-7xl mx-auto">
-                <Link to="/" className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[10px] uppercase tracking-widest mb-12 transition-colors group">
-                    <span className="group-hover:-translate-x-1 transition-transform">←</span> Retour à l'accueil
-                </Link>
+                <div className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[10px] uppercase tracking-widest mb-12 transition-colors group">
+                </div>
 
                 <header className="text-center mb-16 relative">
                     <div className="inline-block relative">
