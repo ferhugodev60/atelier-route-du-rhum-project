@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar, Footer } from './components/layout';
 import ScrollReveal from './components/animations/ScrollReveal.tsx';
 import CartDrawer from './components/shop/CartDrawer';
-import { Bottle } from './data/bottles';
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 
@@ -15,12 +14,20 @@ const Sections = {
     Contact: lazy(() => import('./components/sections/Contact')),
 };
 
-function HomePage() {
+// MODIFICATION : HomePage reçoit maintenant la fonction onAddToCart
+function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => void }) {
     return (
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
-            <section id="workshops"><ScrollReveal><Sections.Workshops /></ScrollReveal></section>
+
+            {/* On transmet la fonction aux Workshops */}
+            <section id="workshops">
+                <ScrollReveal>
+                    <Sections.Workshops onAddToCart={onAddToCart} />
+                </ScrollReveal>
+            </section>
+
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
             <section id="contact"><ScrollReveal><Sections.Contact /></ScrollReveal></section>
         </main>
@@ -28,7 +35,6 @@ function HomePage() {
 }
 
 export default function App() {
-    // --- INITIALISATION DU PANIER DEPUIS LE LOCALSTORAGE ---
     const [cartItems, setCartItems] = useState<any[]>(() => {
         const savedCart = localStorage.getItem('atelier_cart');
         return savedCart ? JSON.parse(savedCart) : [];
@@ -36,23 +42,23 @@ export default function App() {
 
     const [isCartOpen, setIsCartOpen] = useState(false);
 
-    // --- SAUVEGARDE AUTOMATIQUE DU PANIER ---
     useEffect(() => {
         localStorage.setItem('atelier_cart', JSON.stringify(cartItems));
     }, [cartItems]);
 
-    const addToCart = (bottle: Bottle, qty: number) => {
+    // MODIFICATION : Typage plus flexible pour accepter Ateliers et Bouteilles
+    const addToCart = (item: any, qty: number) => {
         setCartItems(prev => {
-            const existing = prev.find(item => item.id === bottle.id);
+            const existing = prev.find(i => i.id === item.id);
             if (existing) {
-                return prev.map(item => item.id === bottle.id ? { ...item, quantity: item.quantity + qty } : item);
+                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + qty } : i);
             }
-            return [...prev, { ...bottle, quantity: qty }];
+            return [...prev, { ...item, quantity: qty }];
         });
         setIsCartOpen(true);
     };
 
-    const removeFromCart = (id: number) => {
+    const removeFromCart = (id: number | string) => {
         setCartItems(prev => prev.filter(item => item.id !== id));
     };
 
@@ -65,7 +71,8 @@ export default function App() {
 
                 <Suspense fallback={<div className="h-screen bg-rhum-cream" aria-hidden="true" />}>
                     <Routes>
-                        <Route path="/" element={<HomePage />} />
+                        {/* On passe addToCart à la HomePage */}
+                        <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addToCart} />} />
                     </Routes>
                 </Suspense>
