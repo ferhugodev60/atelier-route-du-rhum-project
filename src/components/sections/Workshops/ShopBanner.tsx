@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import boutiqueImg from '../../../assets/images/boutique.webp';
+import {Link} from "react-router-dom";
 
 export default function ShopBanner() {
     return (
@@ -34,9 +35,12 @@ export default function ShopBanner() {
                 </p>
 
                 {/* CTA en majuscules avec tracking renforcé */}
-                <button className="px-10 md:px-14 py-4 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.2em] text-[10px] md:text-xs hover:bg-white hover:text-rhum-green transition-all shadow-2xl active:scale-95 rounded-sm">
-                    Découvrir la collection
-                </button>
+                <Link
+                    to="/boutique"
+                    className="inline-block bg-rhum-gold/80 hover:bg-rhum-gold text-rhum-green px-10 py-5 font-black uppercase tracking-[0.2em] text-[10px] md:text-xs transition-all border border-rhum-gold shadow-xl rounded-sm"
+                >
+                    DÉCOUVRIR LA COLLECTION
+                </Link>
             </div>
 
             {/* Dégradé de finition pour l'immersion */}

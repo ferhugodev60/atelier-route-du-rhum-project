@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { heroVariants, bounceAnimation } from '../../utils/animations';
 import logoImg from '../../assets/logo/logo.png';
+import { Link } from "react-router-dom";
 
 interface HeroProps {
     title?: string;
@@ -65,12 +66,12 @@ export default function Hero({
                         >
                             {ctaPrimaryLabel}
                         </a>
-                        <a
-                            href="#menu"
+                        <Link
+                            to="/boutique"
                             className="w-full md:w-auto px-8 md:px-14 py-3.5 md:py-4 bg-transparent border border-white/40 text-white font-bold rounded-sm transition-all uppercase tracking-widest text-[9px] md:text-xs text-center backdrop-blur-sm hover:bg-rhum-gold/10 hover:border-rhum-gold"
                         >
                             {ctaSecondaryLabel}
-                        </a>
+                        </Link>
                     </div>
                 </motion.div>
             </div>
