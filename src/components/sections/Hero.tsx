@@ -30,7 +30,7 @@ export default function Hero({
                     variants={heroVariants}
                     initial="hidden"
                     animate="visible"
-                    className="max-w-4xl mx-auto w-full text-center flex flex-col items-center justify-center max-h-[65vh] md:max-h-full"
+                    className="max-w-4xl mx-auto w-full text-center flex flex-col items-center justify-center max-h-[75vh] md:max-h-full"
                 >
                     {/* Logo adaptatif */}
                     <div className="mb-4 md:mb-8 shrink min-h-0">
@@ -50,11 +50,12 @@ export default function Hero({
                         <div className="h-px w-6 md:w-16 bg-rhum-gold/70" />
                     </div>
 
-                    <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-serif text-white mb-4 md:mb-8 leading-tight drop-shadow-lg shrink-0">
+                    <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-serif text-white mb-3 md:mb-8 leading-tight drop-shadow-lg shrink-0">
                         {title}
                     </h1>
 
-                    <p className="text-[13px] sm:text-base md:text-xl text-white/90 font-sans max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed italic px-2 hidden sm:block">
+                    {/* --- SOUS-TITRE : Rendu visible sur mobile [cite: 2025-12-08] --- */}
+                    <p className="block text-[11px] sm:text-base md:text-xl text-white/90 font-sans max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed italic px-2">
                         {subtitle}
                     </p>
 
