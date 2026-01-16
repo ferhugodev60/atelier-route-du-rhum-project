@@ -12,7 +12,7 @@ export default function ShopBanner() {
             {/* --- IMAGE DE FOND AVEC FILTRE DE LUMINOSITÉ --- */}
             <img
                 src={boutiqueImg}
-                className="absolute inset-0 w-full h-full object-cover z-0 brightness-[0.6] transition-transform duration-[3000ms] hover:scale-110"
+                className="absolute inset-0 w-full h-full object-cover z-0 brightness-[0.8] transition-transform duration-[3000ms] hover:scale-110"
                 alt="Boutique de l'Atelier"
                 loading="lazy"
             />
