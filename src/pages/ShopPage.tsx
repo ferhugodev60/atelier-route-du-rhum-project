@@ -1,6 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
 
 // Imports des données et composants décomposés
 import { BOTTLES, Bottle } from '../data/bottles';
@@ -55,9 +54,8 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
             <div className="max-w-7xl mx-auto">
 
                 {/* Navigation discrète */}
-                <Link to="/" className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[9px] uppercase tracking-widest mb-8 transition-colors group">
-                    <span className="group-hover:-translate-x-1 transition-transform">←</span> Accueil
-                </Link>
+                <div className="inline-flex items-center gap-2 text-rhum-gold/50 hover:text-rhum-gold text-[9px] uppercase tracking-widest mb-8 transition-colors group">
+                </div>
 
                 {/* Header compacté pour mobile */}
                 <header className="text-center mb-10 md:mb-16 relative">
