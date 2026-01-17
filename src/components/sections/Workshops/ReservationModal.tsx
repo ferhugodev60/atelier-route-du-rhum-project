@@ -90,7 +90,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                             {step === 1 ? (
                                 <motion.div key="s1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full flex flex-col justify-center py-4">
                                     <header className="mb-12 text-center">
-                                        <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-bold mb-4 opacity-70">Réservation</p>
+                                        <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-bold mb-4 opacity-70">Nombre de participants ?</p>
                                         <h5 className="text-2xl md:text-4xl font-serif text-white mb-2 leading-tight">{workshop.title}</h5>
                                     </header>
                                     <div className="flex items-center justify-center gap-12 mb-16">
