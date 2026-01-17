@@ -36,9 +36,6 @@ export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
                                 <div className="flex items-center gap-4 md:gap-7 min-w-0">
                                     {/* NUMÉRO CIRCULAIRE HARMONISÉ */}
                                     <div className="relative flex items-center justify-center shrink-0">
-                                        {/* Halo de survol */}
-                                        <div className="absolute inset-0 bg-rhum-gold/15 rounded-full scale-0 group-hover:scale-150 blur-md transition-transform duration-500" />
-
                                         {/* Le cercle du numéro qui masque la ligne verticale */}
                                         <div className={`
                                             w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center z-10 
