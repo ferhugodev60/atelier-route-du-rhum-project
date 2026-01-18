@@ -16,10 +16,14 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     const [reservationData, setReservationData] = useState<any | null>(null);
 
     const handleConfirmReservation = (data: any) => {
-        // On construit l'objet pour App.tsx avec les types corrects
+        /** * CORRECTION : On s'assure que le nom de l'atelier est transmis via 'name'
+         * On utilise data.title (venant de Conception) ou data.name (venant de Découverte).
+         */
+        const finalName = data.title || data.name || "Atelier Alchimie";
+
         onAddToCart({
-            id: `${data.title}-${Date.now()}`,
-            name: data.title,
+            id: `${finalName.replace(/\s+/g, '_')}-${Date.now()}`,
+            name: finalName,
             price: data.price,
             image: data.image,
             type: "Atelier",
@@ -38,15 +42,13 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     ];
 
     return (
-        /* CHANGEMENT : Fond sombre pour un contraste maximal */
         <section id="workshops" className="py-16 md:py-32 bg-[#0a1a14] px-4 md:px-6 overflow-hidden">
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-xs md:text-sm mb-3 md:mb-4 font-bold">
                         Nos Formules & Boutique
                     </h2>
-                    {/* CHANGEMENT : Texte blanc pour la lisibilité sur fond sombre */}
-                    <h3 className="text-4xl md:text-6xl font-serif text-white">La Carte de l'Atelier</h3>
+                    <h3 className="text-4xl md:text-6xl font-serif text-white uppercase tracking-wider">La Carte de l'Atelier</h3>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-16 md:mb-24 items-stretch">
@@ -54,16 +56,15 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                     <ConceptionCard onOpenDetail={setActiveDetail} />
                 </div>
 
-                {/* SECTION HORAIRES : Design Haute Visibilité avec centrage mobile */}
                 <div className="mb-20 md:mb-32">
                     <div className="flex flex-col items-center text-center mb-10">
                         <span className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-[10px] font-black mb-2">
                             Horaires des ateliers
                         </span>
                         <h4 className="text-2xl md:text-4xl font-serif text-white">Mardi au Samedi</h4>
+                        <div className="w-12 h-px bg-rhum-gold/40 mt-4" />
                     </div>
 
-                    {/* Utilisation de flex-wrap et justify-center pour centrer le 5ème élément sur mobile */}
                     <div className="flex flex-wrap justify-center md:grid md:grid-cols-5 gap-3 md:gap-4">
                         {scheduleSlots.map((slot, index) => (
                             <motion.div
@@ -72,7 +73,6 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.1 }}
                                 viewport={{ once: true }}
-                                /* W-[calc(50%-6px)] assure le 2 par ligne sur mobile, md:w-auto laisse la grille gérer le bureau */
                                 className="w-[calc(50%-6px)] md:w-auto group flex flex-col items-center justify-center py-6 px-2 border border-rhum-gold/30 rounded-sm bg-white/[0.03] hover:bg-rhum-gold transition-all duration-500 cursor-default shadow-2xl"
                             >
                                 <span className="text-rhum-gold/60 text-[8px] uppercase tracking-widest mb-2 group-hover:text-[#0a1a14] transition-colors font-bold">

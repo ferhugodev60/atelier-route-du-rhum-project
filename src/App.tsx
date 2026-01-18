@@ -14,20 +14,16 @@ const Sections = {
     Contact: lazy(() => import('./components/sections/Contact')),
 };
 
-// MODIFICATION : HomePage reçoit maintenant la fonction onAddToCart
 function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => void }) {
     return (
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
-
-            {/* On transmet la fonction aux Workshops */}
             <section id="workshops">
                 <ScrollReveal>
                     <Sections.Workshops onAddToCart={onAddToCart} />
                 </ScrollReveal>
             </section>
-
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
             <section id="contact"><ScrollReveal><Sections.Contact /></ScrollReveal></section>
         </main>
@@ -46,21 +42,29 @@ export default function App() {
         localStorage.setItem('atelier_cart', JSON.stringify(cartItems));
     }, [cartItems]);
 
-    // MODIFICATION : Typage plus flexible pour accepter Ateliers et Bouteilles
+    /**
+     * Nettoie les prix entrants pour éviter le NaN
+     * Extrait uniquement les chiffres d'une chaîne (ex: "60€" -> 60)
+     */
+    const cleanPrice = (p: any): number => {
+        if (typeof p === 'number') return p;
+        const numeric = String(p).replace(/[^0-9]/g, '');
+        return parseInt(numeric) || 0;
+    };
+
     const addToCart = (item: any, qty?: number) => {
-        // On prend la quantité passée en argument, sinon celle dans l'objet, sinon 1 par défaut
-        const quantityToAdd = qty ?? item.quantity ?? 1;
+        const quantityToAdd = Number(qty ?? item.quantity ?? 1);
+        const price = cleanPrice(item.price || item.totalPrice);
 
         setCartItems(prev => {
             const existing = prev.find(i => i.id === item.id);
             if (existing) {
                 return prev.map(i => i.id === item.id
-                    ? { ...i, quantity: i.quantity + quantityToAdd }
+                    ? { ...i, quantity: i.quantity + quantityToAdd, price }
                     : i
                 );
             }
-            // On s'assure que l'item stocké possède bien une propriété quantity numérique
-            return [...prev, { ...item, quantity: quantityToAdd }];
+            return [...prev, { ...item, price, quantity: quantityToAdd }];
         });
         setIsCartOpen(true);
     };
@@ -78,7 +82,6 @@ export default function App() {
 
                 <Suspense fallback={<div className="h-screen bg-rhum-cream" aria-hidden="true" />}>
                     <Routes>
-                        {/* On passe addToCart à la HomePage */}
                         <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addToCart} />} />
                     </Routes>

@@ -1,6 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Interface mise à jour pour inclure les nouvelles propriétés des bouteilles
 interface CartItem {
     id: string | number;
     name: string;
@@ -22,7 +21,6 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDrawerProps) {
-    // Calcul du total en vérifiant si le prix est au premier niveau ou dans selectedSize
     const total = items.reduce((sum, item) => {
         const unitPrice = item.price || item.selectedSize?.price || 0;
         return sum + (unitPrice * item.quantity);
@@ -41,14 +39,13 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                             <button onClick={onClose} className="text-rhum-gold hover:text-white transition-colors uppercase text-[10px] tracking-widest font-black">Fermer ×</button>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-8 space-y-8">
+                        <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center">
                                     <p className="text-rhum-cream/30 italic font-serif text-lg">"Votre sélection est vide..."</p>
                                 </div>
                             ) : (
                                 items.map((item) => {
-                                    // Détermination du prix unitaire pour l'affichage de la ligne
                                     const itemUnitPrice = item.price || item.selectedSize?.price || 0;
 
                                     return (
@@ -65,7 +62,9 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                                     {item.type}
                                                                 </span>
                                                             )}
-                                                            <h4 className="text-white font-serif text-lg leading-tight">{item.name}</h4>
+                                                            <h4 className="text-white font-serif text-lg leading-tight">
+                                                                {item.name || "Atelier Alchimie"}
+                                                            </h4>
                                                         </div>
                                                         <button onClick={() => onRemove(item.id)} className="text-white/20 hover:text-red-400 transition-colors p-1" aria-label="Supprimer">
                                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="1.5">
@@ -73,9 +72,13 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                             </svg>
                                                         </button>
                                                     </div>
-                                                    {/* On affiche la capacité si elle existe (ex: 1 litre) à côté de la quantité */}
+
+                                                    {/* AFFICHAGE DYNAMIQUE : Personne(s) pour les ateliers, Qté pour les bouteilles */}
                                                     <p className="text-rhum-gold text-[10px] uppercase tracking-widest mt-1">
-                                                        {item.selectedSize?.capacity && `${item.selectedSize.capacity} | `}Qté : {item.quantity}
+                                                        {item.type === 'Atelier'
+                                                            ? `${item.quantity} Personne${item.quantity > 1 ? 's' : ''}`
+                                                            : `${item.selectedSize?.capacity ? item.selectedSize.capacity + ' | ' : ''}Qté : ${item.quantity}`
+                                                        }
                                                     </p>
                                                 </div>
                                                 <p className="text-white/60 font-sans text-sm">{itemUnitPrice * item.quantity}€</p>

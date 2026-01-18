@@ -9,7 +9,7 @@ interface Participant {
 }
 
 interface ReservationModalProps {
-    workshop: { title: string; price: string; image: string };
+    workshop: { title: string; price: any; image: string };
     onClose: () => void;
     onConfirm: (data: any) => void;
 }
@@ -21,11 +21,13 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     const [participants, setParticipants] = useState<Participant[]>([{ firstName: '', lastName: '', phone: '' }]);
     const [showLevelAlert, setShowLevelAlert] = useState(false);
 
-    // --- DÉTECTION ROBUSTE DE LA GAMME CONCEPTION ---
+    // --- CORRECTION DE L'ERREUR REPLACE ---
+    // On convertit le prix en String() avant d'appeler .replace() pour éviter le crash si c'est déjà un nombre
     const workshopTitle = workshop?.title?.toLowerCase() || "";
-    const workshopPrice = parseInt(workshop?.price) || 0;
+    const rawPrice = String(workshop?.price || "0");
+    const workshopPrice = parseInt(rawPrice.replace(/[^0-9]/g, '')) || 0;
 
-    // Un atelier est "Conception" si son titre contient niveau/conception OU si son prix > 60€
+    // Détection de la gamme
     const isConceptionWorkshop =
         workshopTitle.includes('niveau') ||
         workshopTitle.includes('conception') ||
@@ -52,11 +54,16 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     };
 
     const handlePreConfirm = () => {
-        // Si c'est un atelier conception, on force l'affichage de l'alerte
         if (isConceptionWorkshop) {
             setShowLevelAlert(true);
         } else {
-            onConfirm({ ...workshop, quantity: numPeople, participants });
+            // On envoie le prix nettoyé (workshopPrice) pour garantir la fin du NaN dans le panier
+            onConfirm({
+                ...workshop,
+                price: workshopPrice,
+                quantity: Number(numPeople),
+                participants
+            });
         }
     };
 
@@ -77,14 +84,11 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 className="relative bg-[#0a1a14] w-screen h-screen md:w-full md:h-auto md:max-w-xl md:max-h-[85vh] overflow-hidden shadow-2xl flex flex-col z-10 rounded-none md:rounded-sm border border-white/5"
             >
                 <div className="w-full flex flex-col h-full overflow-hidden relative">
-
-                    {/* 1. ONGLES DE NAVIGATION */}
                     <div className="flex border-b border-white/5 bg-black/20 flex-shrink-0">
                         <button onClick={() => setStep(1)} className={`flex-1 py-5 text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-bold transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>01. Participants</button>
                         <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 text-[9px] md:text-[10px] uppercase tracking-[0.3em] font-bold transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>02. Coordonnées</button>
                     </div>
 
-                    {/* 2. CONTENU DES ÉTAPES */}
                     <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
                         <AnimatePresence mode="wait">
                             {step === 1 ? (
@@ -111,11 +115,11 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                     </header>
                                     <div className="space-y-10 mb-12">
                                         {participants.map((p, i) => (
-                                            <div key={i} className="space-y-5 border-l-2 border-rhum-gold/20 pl-6">
+                                            <div key={i} className="space-y-5 border-l-2 border-rhum-gold/20 pl-6 text-left">
                                                 <p className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold font-black italic">Alchimiste n°{i + 1}</p>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    <input placeholder="Prénom" value={p.firstName} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-sm py-3 focus:border-rhum-gold outline-none text-white" />
-                                                    <input placeholder="Nom" value={p.lastName} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-sm py-3 focus:border-rhum-gold outline-none text-white" />
+                                                    <input placeholder="Prénom" value={p.firstName} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-sm py-3 focus:border-rhum-gold outline-none text-white w-full" />
+                                                    <input placeholder="Nom" value={p.lastName} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-sm py-3 focus:border-rhum-gold outline-none text-white w-full" />
                                                 </div>
                                                 <input placeholder="Téléphone" value={p.phone} onChange={e => updateParticipant(i, 'phone', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-sm py-3 focus:border-rhum-gold outline-none text-white" />
                                             </div>
@@ -132,7 +136,6 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                         </AnimatePresence>
                     </div>
 
-                    {/* 3. ALERTE DE NIVEAU (Placée à la fin pour être au-dessus de tout) */}
                     <AnimatePresence>
                         {showLevelAlert && (
                             <motion.div
@@ -147,7 +150,12 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                         "Êtes-vous sûr que tous les participants ont bien débloqué le niveau en question ?"
                                     </p>
                                     <div className="flex flex-col gap-4">
-                                        <button onClick={() => onConfirm({ ...workshop, quantity: numPeople, participants })} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all">Oui, je confirme</button>
+                                        <button
+                                            onClick={() => onConfirm({ ...workshop, price: workshopPrice, quantity: Number(numPeople), participants })}
+                                            className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all"
+                                        >
+                                            Oui, je confirme
+                                        </button>
                                         <button onClick={() => setShowLevelAlert(false)} className="text-white/40 uppercase tracking-widest text-[9px] hover:text-white transition-colors">Non, je souhaite vérifier</button>
                                     </div>
                                 </div>
