@@ -47,13 +47,20 @@ export default function App() {
     }, [cartItems]);
 
     // MODIFICATION : Typage plus flexible pour accepter Ateliers et Bouteilles
-    const addToCart = (item: any, qty: number) => {
+    const addToCart = (item: any, qty?: number) => {
+        // On prend la quantité passée en argument, sinon celle dans l'objet, sinon 1 par défaut
+        const quantityToAdd = qty ?? item.quantity ?? 1;
+
         setCartItems(prev => {
             const existing = prev.find(i => i.id === item.id);
             if (existing) {
-                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + qty } : i);
+                return prev.map(i => i.id === item.id
+                    ? { ...i, quantity: i.quantity + quantityToAdd }
+                    : i
+                );
             }
-            return [...prev, { ...item, quantity: qty }];
+            // On s'assure que l'item stocké possède bien une propriété quantity numérique
+            return [...prev, { ...item, quantity: quantityToAdd }];
         });
         setIsCartOpen(true);
     };

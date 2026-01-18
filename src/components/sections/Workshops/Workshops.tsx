@@ -16,13 +16,13 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     const [reservationData, setReservationData] = useState<any | null>(null);
 
     const handleConfirmReservation = (data: any) => {
+        // On construit l'objet pour App.tsx avec les types corrects
         onAddToCart({
             id: `${data.title}-${Date.now()}`,
             name: data.title,
-            price: parseInt(data.price),
+            price: data.price,
             image: data.image,
             type: "Atelier",
-            quantity: data.quantity,
             participants: data.participants
         }, data.quantity);
 
