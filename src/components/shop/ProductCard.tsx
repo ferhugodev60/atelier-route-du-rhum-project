@@ -60,12 +60,6 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
                 </div>
             </div>
 
-            <div className="mb-2 px-1">
-                <span className={`text-[7px] uppercase tracking-[0.2em] font-bold ${bottle.category === 'Fruité' ? 'text-green-400' : 'text-rhum-gold/40'}`}>
-                    {bottle.category === 'Fruité' ? '● Rempotable à l\'infini' : `● ${bottle.category}`}
-                </span>
-            </div>
-
             <div className="flex justify-between items-baseline mb-2 md:mb-6 px-1">
                 <h3 className="text-base md:text-2xl font-serif text-white truncate mr-2">{bottle.name}</h3>
                 <span className="text-sm md:text-xl font-serif text-rhum-gold shrink-0">{totalPrice}€</span>
