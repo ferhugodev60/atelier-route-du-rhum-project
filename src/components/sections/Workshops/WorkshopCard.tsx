@@ -20,7 +20,7 @@ export default function WorkshopCard({ onReserve }: WorkshopCardProps) {
     };
 
     return (
-        <article className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/20 shadow-2xl h-full">
+        <article className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/40 shadow-2xl h-full">
             {/* --- VISUEL --- */}
             <div className="relative h-48 md:h-64 overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-t from-[#081c15] via-transparent to-transparent z-10" />
