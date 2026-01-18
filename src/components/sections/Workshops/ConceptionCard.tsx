@@ -36,7 +36,6 @@ export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
                         {Object.entries(WORKSHOP_DETAILS).map(([key, item], index) => (
                             <li
                                 key={key}
-                                // Application dynamique de la couleur de survol
                                 className={`
                                     flex justify-between items-center group gap-4 px-3 py-3 md:py-4 -mx-3 rounded-sm 
                                     transition-all duration-300 
