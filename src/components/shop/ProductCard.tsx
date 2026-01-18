@@ -22,10 +22,7 @@ export default function ProductCard({
     const currentSize: BottleSize = bottle.availableSizes[selectedSizeIndex];
     const showDescription = isHovered || isSelected;
 
-    // CALCUL DU PRIX TOTAL DYNAMIQUE
     const totalPrice = currentSize.price * localQuantity;
-
-    // CORRECTION : La longueur du tableau dépend maintenant du stock réel
     const qtyOptions = Array.from({ length: currentSize.stock }, (_, i) => i + 1);
 
     const getStockLabel = (stock: number) => {
@@ -42,16 +39,47 @@ export default function ProductCard({
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <button onClick={onToggleSelect} className="absolute inset-0 w-full h-full block z-0 cursor-default md:cursor-pointer">
-                    <img src={bottle.image} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" alt={bottle.name} />
+                {/* Bouton de fond (Image) */}
+                <button
+                    type="button"
+                    onClick={onToggleSelect}
+                    className="absolute inset-0 w-full h-full block z-0 cursor-default md:cursor-pointer"
+                >
+                    <img src={bottle.image} alt={bottle.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a14]/90 via-transparent to-transparent z-10" />
                 </button>
 
+                {/* Overlay de description */}
                 <AnimatePresence>
                     {showDescription && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-4 flex flex-col justify-center items-center text-center">
-                            <p className="text-rhum-gold text-[7px] md:text-[8px] uppercase tracking-[0.4em] mb-2 font-bold">Notes de dégustation</p>
-                            <p className="text-rhum-cream/90 font-serif italic text-[13px] md:text-lg leading-relaxed mb-4">"{bottle.desc}"</p>
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            // CORRECTION : L'overlay entier devient cliquable pour fermer sur mobile
+                            onClick={onToggleSelect}
+                            className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center cursor-pointer"
+                        >
+                            <p className="text-rhum-gold text-[7px] md:text-[8px] uppercase tracking-[0.4em] mb-2 font-bold pointer-events-none">Notes de dégustation</p>
+                            <p className="text-rhum-cream/90 font-serif italic text-[13px] md:text-lg leading-relaxed mb-8 pointer-events-none">
+                                "{bottle.desc}"
+                            </p>
+
+                            {/* BOUTON FERMER AMÉLIORÉ */}
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation(); // Empêche le double-clic avec le parent
+                                    onToggleSelect();
+                                }}
+                                className="md:hidden relative z-50 flex flex-col items-center gap-2 p-4 active:scale-95 transition-transform"
+                                aria-label="Fermer la description"
+                            >
+                                <div className="w-12 h-px bg-rhum-gold/30" />
+                                <span className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black">
+                                    Fermer
+                                </span>
+                            </button>
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -63,7 +91,7 @@ export default function ProductCard({
                 </div>
             </div>
 
-            {/* NOM ET PRIX TOTAL MIS À JOUR */}
+            {/* NOM ET PRIX TOTAL */}
             <div className="flex justify-between items-baseline mb-2 md:mb-6 px-1">
                 <h3 className="text-base md:text-2xl font-serif text-white truncate mr-2">{bottle.name}</h3>
                 <span className="text-sm md:text-xl font-serif text-rhum-gold shrink-0">
@@ -79,8 +107,6 @@ export default function ProductCard({
                         onChange={(e) => {
                             const newIndex = parseInt(e.target.value);
                             setSelectedSizeIndex(newIndex);
-
-                            // SECURITÉ : Si la quantité sélectionnée dépasse le stock du nouveau format choisi
                             const newStock = bottle.availableSizes[newIndex].stock;
                             if (localQuantity > newStock) {
                                 setLocalQuantity(newStock > 0 ? newStock : 1);
@@ -103,7 +129,6 @@ export default function ProductCard({
                         onChange={(e) => setLocalQuantity(parseInt(e.target.value))}
                         className="w-full bg-black/20 border border-rhum-gold/10 text-rhum-gold text-[10px] md:text-[11px] uppercase tracking-widest p-3 outline-none appearance-none cursor-pointer hover:border-rhum-gold/30 transition-colors rounded-sm"
                     >
-                        {/* Affiche uniquement les options disponibles en stock */}
                         {qtyOptions.map(num => (
                             <option key={num} value={num} className="bg-[#0a1a14] text-white">
                                 {num}
