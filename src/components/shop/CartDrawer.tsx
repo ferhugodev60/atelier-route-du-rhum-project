@@ -78,7 +78,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                     <span className="text-3xl font-serif text-rhum-gold">{total}€</span>
                                 </div>
                                 <button className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.3em] text-[11px] hover:bg-white transition-all shadow-xl rounded-sm">
-                                    Finaliser ma réservation
+                                    Finaliser mon paiement
                                 </button>
                                 <p className="text-[9px] text-white/20 text-center uppercase tracking-widest mt-6">
                                     Retrait & Ateliers à Compiègne

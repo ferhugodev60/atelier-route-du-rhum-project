@@ -18,7 +18,7 @@ export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
                 </header>
 
                 <div className="flex flex-wrap gap-x-4 gap-y-2 mb-10 md:mb-14 text-[9px] md:text-[10px] uppercase font-bold text-rhum-gold/80 tracking-widest">
-                    <span>📜 Valable 6 mois après achat</span>
+                    <span>📜 Valable 6 mois à partir de la date d'achat</span>
                 </div>
 
                 {/* CONTENEUR DE LISTE AVEC FIL D'ARIANE */}
