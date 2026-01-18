@@ -1,14 +1,19 @@
 import shopImg from '../assets/images/shop.jpg';
 
+export const CAT_FRUITE = "Fruité";
+export const CAT_VRAC = "Vrac";
+export const CAT_DAME_JEANNE = "Dame-Jeanne";
+
 export interface BottleSize {
-    capacity: string; // '25 cl', '33 cl', etc.
-    price: number;    // Prix spécifique à la taille
-    stock: number;    // Quantité réelle en stock pour simulation
+    capacity: string;
+    price: number;
+    stock: number;
 }
 
 export interface Bottle {
     id: number;
     name: string;
+    category: typeof CAT_FRUITE | typeof CAT_VRAC | typeof CAT_DAME_JEANNE;
     type: string;
     flavor: string;
     image: string;
@@ -20,23 +25,25 @@ export const BOTTLES: Bottle[] = [
     {
         id: 1,
         name: "Ananas & Vanille",
+        category: CAT_FRUITE,
         type: "Rhum Arrangé",
         flavor: "Fruité",
         image: shopImg,
-        desc: "Une macération solaire où la sucrosité de l'ananas Victoria rencontre la douceur de la vanille Bourbon.",
+        desc: "Une macération solaire rempotable à l'infini. Gardez les fruits et complétez avec votre rhum blanc.",
         availableSizes: [
-            { capacity: '25 centilitres', price: 20, stock: 0 },
-            { capacity: '50 centilitres', price: 39, stock: 0 },
+            { capacity: '25 centilitres', price: 20, stock: 10 },
+            { capacity: '50 centilitres', price: 39, stock: 5 },
             { capacity: '1 litre', price: 75, stock: 10 }
         ]
     },
     {
         id: 2,
         name: "Mangue & Passion",
-        type: "Signature",
+        category: CAT_VRAC,
+        type: "Collection Vrac",
         flavor: "Épicé",
         image: shopImg,
-        desc: "Un équilibre exotique intense, relevé par une pointe de poivre long pour une structure élégante.",
+        desc: "Format Vrac (One Shot) : une infusion intense sans fruits, prête pour une dégustation immédiate.",
         availableSizes: [
             { capacity: '33 centilitres', price: 25, stock: 12 },
             { capacity: '70 centilitres', price: 65, stock: 8 }
@@ -44,15 +51,14 @@ export const BOTTLES: Bottle[] = [
     },
     {
         id: 3,
-        name: "Vanille Bourbon",
-        type: "Rhum Arrangé",
-        flavor: "Suave",
+        name: "Location Dame-Jeanne",
+        category: CAT_DAME_JEANNE,
+        type: "Prestige",
+        flavor: "Signature",
         image: shopImg,
-        desc: "La pureté d'un rhum agricole sublimé par une infusion lente de gousses de vanille de Madagascar.",
+        desc: "Location de Dame-Jeanne pour vos événements. Service de mise à disposition et reprise inclus.",
         availableSizes: [
-            { capacity: '50 centilitres', price: 39, stock: 15 },
-            { capacity: '70 centilitres', price: 65, stock: 10 },
-            { capacity: '1 litre', price: 75, stock: 3 }
+            { capacity: '1 litre', price: 75, stock: 10 },
         ]
     }
 ];
