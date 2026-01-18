@@ -5,6 +5,14 @@ interface ConceptionCardProps {
 }
 
 export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
+    // Mapping des couleurs de survol par atelier
+    const hoverStyles: Record<string, string> = {
+        fruits: "hover:bg-[#4B5320]/30",    // Kaki
+        epices: "hover:bg-[#4c1d95]/30",    // Violet
+        plantes: "hover:bg-[#1e3a8a]/30",   // Bleu
+        mixologie: "hover:bg-[#450a0a]/40"  // Rouge foncé
+    };
+
     return (
         <article className="flex flex-col bg-[#081c15] rounded-sm border border-rhum-gold/40 shadow-2xl p-6 md:p-10 h-full justify-between">
             <div>
@@ -21,22 +29,22 @@ export default function ConceptionCard({ onOpenDetail }: ConceptionCardProps) {
                     <span>📜 Valable 6 mois à partir de la date d'achat</span>
                 </div>
 
-                {/* CONTENEUR DE LISTE AVEC FIL D'ARIANE */}
                 <div className="relative">
-                    {/* Ligne verticale décorative */}
                     <div className="absolute left-[15px] md:left-[19px] top-2 bottom-2 w-px bg-gradient-to-b from-rhum-gold/0 via-rhum-gold/20 to-rhum-gold/0" />
 
                     <ul className="space-y-4 md:space-y-6 relative z-10">
                         {Object.entries(WORKSHOP_DETAILS).map(([key, item], index) => (
                             <li
                                 key={key}
-                                // On définit la couleur de hover ici
-                                className="flex justify-between items-center group gap-4 px-3 py-3 md:py-4 -mx-3 rounded-sm hover:bg-white/[0.03] transition-all duration-300"
+                                // Application dynamique de la couleur de survol
+                                className={`
+                                    flex justify-between items-center group gap-4 px-3 py-3 md:py-4 -mx-3 rounded-sm 
+                                    transition-all duration-300 
+                                    ${hoverStyles[key] || "hover:bg-white/[0.03]"}
+                                `}
                             >
                                 <div className="flex items-center gap-4 md:gap-7 min-w-0">
-                                    {/* NUMÉRO CIRCULAIRE HARMONISÉ */}
                                     <div className="relative flex items-center justify-center shrink-0">
-                                        {/* Le cercle du numéro qui masque la ligne verticale */}
                                         <div className={`
                                             w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center z-10 
                                             transition-colors duration-300 border border-transparent

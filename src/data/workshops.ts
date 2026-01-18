@@ -16,7 +16,7 @@ export const WORKSHOP_DETAILS: Record<string, WorkshopDetail> = {
         duration: "2h30",
         included: "une bouteille d'1 litre de Rhum arrangé",
         desc: "Maitrise des acides de fruits",
-        fullDesc: "Apprenez à travailler les fruits frais de saison pour créer une macération harmonieuse sous les conseils de Nabil Ziani.",
+        fullDesc: "Apprenez à travailler les fruits frais de saison pour créer une macération harmonieuse.",
         image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1000&auto=format&fit=crop"
     },
     epices: {
