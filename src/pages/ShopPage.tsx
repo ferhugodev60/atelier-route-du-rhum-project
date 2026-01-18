@@ -25,7 +25,7 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
     // LOGIQUE DE FILTRAGE ET TRI
     const processedBottles = useMemo(() => {
         /** * FILTRAGE : Si l'ID de catégorie est "TOUS", on retourne le tableau BOTTLES complet.
-         * Sinon, on filtre strictement par la catégorie sélectionnée.
+         * Sinon, on filtre strictement par la catégorie sélectionnée (Fruité, Vrac, Dame-Jeanne).
          */
         let filtered = activeCat === "TOUS"
             ? BOTTLES
@@ -49,7 +49,8 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen bg-[#0a1a14] pt-20 md:pt-32 pb-20 px-4 md:px-6"
+            /* AJUSTEMENT : Augmentation du padding-top (pt-40 sur mobile et md:pt-60 sur desktop) */
+            className="min-h-screen bg-[#0a1a14] pt-40 md:pt-60 pb-20 px-4 md:px-6"
         >
             <div className="max-w-7xl mx-auto">
 
