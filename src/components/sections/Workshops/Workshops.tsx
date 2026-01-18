@@ -48,7 +48,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                     <h2 className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-xs md:text-sm mb-3 md:mb-4 font-bold">
                         Nos Formules & Boutique
                     </h2>
-                    <h3 className="text-4xl md:text-6xl font-serif text-white uppercase tracking-wider">La Carte de l'Atelier</h3>
+                    <h3 className="text-4xl md:text-6xl font-serif text-white">La Carte de l'Atelier</h3>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-16 md:mb-24 items-stretch">
