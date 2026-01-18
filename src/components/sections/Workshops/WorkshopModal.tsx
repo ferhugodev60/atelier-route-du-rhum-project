@@ -102,19 +102,19 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                     <footer className="p-8 md:p-12 pt-6 border-t border-white/5 bg-[#0a1a14] flex-shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.5)]">
                         {/* Prix et Mention à pré-payer */}
                         <div className="flex justify-between items-start mb-6 px-1">
-        <span className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold mt-2">
-            Prix de l'atelier
-        </span>
+                            <span className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold mt-2">
+                                Prix de l'atelier
+                            </span>
 
                             <div className="flex flex-col items-end">
                                 {/* Prix : Ajout d'un drop-shadow pour le relief */}
                                 <span className="text-3xl md:text-5xl font-serif text-rhum-gold drop-shadow-md leading-none">
-                {detail.price}
-            </span>
+                                    {detail.price}
+                                </span>
                                 {/* Mention : Opacité 100%, gras, et tracking plus large */}
                                 <span className="text-[9px] md:text-[11px] uppercase tracking-[0.3em] text-rhum-gold font-bold mt-2">
-                à pré-payer
-            </span>
+                                    à pré-payer
+                                </span>
                             </div>
                         </div>
 

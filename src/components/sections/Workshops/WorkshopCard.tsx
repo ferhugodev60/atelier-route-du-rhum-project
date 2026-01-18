@@ -57,7 +57,7 @@ export default function WorkshopCard({ onReserve }: WorkshopCardProps) {
 
                 {/* DESCRIPTION : Version vendeuse et courte */}
                 <p className="text-rhum-cream/70 italic text-base md:text-lg mb-10 leading-relaxed font-serif">
-                    "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de nos nectars."
+                    "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum."
                 </p>
 
                 {/* ACTIONS */}
