@@ -73,7 +73,6 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
                     onChange={(e) => onSortChange(e.target.value)}
                     className="bg-transparent text-white/60 text-[11px] uppercase tracking-[0.2em] border-b border-rhum-gold/20 py-2 pr-8 focus:outline-none cursor-pointer appearance-none"
                 >
-                    <option value="default" className="bg-[#0a1a14]">Ordre Alchimiste</option>
                     <option value="asc" className="bg-[#0a1a14]">Prix croissant</option>
                     <option value="desc" className="bg-[#0a1a14]">Prix décroissant</option>
                 </select>
