@@ -6,7 +6,6 @@ interface ProductCardProps {
     bottle: Bottle;
     isSelected: boolean;
     onToggleSelect: () => void;
-    // CORRECTION TS2554 : La signature accepte maintenant les deux arguments
     onAddToCart: (item: any, qty: number) => void;
 }
 
@@ -17,11 +16,7 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
 
     const currentSize: BottleSize = bottle.availableSizes[selectedSizeIndex];
     const showDescription = isHovered || isSelected;
-
-    // Calcul du prix total affiché sur la carte
     const totalPrice = currentSize.price * localQuantity;
-
-    // Le dropdown respecte le stock réel de la taille sélectionnée
     const qtyOptions = Array.from({ length: currentSize.stock }, (_, i) => i + 1);
 
     const getStockLabel = (stock: number) => {
@@ -32,9 +27,9 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
 
     return (
         <motion.div layout className="group flex flex-col">
-            {/* CONTENEUR IMAGE ET DESCRIPTION */}
+            {/* CONTENEUR IMAGE : On passe sur un aspect carré sur mobile pour gagner de la place */}
             <div
-                className="relative aspect-[4/5] md:aspect-[3/4] bg-[#0a1a14] rounded-sm overflow-hidden mb-3 md:mb-8 border border-white/5 shadow-2xl"
+                className="relative aspect-square sm:aspect-[4/5] md:aspect-[3/4] bg-[#0a1a14] rounded-sm overflow-hidden mb-2 md:mb-8 border border-white/5 shadow-2xl"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
@@ -50,38 +45,38 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={onToggleSelect}
-                            className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center cursor-pointer"
+                            className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-4 md:p-6 flex flex-col justify-center items-center text-center cursor-pointer"
                         >
-                            <p className="text-rhum-gold text-[7px] md:text-[8px] uppercase tracking-[0.4em] mb-2 font-bold pointer-events-none">Notes de dégustation</p>
-                            <p className="text-rhum-cream/90 font-serif italic text-[13px] md:text-lg leading-relaxed mb-8 pointer-events-none">"{bottle.desc}"</p>
+                            <p className="text-rhum-gold text-[6px] md:text-[8px] uppercase tracking-[0.4em] mb-1 md:mb-2 font-bold pointer-events-none">Notes de dégustation</p>
+                            <p className="text-rhum-cream/90 font-serif italic text-[11px] md:text-lg leading-snug md:leading-relaxed mb-4 md:mb-8 pointer-events-none">"{bottle.desc}"</p>
                             <button
                                 type="button"
                                 onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}
-                                className="md:hidden relative z-50 flex flex-col items-center gap-2 p-4 active:scale-95 transition-transform"
+                                className="md:hidden relative z-50 flex flex-col items-center gap-1.5 p-2 active:scale-95 transition-transform"
                             >
-                                <div className="w-12 h-px bg-rhum-gold/30" />
-                                <span className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black">Fermer</span>
+                                <div className="w-8 h-px bg-rhum-gold/30" />
+                                <span className="text-rhum-gold text-[8px] uppercase tracking-[0.4em] font-black">Fermer</span>
                             </button>
                         </motion.div>
                     )}
                 </AnimatePresence>
 
-                {/* BADGE DE STOCK */}
-                <div className={`absolute top-3 right-3 z-20 transition-opacity duration-300 ${showDescription ? 'opacity-0' : 'opacity-100'}`}>
-                    <span className={`text-[7px] md:text-[8px] uppercase tracking-[0.15em] px-2 py-0.5 border backdrop-blur-md font-bold ${currentSize.stock <= 5 ? 'border-red-500/60 text-red-400 bg-black/60' : 'border-rhum-gold/60 text-rhum-gold bg-black/60'}`}>
+                {/* BADGE DE STOCK : Réduit sur mobile */}
+                <div className={`absolute top-2 right-2 md:top-3 md:right-3 z-20 transition-opacity duration-300 ${showDescription ? 'opacity-0' : 'opacity-100'}`}>
+                    <span className={`text-[6px] md:text-[8px] uppercase tracking-[0.1em] px-1.5 py-0.5 border backdrop-blur-md font-bold ${currentSize.stock <= 5 ? 'border-red-500/60 text-red-400 bg-black/60' : 'border-rhum-gold/60 text-rhum-gold bg-black/60'}`}>
                         {getStockLabel(currentSize.stock)}
                     </span>
                 </div>
             </div>
 
-            {/* NOM ET PRIX TOTAL */}
-            <div className="flex justify-between items-baseline mb-2 md:mb-6 px-1">
-                <h3 className="text-base md:text-2xl font-serif text-white truncate mr-2">{bottle.name}</h3>
-                <span className="text-sm md:text-xl font-serif text-rhum-gold shrink-0">{totalPrice}€</span>
+            {/* NOM ET PRIX : Tailles de texte réduites */}
+            <div className="flex justify-between items-baseline mb-1.5 md:mb-6 px-1">
+                <h3 className="text-sm md:text-2xl font-serif text-white truncate mr-2">{bottle.name}</h3>
+                <span className="text-xs md:text-xl font-serif text-rhum-gold shrink-0">{totalPrice}€</span>
             </div>
 
-            {/* SÉLECTEURS DE TAILLE ET QUANTITÉ */}
-            <div className="flex flex-col md:flex-row items-center gap-2 mb-2 md:mb-4">
+            {/* SÉLECTEURS : Moins hauts sur mobile */}
+            <div className="flex flex-col md:flex-row items-center gap-1.5 md:gap-2 mb-2 md:mb-4">
                 <div className="w-full md:flex-[1.4] relative group/select">
                     <select
                         value={selectedSizeIndex}
@@ -91,7 +86,7 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
                             const newStock = bottle.availableSizes[newIndex].stock;
                             if (localQuantity > newStock) setLocalQuantity(newStock > 0 ? newStock : 1);
                         }}
-                        className="w-full bg-black/20 border border-rhum-gold/10 text-rhum-gold text-[10px] md:text-[11px] uppercase tracking-widest p-3 outline-none appearance-none cursor-pointer rounded-sm hover:border-rhum-gold/30 transition-colors"
+                        className="w-full bg-black/20 border border-rhum-gold/10 text-rhum-gold text-[9px] md:text-[11px] uppercase tracking-widest p-2 md:p-3 outline-none appearance-none cursor-pointer rounded-sm hover:border-rhum-gold/30 transition-colors"
                     >
                         {bottle.availableSizes.map((size, index) => (
                             <option key={size.capacity} value={index} className="bg-[#0a1a14] text-white">
@@ -99,24 +94,24 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
                             </option>
                         ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-rhum-gold/40 text-[8px]">▼</div>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rhum-gold/40 text-[7px]">▼</div>
                 </div>
 
                 <div className="w-full md:flex-1 relative group/select">
                     <select
                         value={localQuantity}
                         onChange={(e) => setLocalQuantity(parseInt(e.target.value))}
-                        className="w-full bg-black/20 border border-rhum-gold/10 text-rhum-gold text-[10px] md:text-[11px] uppercase tracking-widest p-3 outline-none appearance-none cursor-pointer rounded-sm hover:border-rhum-gold/30 transition-colors"
+                        className="w-full bg-black/20 border border-rhum-gold/10 text-rhum-gold text-[9px] md:text-[11px] uppercase tracking-widest p-2 md:p-3 outline-none appearance-none cursor-pointer rounded-sm hover:border-rhum-gold/30 transition-colors"
                     >
                         {qtyOptions.map(num => (
                             <option key={num} value={num} className="bg-[#0a1a14] text-white">{num}</option>
                         ))}
                     </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-rhum-gold/40 text-[8px]">▼</div>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-rhum-gold/40 text-[7px]">▼</div>
                 </div>
             </div>
 
-            {/* BOUTON D'AJOUT : Injection du prix unitaire pour éviter le NaN dans le panier */}
+            {/* BOUTON D'AJOUT : Moins de padding vertical */}
             <button
                 disabled={currentSize.stock === 0}
                 onClick={() => onAddToCart({
@@ -124,7 +119,7 @@ export default function ProductCard({ bottle, isSelected, onToggleSelect, onAddT
                     price: currentSize.price,
                     selectedSize: currentSize
                 }, localQuantity)}
-                className={`w-full py-3 md:py-5 border border-rhum-gold/30 text-[9px] md:text-[10px] uppercase tracking-[0.2em] font-black transition-all rounded-sm 
+                className={`w-full py-2.5 md:py-5 border border-rhum-gold/30 text-[8px] md:text-[10px] uppercase tracking-[0.2em] font-black transition-all rounded-sm 
                     ${currentSize.stock === 0 ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green shadow-xl'}`}
             >
                 {currentSize.stock === 0 ? 'RUPTURE DE STOCK' : `AJOUTER AU PANIER`}
