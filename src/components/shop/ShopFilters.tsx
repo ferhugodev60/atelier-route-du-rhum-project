@@ -19,17 +19,21 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
     const [hoveredInfo, setHoveredInfo] = useState<string | null>(null);
 
     return (
-        <div className="flex flex-col gap-8 mb-16 border-y border-rhum-gold/10 py-10 md:py-14 md:flex-row md:justify-between md:items-end overflow-visible">
-            <div className="flex flex-col gap-6">
-                <span className="text-[10px] uppercase tracking-[0.4em] text-rhum-gold/40 font-medium ml-1">Collections</span>
+        <div className="flex flex-col gap-6 mb-8 md:mb-16 border-y border-rhum-gold/10 py-6 md:py-14 md:flex-row md:justify-between md:items-end">
 
-                <div className="flex flex-wrap justify-center md:justify-start gap-x-10 gap-y-6">
+            {/* BLOC COLLECTIONS : Centré sur mobile, aligné à gauche sur desktop */}
+            <div className="flex flex-col gap-4 items-center md:items-start">
+                <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold md:ml-1 text-center">
+                    Collections
+                </span>
+
+                <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-4 md:gap-x-10">
                     {SHOP_CATEGORIES.map((cat) => (
-                        <div key={cat.id} className="relative flex items-center gap-3 group">
+                        <div key={cat.id} className="relative flex items-center gap-2 group">
                             <button
                                 onClick={() => onCatChange(cat.id)}
-                                className={`text-lg md:text-xl font-serif tracking-wide transition-all duration-500 relative pb-2 ${
-                                    activeCat === cat.id ? "text-rhum-gold opacity-100" : "text-white opacity-25 hover:opacity-100"
+                                className={`text-base md:text-xl font-serif tracking-wide transition-all duration-500 relative pb-1 ${
+                                    activeCat === cat.id ? "text-rhum-gold opacity-100" : "text-white opacity-30 hover:opacity-100"
                                 }`}
                             >
                                 {cat.label}
@@ -41,23 +45,23 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
                             </button>
 
                             <div
-                                className="relative flex items-center mb-1"
+                                className="relative flex items-center"
                                 onMouseEnter={() => setHoveredInfo(cat.id)}
                                 onMouseLeave={() => setHoveredInfo(null)}
+                                onClick={() => setHoveredInfo(hoveredInfo === cat.id ? null : cat.id)}
                             >
-                                <span className="cursor-help text-[10px] w-5 h-5 flex items-center justify-center rounded-full border border-rhum-gold/20 text-rhum-gold/30 hover:text-rhum-gold transition-all italic font-serif">i</span>
+                                <span className="cursor-help text-[9px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full border border-rhum-gold/20 text-rhum-gold/30 italic font-serif">i</span>
                                 <AnimatePresence>
                                     {hoveredInfo === cat.id && (
                                         <motion.div
-                                            initial={{ opacity: 0, y: 10 }}
+                                            initial={{ opacity: 0, y: 5 }}
                                             animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0, y: 10 }}
-                                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-5 w-64 p-5 bg-[#0a1a14] border border-rhum-gold/20 shadow-2xl z-[999] pointer-events-none backdrop-blur-xl"
+                                            exit={{ opacity: 0, y: 5 }}
+                                            className="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 w-56 p-4 bg-[#0a1a14] border border-rhum-gold/20 shadow-2xl z-[999] pointer-events-none backdrop-blur-xl"
                                         >
-                                            <p className="text-[11px] leading-relaxed text-rhum-cream/80 italic text-center font-sans font-light">
+                                            <p className="text-[10px] leading-relaxed text-rhum-cream/80 italic text-center font-sans">
                                                 {cat.desc}
                                             </p>
-                                            <div className="absolute top-full left-1/2 -translate-x-1/2 w-3 h-3 bg-[#0a1a14] border-r border-b border-rhum-gold/20 rotate-45 -translate-y-1.5" />
                                         </motion.div>
                                     )}
                                 </AnimatePresence>
@@ -67,11 +71,12 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
                 </div>
             </div>
 
-            <div className="flex flex-col items-center md:items-end gap-3 pt-6 md:pt-0 border-t border-white/5 md:border-t-0">
-                <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold font-sans">Trier par</span>
+            {/* BLOC TRI : Reste réparti sur mobile pour la visibilité */}
+            <div className="flex items-center justify-between md:flex-col md:items-end gap-3 pt-4 border-t border-white/5 md:border-t-0 md:pt-0">
+                <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold">Trier par</span>
                 <select
                     onChange={(e) => onSortChange(e.target.value)}
-                    className="bg-transparent text-white/60 text-[11px] uppercase tracking-[0.2em] border-b border-rhum-gold/20 py-2 pr-8 focus:outline-none cursor-pointer appearance-none"
+                    className="bg-transparent text-white/60 text-[10px] uppercase tracking-[0.2em] border-b border-rhum-gold/20 py-1 pr-6 focus:outline-none cursor-pointer appearance-none"
                 >
                     <option value="asc" className="bg-[#0a1a14]">Prix croissant</option>
                     <option value="desc" className="bg-[#0a1a14]">Prix décroissant</option>
