@@ -43,7 +43,7 @@ export const BOTTLES: Bottle[] = [
         type: "Collection Vrac",
         flavor: "Épicé",
         image: shopImg,
-        desc: "Format Vrac (One Shot) : une infusion intense sans fruits, prête pour une dégustation immédiate.",
+        desc: "Format Vrac : une infusion intense sans fruits, prête pour une dégustation immédiate.",
         availableSizes: [
             { capacity: '33 centilitres', price: 25, stock: 12 },
             { capacity: '70 centilitres', price: 65, stock: 8 }

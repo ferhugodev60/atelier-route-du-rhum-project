@@ -12,10 +12,10 @@ interface BusinessSelectionModalProps {
 export default function BusinessSelectionModal({ isOpen, onClose, onSelectionComplete }: BusinessSelectionModalProps) {
     const [view, setView] = useState<'category' | 'conception-choice'>('category');
     const conceptionOptions = [
-        { id: 'fruits', label: '1. Fruits & Agrumes', image: IMG_DISCOVERY },
-        { id: 'epices', label: '2. Épices & Racines', image: IMG_DISCOVERY },
-        { id: 'plantes', label: '3. Plantes & Fleurs', image: IMG_DISCOVERY },
-        { id: 'mixologie', label: '4. L\'Art de la Mixologie', image: IMG_DISCOVERY }
+        { id: 'fruits', label: '1. Fruits', image: IMG_DISCOVERY },
+        { id: 'epices', label: '2. Épices', image: IMG_DISCOVERY },
+        { id: 'plantes', label: '3. Plantes', image: IMG_DISCOVERY },
+        { id: 'mixologie', label: '4. Mixologie', image: IMG_DISCOVERY }
     ];
 
     if (!isOpen) return null;
@@ -38,11 +38,9 @@ export default function BusinessSelectionModal({ isOpen, onClose, onSelectionCom
                             <h5 className="text-2xl md:text-4xl font-serif text-white mb-10 leading-tight">Quel atelier pour votre équipe ?</h5>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <button onClick={() => handleFinalSelect("Séminaire : Atelier Découverte", "60€", IMG_DISCOVERY)} className="group p-8 border border-white/5 bg-white/[0.02] hover:border-rhum-gold/50 transition-all flex flex-col items-center gap-4">
-                                    <span className="text-rhum-gold text-xs uppercase font-bold">Niveau 1</span>
                                     <span className="text-xl font-serif text-white">Atelier Découverte</span>
                                 </button>
                                 <button onClick={() => setView('conception-choice')} className="group p-8 border border-white/5 bg-white/[0.02] hover:border-rhum-gold/50 transition-all flex flex-col items-center gap-4">
-                                    <span className="text-rhum-gold text-xs uppercase font-bold">Niveaux Supérieurs</span>
                                     <span className="text-xl font-serif text-white">Atelier Conception</span>
                                 </button>
                             </div>
@@ -50,7 +48,7 @@ export default function BusinessSelectionModal({ isOpen, onClose, onSelectionCom
                     ) : (
                         <motion.div key="v2" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="text-center">
                             <button onClick={() => setView('category')} className="text-rhum-gold/40 hover:text-rhum-gold text-[10px] uppercase tracking-widest mb-8 flex items-center justify-center gap-2 mx-auto">← Retour</button>
-                            <h5 className="text-2xl md:text-3xl font-serif text-white mb-8">Choisissez votre spécialité</h5>
+                            <h5 className="text-2xl md:text-3xl font-serif text-white mb-8">Choisissez votre niveau</h5>
                             <div className="grid grid-cols-2 gap-4">
                                 {conceptionOptions.map(opt => (
                                     <button key={opt.id} onClick={() => handleFinalSelect(`Séminaire : Conception ${opt.label}`, "140€", opt.image)} className="py-6 border border-white/5 bg-white/[0.01] hover:bg-rhum-gold hover:text-rhum-green transition-all text-white font-serif text-sm tracking-wide">
