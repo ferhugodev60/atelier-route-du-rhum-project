@@ -12,7 +12,7 @@ export default function BusinessWorkshopCard({ onContact }: BusinessWorkshopCard
                 <div className="max-w-2xl text-center lg:text-left">
                     <span className="text-rhum-gold font-sans tracking-[0.4em] uppercase text-[10px] font-black mb-3 block">Offre entreprise</span>
                     <h4 className="text-2xl md:text-4xl font-serif text-white mb-4">Privatisation & Grands groupes</h4>
-                    <p className="text-rhum-cream/60 font-serif italic text-base md:text-lg leading-relaxed">"Déclinez l'expérience Découverte ou Conception pour vos collaborateurs. Un format sur-mesure conçu pour la cohésion d'équipe."</p>
+                    <p className="text-rhum-cream/60 font-serif italic text-base md:text-lg leading-relaxed">"Déclinez l'expérience Découverte ou Conception pour vos collaborateurs."</p>
                 </div>
                 <div className="flex flex-col items-center lg:items-end gap-4 shrink-0">
                     <div className="text-center lg:text-right">

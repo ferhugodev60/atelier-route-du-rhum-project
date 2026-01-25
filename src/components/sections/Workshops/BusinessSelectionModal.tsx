@@ -12,10 +12,10 @@ interface BusinessSelectionModalProps {
 export default function BusinessSelectionModal({ isOpen, onClose, onSelectionComplete }: BusinessSelectionModalProps) {
     const [view, setView] = useState<'category' | 'conception-choice'>('category');
     const conceptionOptions = [
-        { id: 'fruits', label: 'Fruits & Agrumes', image: IMG_DISCOVERY },
-        { id: 'epices', label: 'Épices & Racines', image: IMG_DISCOVERY },
-        { id: 'plantes', label: 'Plantes & Fleurs', image: IMG_DISCOVERY },
-        { id: 'mixologie', label: 'L\'Art de la Mixologie', image: IMG_DISCOVERY }
+        { id: 'fruits', label: '1. Fruits & Agrumes', image: IMG_DISCOVERY },
+        { id: 'epices', label: '2. Épices & Racines', image: IMG_DISCOVERY },
+        { id: 'plantes', label: '3. Plantes & Fleurs', image: IMG_DISCOVERY },
+        { id: 'mixologie', label: '4. L\'Art de la Mixologie', image: IMG_DISCOVERY }
     ];
 
     if (!isOpen) return null;

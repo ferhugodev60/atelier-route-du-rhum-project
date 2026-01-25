@@ -60,7 +60,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                 <div className="mb-20 md:mb-32">
                     <div className="flex flex-col items-center text-center mb-10">
                         <span className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-[10px] font-black mb-2">Horaires des ateliers</span>
-                        <h4 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tighter">Mardi au Samedi</h4>
+                        <h4 className="text-2xl md:text-4xl font-serif text-white">Mardi au Samedi</h4>
                         <div className="w-12 h-px bg-rhum-gold/40 mt-4" />
                     </div>
                     <div className="flex flex-wrap justify-center md:grid md:grid-cols-5 gap-3 md:gap-4">

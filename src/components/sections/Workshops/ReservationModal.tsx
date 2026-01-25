@@ -41,7 +41,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 return [...prev, ...added];
             }
             return prev.slice(0, newCount);
-        });
+        })
     };
 
     const handlePreConfirm = () => {
