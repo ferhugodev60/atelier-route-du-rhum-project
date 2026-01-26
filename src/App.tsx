@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar, Footer } from './components/layout';
 import ScrollReveal from './components/animations/ScrollReveal.tsx';
 import CartDrawer from './components/shop/CartDrawer';
+import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
+import CustomerDashboard from "./pages/CustomerDashboard.tsx"; // Import du gardien
 
 const ShopPage = lazy(() => import('./pages/ShopPage'));
 
@@ -31,6 +33,11 @@ function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => vo
 }
 
 export default function App() {
+    const [user, setUser] = useState<{ name: string } | null>(() => {
+        const savedUser = localStorage.getItem('atelier_user');
+        return savedUser ? JSON.parse(savedUser) : null;
+    });
+
     const [cartItems, setCartItems] = useState<any[]>(() => {
         const savedCart = localStorage.getItem('atelier_cart');
         return savedCart ? JSON.parse(savedCart) : [];
@@ -40,37 +47,32 @@ export default function App() {
 
     useEffect(() => {
         localStorage.setItem('atelier_cart', JSON.stringify(cartItems));
-    }, [cartItems]);
+        if (user) {
+            localStorage.setItem('atelier_user', JSON.stringify(user));
+        } else {
+            localStorage.removeItem('atelier_user');
+        }
+    }, [cartItems, user]);
 
-    /**
-     * Nettoie les prix entrants pour éviter le NaN
-     * Extrait uniquement les chiffres d'une chaîne (ex: "60€" -> 60)
-     */
-    const cleanPrice = (p: any): number => {
-        if (typeof p === 'number') return p;
-        const numeric = String(p).replace(/[^0-9]/g, '');
-        return parseInt(numeric) || 0;
+    const handleLogin = (userData: { name: string }) => setUser(userData);
+
+    const handleLogout = () => {
+        setUser(null);
+        localStorage.removeItem('atelier_user');
+        // Redirection forcée pour nettoyer l'état de l'historique
+        window.location.href = "/";
     };
 
     const addToCart = (item: any, qty?: number) => {
         const quantityToAdd = Number(qty ?? item.quantity ?? 1);
-        const price = cleanPrice(item.price || item.totalPrice);
-
         setCartItems(prev => {
             const existing = prev.find(i => i.id === item.id);
             if (existing) {
-                return prev.map(i => i.id === item.id
-                    ? { ...i, quantity: i.quantity + quantityToAdd, price }
-                    : i
-                );
+                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantityToAdd } : i);
             }
-            return [...prev, { ...item, price, quantity: quantityToAdd }];
+            return [...prev, { ...item, quantity: quantityToAdd }];
         });
         setIsCartOpen(true);
-    };
-
-    const removeFromCart = (id: number | string) => {
-        setCartItems(prev => prev.filter(item => item.id !== id));
     };
 
     const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
@@ -78,22 +80,32 @@ export default function App() {
     return (
         <BrowserRouter>
             <div className="min-h-screen bg-rhum-cream font-sans text-rhum-green">
-                <Navbar cartCount={cartCount} onOpenCart={() => setIsCartOpen(true)} />
+                <Navbar
+                    cartCount={cartCount}
+                    onOpenCart={() => setIsCartOpen(true)}
+                    user={user}
+                    onLoginSuccess={handleLogin}
+                    onLogout={handleLogout}
+                />
 
                 <Suspense fallback={<div className="h-screen bg-rhum-cream" aria-hidden="true" />}>
                     <Routes>
                         <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addToCart} />} />
+
+                        {/* PROTECTION DE LA ROUTE */}
+                        <Route
+                            path="/mon-compte"
+                            element={
+                                <ProtectedRoute user={user}>
+                                    <CustomerDashboard onLogout={handleLogout} />
+                                </ProtectedRoute>
+                            }
+                        />
                     </Routes>
                 </Suspense>
 
-                <CartDrawer
-                    isOpen={isCartOpen}
-                    onClose={() => setIsCartOpen(false)}
-                    items={cartItems}
-                    onRemove={removeFromCart}
-                />
-
+                <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={(id) => setCartItems(prev => prev.filter(i => i.id !== id))} />
                 <Footer />
             </div>
         </BrowserRouter>
