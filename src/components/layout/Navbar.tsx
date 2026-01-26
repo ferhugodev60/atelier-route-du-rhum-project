@@ -9,7 +9,6 @@ interface NavbarProps {
     onOpenCart: () => void;
     user: { name: string } | null;
     onLoginSuccess: (userData: { name: string }) => void;
-    onLogout: () => void;
 }
 
 const NAV_LINKS = [
@@ -20,7 +19,7 @@ const NAV_LINKS = [
     { name: 'Contact', href: '/#contact', isExternal: false },
 ];
 
-export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess, onLogout }: NavbarProps) {
+export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess }: NavbarProps) {
     const isScrolled = useScroll(50);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
@@ -72,7 +71,7 @@ export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess, on
                                     to="/mon-compte"
                                     className={`flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] transition-all rounded-full border border-rhum-gold/30 hover:border-rhum-gold ${isScrolled ? 'text-white' : 'text-rhum-gold'}`}
                                 >
-                                    Bonjour {user.name}
+                                    Bonjour {user.name} !
                                 </Link>
                             </div>
                         ) : (

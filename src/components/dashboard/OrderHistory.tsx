@@ -7,7 +7,7 @@ export default function OrderHistory() {
     return (
         <div className="space-y-8">
             <header>
-                <h2 className="text-2xl font-serif text-white">Historique de la Cave</h2>
+                <h2 className="text-2xl font-serif text-white">Mes commandes</h2>
                 <p className="text-white/40 text-xs mt-1 italic">Retrouvez le détail de vos commandes passées.</p>
             </header>
 

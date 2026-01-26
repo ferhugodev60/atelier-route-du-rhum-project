@@ -24,7 +24,7 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
                             activeView === item.id ? 'text-rhum-gold border-rhum-gold bg-white/[0.03]' : 'text-white/30 border-transparent hover:text-white/60'
                         }`}
                     >
-                        <span className="text-sm">{item.icon}</span>{item.label}
+                        <span className="text-sm"></span>{item.label}
                     </button>
                 ))}
                 <button onClick={onLogout} className="mt-4 lg:mt-12 text-left px-6 py-4 text-[10px] uppercase tracking-widest text-red-500/40 hover:text-red-500 transition-colors font-black">

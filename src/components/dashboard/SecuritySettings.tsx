@@ -2,7 +2,7 @@ export default function SecuritySettings() {
     return (
         <div className="max-w-md space-y-10">
             <header>
-                <h2 className="text-2xl font-serif text-white">Sécurité de l'Antre</h2>
+                <h2 className="text-2xl font-serif text-white">Modifier votre mot de passe</h2>
                 <p className="text-white/40 text-xs mt-1 italic">Modifiez vos identifiants d'accès secrets.</p>
             </header>
 
