@@ -18,7 +18,7 @@ export default function ProfileInfo() {
     return (
         <div className="max-w-2xl mx-auto lg:mx-0">
             <header className="mb-12">
-                <h2 className="text-2xl lg:text-3xl font-serif text-white">Mon Profil</h2>
+                <h2 className="text-2xl lg:text-3xl font-serif text-white">Mon profil</h2>
                 <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">Identifiants pour le retrait</p>
             </header>
 

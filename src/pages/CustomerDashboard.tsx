@@ -35,5 +35,5 @@ export default function CustomerDashboard({ onLogout }: { onLogout: () => void }
                 </div>
             </div>
         </div>
-    );
+    );x
 }
