@@ -38,7 +38,7 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
                 className="hidden lg:flex items-center gap-4 px-6 py-4 text-[10px] uppercase tracking-[0.3em] font-black group transition-all"
             >
                 <LogoutIcon className="w-4 h-4 text-red-500/40 group-hover:text-red-500 transition-colors" />
-                <span className="text-red-500/40 group-hover:text-red-500 transition-colors">Quitter l'Antre</span>
+                <span className="text-red-500/40 group-hover:text-red-500 transition-colors">Déconnexion</span>
             </button>
         </aside>
     );

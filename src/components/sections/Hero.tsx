@@ -55,7 +55,7 @@ export default function Hero({
                     </h1>
 
                     {/* --- SOUS-TITRE : Rendu visible sur mobile [cite: 2025-12-08] --- */}
-                    <p className="block text-[11px] sm:text-base md:text-xl text-white/90 font-sans max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed italic px-2">
+                    <p className="block text-[11px] sm:text-base md:text-xl text-white/90 font-sans max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed px-2">
                         {subtitle}
                     </p>
 
