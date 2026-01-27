@@ -14,7 +14,7 @@ export default function CustomerDashboard({ onLogout }: { onLogout: () => void }
 
                 {/* EN-TÊTE : Espacement élégant et bordure dorée */}
                 <header className="mb-10 lg:mb-16 border-l-2 lg:border-l-4 border-rhum-gold pl-6 lg:pl-8">
-                    <h1 className="text-4xl lg:text-6xl font-serif text-white uppercase italic tracking-tighter">
+                    <h1 className="text-4xl lg:text-6xl font-serif text-white uppercase">
                         Votre Espace
                     </h1>
                     {/* mt-6 pour laisser respirer le titre */}
