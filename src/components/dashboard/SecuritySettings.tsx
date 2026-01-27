@@ -6,9 +6,6 @@ export default function SecuritySettings() {
                 <h2 className="text-2xl lg:text-3xl font-serif text-white">
                     Modifier votre mot de passe
                 </h2>
-                <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">
-                    Modifiez vos identifiants d'accès secrets.
-                </p>
             </header>
 
             {/* FORMULAIRE : Utilise le gap-y de ProfileInfo */}
@@ -38,7 +35,7 @@ export default function SecuritySettings() {
                 {/* BOUTON D'ACTION */}
                 <div className="pt-6">
                     <button className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all shadow-xl rounded-sm">
-                        Mettre à jour les scellés
+                        Mettre à jour
                     </button>
                 </div>
             </form>
