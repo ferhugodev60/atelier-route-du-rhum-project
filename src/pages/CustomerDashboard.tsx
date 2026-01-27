@@ -11,9 +11,13 @@ export default function CustomerDashboard({ onLogout }: { onLogout: () => void }
     return (
         <div className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-12">
             <div className="max-w-7xl mx-auto">
-                <header className="mb-16 border-l-4 border-rhum-gold pl-8">
-                    <h1 className="text-4xl md:text-6xl font-serif text-white">Votre Espace</h1>
-                    <p className="text-rhum-gold/40 text-xs uppercase tracking-[0.5em] font-bold mt-2">Membre de l'Atelier de la Route du Rhum</p>
+                <header className="mb-10 lg:mb-16 border-l-2 lg:border-l-4 border-rhum-gold pl-6 lg:pl-8">
+                    <h1 className="text-3xl lg:text-6xl font-serif text-white">
+                        Votre Espace
+                    </h1>
+                    <p className="text-rhum-gold/40 text-[9px] lg:text-xs uppercase tracking-[0.5em] font-bold mt-4">
+                        Membre de l'Atelier de la Route du Rhum
+                    </p>
                 </header>
 
                 <div className="flex flex-col lg:flex-row gap-16 items-start">

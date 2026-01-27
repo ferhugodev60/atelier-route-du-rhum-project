@@ -1,23 +1,46 @@
 export default function SecuritySettings() {
     return (
-        <div className="max-w-md space-y-10">
-            <header>
-                <h2 className="text-2xl font-serif text-white">Modifier votre mot de passe</h2>
-                <p className="text-white/40 text-xs mt-1 italic">Modifiez vos identifiants d'accès secrets.</p>
+        <div className="max-w-2xl mx-auto lg:mx-0">
+            {/* EN-TÊTE : Aligné sur ProfileInfo et OrderHistory */}
+            <header className="mb-12">
+                <h2 className="text-2xl lg:text-3xl font-serif text-white">
+                    Modifier votre mot de passe
+                </h2>
+                <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">
+                    Modifiez vos identifiants d'accès secrets.
+                </p>
             </header>
 
-            <form className="space-y-6">
-                <div className="space-y-2">
-                    <label className="text-[9px] uppercase tracking-[0.2em] text-rhum-gold font-bold">Mot de passe actuel</label>
-                    <input type="password" placeholder="••••••••" className="w-full bg-white/[0.03] border-b border-white/10 p-4 text-white focus:border-rhum-gold outline-none transition-all" />
+            {/* FORMULAIRE : Utilise le gap-y de ProfileInfo */}
+            <form className="space-y-10 max-w-lg">
+                <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
+                    <label className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black">
+                        Mot de passe actuel
+                    </label>
+                    <input
+                        type="password"
+                        placeholder="••••••••"
+                        className="w-full bg-transparent text-white font-serif text-lg lg:text-xl tracking-tight outline-none italic placeholder:opacity-20"
+                    />
                 </div>
-                <div className="space-y-2">
-                    <label className="text-[9px] uppercase tracking-[0.2em] text-rhum-gold font-bold">Nouveau mot de passe</label>
-                    <input type="password" placeholder="••••••••" className="w-full bg-white/[0.03] border-b border-white/10 p-4 text-white focus:border-rhum-gold outline-none transition-all" />
+
+                <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
+                    <label className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black">
+                        Nouveau mot de passe
+                    </label>
+                    <input
+                        type="password"
+                        placeholder="••••••••"
+                        className="w-full bg-transparent text-white font-serif text-lg lg:text-xl tracking-tight outline-none italic placeholder:opacity-20"
+                    />
                 </div>
-                <button className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all shadow-xl">
-                    Mettre à jour
-                </button>
+
+                {/* BOUTON D'ACTION */}
+                <div className="pt-6">
+                    <button className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all shadow-xl rounded-sm">
+                        Mettre à jour les scellés
+                    </button>
+                </div>
             </form>
         </div>
     );
