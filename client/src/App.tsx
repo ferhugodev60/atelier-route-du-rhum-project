@@ -2,18 +2,18 @@ import { useState, useEffect, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Navbar, Footer } from './components/layout';
 import ScrollReveal from './components/animations/ScrollReveal.tsx';
-import CartDrawer from './components/shop/CartDrawer';
+import CartDrawer from './components/shop/CartDrawer.tsx';
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 import CustomerDashboard from "./pages/CustomerDashboard.tsx";
 
-const ShopPage = lazy(() => import('./pages/ShopPage'));
+const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 
 const Sections = {
-    Hero: lazy(() => import('./components/sections/Hero')),
-    About: lazy(() => import('./components/sections/About')),
+    Hero: lazy(() => import('./components/sections/Hero.tsx')),
+    About: lazy(() => import('./components/sections/About.tsx')),
     Workshops: lazy(() => import('./components/sections/Workshops/Workshops.tsx')),
-    Testimonials: lazy(() => import('./components/sections/Testimonials')),
-    Contact: lazy(() => import('./components/sections/Contact')),
+    Testimonials: lazy(() => import('./components/sections/Testimonials.tsx')),
+    Contact: lazy(() => import('./components/sections/Contact.tsx')),
 };
 
 function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => void }) {

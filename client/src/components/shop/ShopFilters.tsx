@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CAT_FRUITE, CAT_VRAC, CAT_DAME_JEANNE } from '../../data/bottles';
+import { CAT_FRUITE, CAT_VRAC, CAT_DAME_JEANNE } from '../../data/bottles.ts';
 
 interface ShopFiltersProps {
     activeCat: string;

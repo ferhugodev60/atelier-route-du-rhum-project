@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { revealVariants } from '../../utils/animations';
+import { revealVariants } from '../../utils/animations.ts';
 import { PropsWithChildren } from 'react';
 
 interface ScrollRevealProps extends PropsWithChildren {

@@ -1,8 +1,8 @@
 import { useState, useMemo } from 'react';
 // Correction du chemin (TS2307) : on remonte de 2 niveaux seulement
-import { BOTTLES, Bottle } from '../../data/bottles';
-import ShopFilters from './ShopFilters';
-import ProductCard from './ProductCard';
+import { BOTTLES, Bottle } from '../../data/bottles.ts';
+import ShopFilters from './ShopFilters.tsx';
+import ProductCard from './ProductCard.tsx';
 
 export default function Shop() {
     // On initialise sur "TOUS" pour ne pas avoir une page vide au départ

@@ -1,5 +1,5 @@
-export { default as Hero } from './Hero';
-export { default as About } from './About';
+export { default as Hero } from './Hero.tsx';
+export { default as About } from './About.tsx';
 export { default as Workshops } from './Workshops';
-export { default as Testimonials } from './Testimonials';
-export { default as Contact } from './Contact';
+export { default as Testimonials } from './Testimonials.tsx';
+export { default as Contact } from './Contact.tsx';

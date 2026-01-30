@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { IMG_DISCOVERY } from '../../../data/workshops';
+import { IMG_DISCOVERY } from '../../../data/workshops.ts';
 
 interface BusinessSelectionModalProps {
     isOpen: boolean;

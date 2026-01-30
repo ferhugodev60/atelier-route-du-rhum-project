@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom'; // Import du hook de navigation
-import { useLogin } from '../../hooks/useAuth';
+import { useLogin } from '../../hooks/useAuth.ts';
 
 interface LoginModalProps {
     isOpen: boolean;

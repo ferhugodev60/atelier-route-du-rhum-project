@@ -1,4 +1,4 @@
-import { IMG_DISCOVERY } from '../../../data/workshops';
+import { IMG_DISCOVERY } from '../../../data/workshops.ts';
 
 interface WorkshopCardProps {
     onReserve: (item: any) => void;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { useScroll } from '../../hooks/useScroll';
+import { useScroll } from '../../hooks/useScroll.ts';
 import { LoginModal } from '../auth';
 
 /**

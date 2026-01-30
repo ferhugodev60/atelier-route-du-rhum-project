@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Bottle, BottleSize } from '../../data/bottles';
+import { Bottle, BottleSize } from '../../data/bottles.ts';
 
 interface ProductCardProps {
     bottle: Bottle;

@@ -1,4 +1,4 @@
-import { useContactForm } from '../../hooks/useContact';
+import { useContactForm } from '../../hooks/useContact.ts';
 
 export default function Contact() {
     const { state, formAction, isPending } = useContactForm();

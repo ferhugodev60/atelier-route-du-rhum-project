@@ -2,10 +2,10 @@ import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 // Imports des données et composants synchronisés
-import { BOTTLES, Bottle } from '../data/bottles';
-import ProductCard from '../components/shop/ProductCard';
-import ShopFilters from '../components/shop/ShopFilters';
-import ShopReassurance from '../components/shop/ShopReassurance';
+import { BOTTLES, Bottle } from '../data/bottles.ts';
+import ProductCard from '../components/shop/ProductCard.tsx';
+import ShopFilters from '../components/shop/ShopFilters.tsx';
+import ShopReassurance from '../components/shop/ShopReassurance.tsx';
 
 interface ShopPageProps {
     onAddToCart: (item: any) => void;

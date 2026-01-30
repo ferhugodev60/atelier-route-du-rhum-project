@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import WorkshopCard from './WorkshopCard';
-import ConceptionCard from './ConceptionCard';
-import ShopBanner from './ShopBanner';
+import WorkshopCard from './WorkshopCard.tsx';
+import ConceptionCard from './ConceptionCard.tsx';
+import ShopBanner from './ShopBanner.tsx';
 import { WorkshopDetail } from "../../../data/workshops.ts";
 import WorkshopModal from "./WorkshopModal.tsx";
 import ReservationModal from "./ReservationModal.tsx";

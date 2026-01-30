@@ -1,4 +1,4 @@
-import { WORKSHOP_DETAILS, type WorkshopDetail } from '../../../data/workshops';
+import { WORKSHOP_DETAILS, type WorkshopDetail } from '../../../data/workshops.ts';
 
 interface ConceptionCardProps {
     onOpenDetail: (detail: WorkshopDetail) => void;

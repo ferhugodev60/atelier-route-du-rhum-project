@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { type WorkshopDetail } from '../../../data/workshops';
+import { type WorkshopDetail } from '../../../data/workshops.ts';
 
 interface WorkshopModalProps {
     detail: WorkshopDetail;

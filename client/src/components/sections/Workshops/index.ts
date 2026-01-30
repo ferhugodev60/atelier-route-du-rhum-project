@@ -1,1 +1,1 @@
-export { default } from './Workshops';
+export { default } from './Workshops.tsx';

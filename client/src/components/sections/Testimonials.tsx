@@ -1,4 +1,4 @@
-import { REVIEWS } from '../../data/testimonials';
+import { REVIEWS } from '../../data/testimonials.ts';
 
 export default function Testimonials() {
     return (
