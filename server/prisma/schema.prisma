@@ -26,6 +26,8 @@ model Product {
   name       String
   price      Float
   category   String
+  volume     Int? // Volume en cl (ex: 20, 50, 70). Optionnel pour les ateliers.
+  stock      Int         @default(0)
   image      String?
   orderItems OrderItem[]
 }
