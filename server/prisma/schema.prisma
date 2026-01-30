@@ -1,0 +1,52 @@
+// server/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  password        String
+  firstName       String
+  lastName        String
+  phone           String?
+  conceptionLevel Int      @default(0)
+  createdAt       DateTime @default(now())
+  orders          Order[]
+}
+
+model Product {
+  id         String      @id @default(cuid())
+  name       String
+  price      Float
+  category   String
+  image      String?
+  orderItems OrderItem[]
+}
+
+model Order {
+  id        String      @id @default(cuid())
+  reference String      @unique
+  status    String      @default("EN PRÉPARATION")
+  total     Float
+  userId    String
+  user      User        @relation(fields: [userId], references: [id])
+  items     OrderItem[]
+  createdAt DateTime    @default(now())
+}
+
+model OrderItem {
+  id        String   @id @default(cuid())
+  quantity  Int
+  price     Float
+  orderId   String
+  order     Order    @relation(fields: [orderId], references: [id])
+  productId String?
+  product   Product? @relation(fields: [productId], references: [id])
+}
