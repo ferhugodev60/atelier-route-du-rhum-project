@@ -10,8 +10,8 @@ interface ShopFiltersProps {
 
 const SHOP_CATEGORIES = [
     { id: "TOUS", label: "Tous", desc: "Découvrez l'intégralité de nos créations artisanales." },
-    { id: CAT_FRUITE, label: "Fruités", desc: "Bouteilles contenant des fruits entiers. Rempotables à l'infini." },
-    { id: CAT_VRAC, label: "Vrac", desc: "Infusions filtrées sans fruits pour une dégustation immédiate." },
+    { id: CAT_FRUITE, label: "Rhum arrangé", desc: "Bouteilles contenant des fruits entiers. Rempotables à l'infini." },
+    { id: CAT_VRAC, label: "Vrac", desc: "Rhum arrangé sans fruits prêt à la consommation." },
     { id: CAT_DAME_JEANNE, label: "Location de Dame-Jeanne", desc: "Nos formats de prestige disponibles pour vos événements." }
 ];
 

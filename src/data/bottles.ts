@@ -58,7 +58,8 @@ export const BOTTLES: Bottle[] = [
         image: shopImg,
         desc: "Location de Dame-Jeanne pour vos événements. Service de mise à disposition et reprise inclus.",
         availableSizes: [
-            { capacity: '1 litre', price: 75, stock: 10 },
+            { capacity: '3 litres', price: 150, stock: 1 },
+            { capacity: '6 litres', price: 300, stock: 1 },
         ]
     }
 ];
