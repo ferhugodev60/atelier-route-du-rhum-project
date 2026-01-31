@@ -1,15 +1,17 @@
 import { Router } from 'express';
-// 🏺 On importe précisément les fonctions depuis le contrôleur
-import { register, login } from '../controllers/authController';
+import { register, login, changePassword } from '../controllers/authController';
+import { authenticateToken } from '../middleware/authMiddleware'; // Assure-toi que ce middleware existe
 
 const router = Router();
 
-// On s'assure que 'register' et 'login' existent bien avant de les passer à router
-if (!register || !login) {
-    console.error("❌ ERREUR CRITIQUE : Les fonctions login ou register sont undefined !");
+if (!register || !login || !changePassword) {
+    console.error("❌ ERREUR CRITIQUE : Une fonction du contrôleur auth est undefined !");
 }
 
 router.post('/register', register);
 router.post('/login', login);
+
+// Route pour changer le mot de passe (Protégée)
+router.patch('/change-password', authenticateToken, changePassword);
 
 export default router;

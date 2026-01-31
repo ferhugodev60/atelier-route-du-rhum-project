@@ -52,7 +52,7 @@ export default function CustomerDashboard() {
                             Votre Espace
                         </h1>
                         <p className="text-rhum-gold/40 text-[9px] lg:text-xs uppercase tracking-[0.5em] font-bold mt-6">
-                            Bienvenue dans l'Antre, <span className="text-rhum-gold">{user.firstName}</span>
+                            Bienvenue dans l'Atelier, <span className="text-rhum-gold">{user.firstName}</span>
                         </p>
                     </motion.div>
                 </header>
@@ -100,7 +100,7 @@ export default function CustomerDashboard() {
                         className="w-full flex items-center justify-center gap-4 py-6 text-[10px] uppercase tracking-[0.3em] font-black text-red-500/40 hover:text-red-500 transition-all group bg-red-500/5 rounded-sm"
                     >
                         <LogoutIcon className="w-5 h-5 opacity-40 group-hover:opacity-100 transition-opacity" />
-                        <span>Fermer la session</span>
+                        <span>Déconnexion</span>
                     </button>
                 </div>
             </div>

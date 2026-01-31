@@ -3,7 +3,6 @@ import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-// 🏺 Vérifie bien le mot "export" devant chaque fonction
 export const login = async (req: Request, res: Response) => {
     console.log("🔑 [CONTROLLER] Tentative de login...");
     try {
@@ -46,5 +45,29 @@ export const register = async (req: Request, res: Response) => {
     } catch (error: any) {
         console.error("🔥 [ERROR REGISTER]:", error.message);
         return res.status(400).json({ error: "Email déjà utilisé ou données invalides" });
+    }
+};
+
+export const changePassword = async (req: Request, res: Response) => {
+    // @ts-ignore - Le userId est injecté par le middleware d'authentification
+    const userId = req.user?.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    try {
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ error: "Utilisateur introuvable." });
+
+        const isMatch = await bcrypt.compare(currentPassword, user.password);
+        if (!isMatch) return res.status(400).json({ error: "Le mot de passe actuel est incorrect." });
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        await prisma.user.update({
+            where: { id: userId },
+            data: { password: hashedPassword }
+        });
+
+        return res.status(200).json({ message: "Le secret a été mis à jour." });
+    } catch (error: any) {
+        return res.status(500).json({ error: "Erreur lors de la mise à jour." });
     }
 };
