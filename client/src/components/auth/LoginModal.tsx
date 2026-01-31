@@ -4,12 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 
+// 1. Définition de l'interface avec la prop de basculement
 interface LoginModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSwitchToRegister: () => void; // Requis pour la synchronisation avec la Navbar
 }
 
-export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
     const navigate = useNavigate();
     const setAuth = useAuthStore((state) => state.setAuth);
 
@@ -27,18 +29,16 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
         const password = formData.get('password');
 
         try {
-            // 1. Appel à l'API (Endpoint sécurisé par Zod et Bcrypt)
+            // Appel à l'API sur le port 5001 (configuré précédemment)
             const response = await api.post('/auth/login', { email, password });
 
-            // 2. Mise à jour du Store Global (User + JWT)
-            // La persistance est gérée automatiquement par Zustand
+            // Mise à jour du Store Global (User + JWT)
             setAuth(response.data.user, response.data.token);
 
-            // 3. Fermeture et Redirection
+            // Fermeture et Redirection
             onClose();
             navigate('/mon-compte');
         } catch (err: any) {
-            // Extraction de l'erreur renvoyée par ton middleware de sécurité
             const message = err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès.";
             setError(message);
         } finally {
@@ -149,7 +149,13 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
 
                         <footer className="mt-10 text-center border-t border-white/5 pt-8 space-y-6">
                             <p className="text-[10px] text-rhum-cream/40 uppercase tracking-widest">
-                                Pas encore membre ? <a href="#" className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 decoration-rhum-gold/30">Rejoignez la guilde</a>
+                                Pas encore membre ?{" "}
+                                <button
+                                    onClick={onSwitchToRegister}
+                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 decoration-rhum-gold/30"
+                                >
+                                    REJOIGNEZ NOUS
+                                </button>
                             </p>
 
                             <div className="pt-2">

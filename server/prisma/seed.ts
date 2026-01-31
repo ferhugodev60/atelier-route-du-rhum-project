@@ -6,45 +6,35 @@ const prisma = new PrismaClient();
 async function main() {
     console.log('--- 🧪 Distillation des Ateliers et Produits ---');
 
-    // Nettoyage complet
+    // 1. Nettoyage complet
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
     await prisma.product.deleteMany();
     await prisma.user.deleteMany();
 
-    // 1. Les Ateliers de Conception (La Progression)
+    // 2. Création des Produits (Boutique & Ateliers)
+    // On utilise des variables pour stocker certains produits afin de créer la commande après
+    const rhum1 = await prisma.product.create({
+        data: { name: "Ananas & Vanille Bourbon", price: 32.0, category: "Rhum Arrangé", volume: 70, stock: 45 }
+    });
+
+    const atelier1 = await prisma.product.create({
+        data: { name: "Atelier Conception - Niveau 1 (Fruits)", price: 45.0, category: "Atelier" }
+    });
+
+    // Le reste peut être créé en masse
     await prisma.product.createMany({
         data: [
-            { name: "Atelier Conception - Niveau 1 (Fruits)", price: 45.0, category: "Atelier" },
             { name: "Atelier Conception - Niveau 2 (Épices)", price: 55.0, category: "Atelier" },
             { name: "Atelier Conception - Niveau 3 (Plantes)", price: 65.0, category: "Atelier" },
-            { name: "Atelier Conception - Niveau 4 (Mixologie)", price: 75.0, category: "Atelier" },
-            { name: "Atelier Découverte", price: 30.0, category: "Atelier" },
-        ]
-    });
-
-    // 2. L'Atelier Découverte (Indépendant)
-    await prisma.product.create({
-        data: {
-            name: "Atelier Découverte (Dégustation & Histoire)",
-            price: 60.0,
-            category: "Atelier"
-        }
-    });
-
-    // 3. La Boutique (Les Bouteilles)
-    await prisma.product.createMany({
-        data: [
-            { name: "Ananas & Vanille Bourbon", price: 32.0, category: "Rhum Arrangé", volume: 70, stock: 45 },
-            { name: "Ananas & Vanille Bourbon (Format Vrac)", price: 15.0, category: "Vrac", volume: 20, stock: 100 },
             { name: "Banane Flambée & Épices", price: 34.0, category: "Rhum Arrangé", volume: 70, stock: 30 },
             { name: "Mangue Passion", price: 32.0, category: "Rhum Arrangé", volume: 70, stock: 50 },
         ]
     });
 
-    // 4. Utilisateur de test
+    // 3. Création de l'Utilisateur de test
     const hashedPassword = await bcrypt.hash('rhum2026', 10);
-    await prisma.user.create({
+    const user = await prisma.user.create({
         data: {
             email: "hugo@atelier.com",
             password: hashedPassword,
@@ -54,7 +44,32 @@ async function main() {
         }
     });
 
-    console.log('--- ✅ Alambic prêt ! Ateliers et Boutique initialisés. ---');
+    // 4. Création d'une commande historique pour Hugo
+    // Cela permet de tester immédiatement ton composant OrderHistory
+    await prisma.order.create({
+        data: {
+            userId: user.id,
+            reference: `ORD-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+            total: 77.0, // 32 (Rhum) + 45 (Atelier)
+            status: "Terminée",
+            items: {
+                create: [
+                    {
+                        productId: rhum1.id,
+                        quantity: 1,
+                        price: rhum1.price
+                    },
+                    {
+                        productId: atelier1.id,
+                        quantity: 1,
+                        price: atelier1.price
+                    }
+                ]
+            }
+        }
+    });
+
+    console.log('--- ✅ Alambic prêt ! Hugo a maintenant une commande en historique. ---');
 }
 
 main()

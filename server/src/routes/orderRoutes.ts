@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { createOrder } from '../controllers/orderController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import { getUserOrders, createOrder } from '../controllers/orderController';
 
 const router = Router();
 
-// On place le middleware AVANT le contrôleur
-// La requête passe par authenticateToken, puis si OK, va vers createOrder
-router.post('/orders', authenticateToken, createOrder);
+// URL finale : GET http://localhost:5001/api/orders
+router.get('/', getUserOrders);
+
+// URL finale : POST http://localhost:5001/api/orders
+router.post('/', createOrder);
 
 export default router;
