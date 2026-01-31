@@ -1,36 +1,61 @@
-import { useState, useMemo } from 'react';
-// Correction du chemin (TS2307) : on remonte de 2 niveaux seulement
-import { BOTTLES, Bottle } from '../../data/bottles.ts';
+import { useState, useMemo, useEffect } from 'react';
+import api from '../../api/axiosInstance';
+import { Product, ProductVolume } from '../../types/shop';
 import ShopFilters from './ShopFilters.tsx';
 import ProductCard from './ProductCard.tsx';
 
 export default function Shop() {
-    // On initialise sur "TOUS" pour ne pas avoir une page vide au départ
+    const [products, setProducts] = useState<Product[]>([]);
     const [activeCat, setActiveCat] = useState<string>("TOUS");
     const [sortBy, setSortBy] = useState<string>("default");
-    const [selectedBottleId, setSelectedBottleId] = useState<number | null>(null);
+    const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
 
-    // LOGIQUE DE FILTRAGE
-    const displayedBottles = useMemo(() => {
-        // Si "TOUS", on prend tout, sinon on filtre par catégorie strictement
+    // 🏺 Chargement des données réelles
+    useEffect(() => {
+        const fetchProducts = async () => {
+            try {
+                const { data } = await api.get('/shop/products');
+                setProducts(data);
+            } catch (error) {
+                console.error("Erreur lors de la récupération de la cave :", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchProducts();
+    }, []);
+
+    const displayedProducts = useMemo(() => {
         let filtered = activeCat === "TOUS"
-            ? BOTTLES
-            : BOTTLES.filter((bottle: Bottle) => bottle.category === activeCat);
+            ? products
+            : products.filter((p) => p.category.name === activeCat);
 
-        // Tri par prix
         if (sortBy === "asc") {
-            filtered = [...filtered].sort((a: Bottle, b: Bottle) => a.availableSizes[0].price - b.availableSizes[0].price);
+            filtered = [...filtered].sort((a, b) => a.volumes[0].price - b.volumes[0].price);
         } else if (sortBy === "desc") {
-            filtered = [...filtered].sort((a: Bottle, b: Bottle) => b.availableSizes[0].price - a.availableSizes[0].price);
+            filtered = [...filtered].sort((a, b) => b.volumes[0].price - a.volumes[0].price);
         }
 
         return filtered;
-    }, [activeCat, sortBy]);
+    }, [activeCat, sortBy, products]);
+
+    const handleAddToCart = (product: Product, volume: ProductVolume, qty: number) => {
+        console.log("🛒 Panier :", {
+            productId: product.id,
+            volumeId: volume.id,
+            name: `${product.name} (${volume.size}${volume.unit})`,
+            price: volume.price,
+            quantity: qty
+        });
+        // Ici, tu appelleras ta fonction dispatch du panier (CartContext ou Store)
+    };
+
+    if (isLoading) return <div className="min-h-screen bg-[#06110d] flex items-center justify-center text-rhum-gold font-serif italic">Chauffage de l'alambic...</div>;
 
     return (
         <section className="py-20 px-4 md:px-10 bg-[#06110d] min-h-screen">
             <div className="max-w-7xl mx-auto">
-                {/* On passe activeCat et sa fonction de modification */}
                 <ShopFilters
                     activeCat={activeCat}
                     onCatChange={setActiveCat}
@@ -38,19 +63,18 @@ export default function Shop() {
                 />
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
-                    {displayedBottles.map((bottle: Bottle) => (
+                    {displayedProducts.map((product) => (
                         <ProductCard
-                            key={bottle.id}
-                            bottle={bottle}
-                            isSelected={selectedBottleId === bottle.id}
-                            onToggleSelect={() => setSelectedBottleId(selectedBottleId === bottle.id ? null : bottle.id)}
-                            onAddToCart={(item) => console.log("Ajout :", item)}
+                            key={product.id}
+                            product={product}
+                            isSelected={selectedProductId === product.id}
+                            onToggleSelect={() => setSelectedProductId(selectedProductId === product.id ? null : product.id)}
+                            onAddToCart={handleAddToCart}
                         />
                     ))}
                 </div>
 
-                {/* Message de secours si aucun résultat */}
-                {displayedBottles.length === 0 && (
+                {displayedProducts.length === 0 && (
                     <div className="py-20 text-center">
                         <p className="font-serif italic text-rhum-cream/30 text-xl font-light">
                             Cet élixir est en cours de macération...

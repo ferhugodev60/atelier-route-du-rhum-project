@@ -16,13 +16,16 @@ const Sections = {
     Contact: lazy(() => import('./components/sections/Contact.tsx')),
 };
 
-function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => void }) {
+function HomePage({ onAddToCart }: { onAddToCart: (product: any, detail: any, qty: number) => void }) {
     return (
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
             <section id="workshops">
-                <ScrollReveal><Sections.Workshops onAddToCart={onAddToCart} /></ScrollReveal>
+                <ScrollReveal>
+                    {/* Pour les ateliers, le 'product' est null, on passe directement l'atelier en 'detail' */}
+                    <Sections.Workshops onAddToCart={(ws: any, q: number) => onAddToCart(null, ws, q)} />
+                </ScrollReveal>
             </section>
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
             <section id="contact"><ScrollReveal><Sections.Contact /></ScrollReveal></section>
@@ -31,63 +34,77 @@ function HomePage({ onAddToCart }: { onAddToCart: (item: any, qty: number) => vo
 }
 
 export default function App() {
-    const [user, setUser] = useState<{ name: string } | null>(() => {
-        const saved = localStorage.getItem('atelier_user');
-        return saved ? JSON.parse(saved) : null;
-    });
-
+    const [isCartOpen, setIsCartOpen] = useState(false);
     const [cartItems, setCartItems] = useState<any[]>(() => {
         const saved = localStorage.getItem('atelier_cart');
         return saved ? JSON.parse(saved) : [];
     });
 
-    const [isCartOpen, setIsCartOpen] = useState(false);
-
     useEffect(() => {
         localStorage.setItem('atelier_cart', JSON.stringify(cartItems));
-        if (user) localStorage.setItem('atelier_user', JSON.stringify(user));
-        else localStorage.removeItem('atelier_user');
-    }, [cartItems, user]);
+    }, [cartItems]);
 
-    const handleLogout = () => {
-        setUser(null);
-        localStorage.removeItem('atelier_user');
-        window.location.href = "/";
-    };
+    /**
+     * @param product Le produit parent (null pour un atelier)
+     * @param detail Le volume spécifique ou l'objet atelier
+     * @param qty La quantité choisie
+     */
+    const addToCart = (product: any, detail: any, qty: number) => {
+        const uniqueId = detail.id;
 
-    const addToCart = (item: any, qty?: number) => {
-        const quantityToAdd = Number(qty ?? item.quantity ?? 1);
         setCartItems(prev => {
-            const existing = prev.find(i => i.id === item.id);
+            const existing = prev.find(i => i.cartId === uniqueId);
             if (existing) {
-                return prev.map(i => i.id === item.id ? { ...i, quantity: i.quantity + quantityToAdd } : i);
+                return prev.map(i => i.cartId === uniqueId
+                    ? { ...i, quantity: i.quantity + qty }
+                    : i
+                );
             }
-            return [...prev, { ...item, quantity: quantityToAdd }];
+
+            const newItem = {
+                cartId: uniqueId,
+                name: product ? `${product.name} (${detail.size}${detail.unit})` : detail.title,
+                price: detail.price,
+                image: product?.image || detail.image,
+                quantity: qty,
+                workshopId: !product ? detail.id : undefined,
+                volumeId: product ? detail.id : undefined
+            };
+
+            return [...prev, newItem];
         });
         setIsCartOpen(true);
     };
 
     return (
         <BrowserRouter>
-            <div className="min-h-screen bg-rhum-cream font-sans text-rhum-green">
+            <div className="min-h-screen bg-[#0a1a14] font-sans text-rhum-cream">
                 <Navbar
                     cartCount={cartItems.reduce((sum, i) => sum + i.quantity, 0)}
                     onOpenCart={() => setIsCartOpen(true)}
-                    user={user}
-                    onLoginSuccess={(u) => setUser(u)}
                 />
-                <Suspense fallback={<div className="h-screen bg-rhum-cream" />}>
+
+                <Suspense fallback={<div className="h-screen bg-[#0a1a14]" />}>
                     <Routes>
                         <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addToCart} />} />
+
+                        {/* 🏺 CORRECTION TS2322 : Suppression des props inutiles */}
+                        {/* ProtectedRoute et CustomerDashboard iront chercher user/logout dans le store directement */}
                         <Route path="/mon-compte" element={
-                            <ProtectedRoute user={user}>
-                                <CustomerDashboard onLogout={handleLogout} />
+                            <ProtectedRoute>
+                                <CustomerDashboard />
                             </ProtectedRoute>
                         } />
                     </Routes>
                 </Suspense>
-                <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} items={cartItems} onRemove={(id) => setCartItems(prev => prev.filter(i => i.id !== id))} />
+
+                <CartDrawer
+                    isOpen={isCartOpen}
+                    onClose={() => setIsCartOpen(false)}
+                    items={cartItems}
+                    onRemove={(cartId) => setCartItems(prev => prev.filter(i => i.cartId !== cartId))}
+                />
                 <Footer />
             </div>
         </BrowserRouter>
