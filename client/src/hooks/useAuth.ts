@@ -1,22 +1,33 @@
 import { useActionState } from 'react';
+import api from '../api/axiosInstance';
+import { useAuthStore } from '../store/authStore';
 
-// Simulation d'une fonction de connexion (Alchimie 2026)
+// La fonction d'action qui sera exécutée à la soumission
 async function loginAction(_prevState: any, formData: FormData) {
     const email = formData.get('email');
     const password = formData.get('password');
+    const setAuth = useAuthStore.getState().setAuth; // Accès direct au store Zustand
 
-    // Simulation d'un délai réseau
-    await new Promise((res) => setTimeout(res, 1000));
+    try {
+        // Appel réel à ton API Express
+        const response = await api.post('/auth/login', { email, password });
 
-    if (email === "admin@rhum.com" && password === "secret") {
-        return { success: true, message: "Entrée autorisée dans l'Antre." };
+        // On enregistre dans Zustand
+        const { user, token } = response.data;
+        setAuth(user, token);
+
+        return { success: true, user };
+    } catch (err: any) {
+        // On récupère l'erreur précise renvoyée par ton middleware Zod ou Express
+        return {
+            success: false,
+            error: err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès."
+        };
     }
-
-    return { success: false, error: "Grimoire ou Identifiant invalide." };
 }
 
 export function useLogin() {
-    // useActionState gère automatiquement l'état "isPending" (chargement)
+    // Initialisation de useActionState (React 19)
     const [state, formAction, isPending] = useActionState(loginAction, null);
 
     return { state, formAction, isPending };

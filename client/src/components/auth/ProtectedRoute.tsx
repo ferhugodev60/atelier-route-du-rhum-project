@@ -1,17 +1,22 @@
-import { Navigate } from 'react-router-dom';
-import {JSX} from "react";
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthStore } from '../../store/authStore';
 
-interface ProtectedRouteProps {
-    user: { name: string } | null;
-    children: JSX.Element;
+interface Props {
+    children: React.ReactNode;
+    adminOnly?: boolean;
 }
 
-export default function ProtectedRoute({ user, children }: ProtectedRouteProps) {
-    // Si l'utilisateur n'est pas connecté, on le redirige vers l'accueil
-    if (!user) {
-        return <Navigate to="/" replace />;
+export default function ProtectedRoute({ children, adminOnly = false }: Props) {
+    const { user, token } = useAuthStore();
+    const location = useLocation();
+
+    if (!token || !user) {
+        return <Navigate to="/" state={{ from: location }} replace />;
     }
 
-    // Sinon, on affiche le composant enfant (le Dashboard)
-    return children;
+    if (adminOnly && user.role !== 'ADMIN') {
+        return <Navigate to="/mon-compte" replace />;
+    }
+
+    return <>{children}</>;
 }

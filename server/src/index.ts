@@ -1,80 +1,48 @@
-import express, { Request, Response, NextFunction } from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import rateLimit from 'express-rate-limit';
-import * as dotenv from 'dotenv';
-import { PrismaClient } from '@prisma/client';
-
-// Importation des routes
-import authRoutes from './routes/authRoutes';
-import orderRoutes from './routes/orderRoutes';
-import shopRoutes from './routes/shopRoutes';
-import adminRoutes from './routes/adminRoutes'; // Ajouté pour ton back-office
-
-dotenv.config();
-
-// Exportation de l'instance Prisma
-export const prisma = new PrismaClient();
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import router from "./routes";
 
 const app = express();
 
-/* --- 🛡️ COUCHE DE SÉCURITÉ RÉSEAU --- */
-
-// 1. Blindage des headers HTTP (Protection contre XSS, sniffing, etc.)
-app.use(helmet());
-
-// 2. Limitation du trafic (Anti-Brute Force / Anti-DoS)
-const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limite chaque IP à 100 requêtes par fenêtre
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: { error: "Trop de requêtes. L'alambic a besoin de souffler, réessayez dans 15 minutes." }
-});
-app.use('/api/', limiter);
-
-// 3. Configuration CORS restrictive
-app.use(cors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000', // Autorise uniquement ton Front
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    credentials: true
+// 1. SÉCURITÉ HELMET (Assouplie pour le dev local)
+app.use(helmet({
+    crossOriginResourcePolicy: false,
 }));
 
-// 4. Limitation de la taille des données entrantes (Anti-Payload trop lourd)
-app.use(express.json({ limit: '10kb' }));
+// 2. CONFIGURATION CORS (La plus stable)
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
+}));
 
-/* --- 🛣️ ROUTES DE L'API --- */
+app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-app.use('/api', orderRoutes);
-app.use('/api', shopRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Test de santé (Health Check)
-app.get('/api/health', (req: Request, res: Response) => {
-    res.json({
-        status: "success",
-        message: "L'alambic est scellé et opérationnel.",
-        timestamp: new Date().toISOString()
-    });
+// 3. LOGGER (Pour confirmer que le signal passe)
+app.use((req, res, next) => {
+    console.log(`🏺 [${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+    next();
 });
 
-/* --- 🚨 GESTIONNAIRE D'ERREURS GLOBAL --- */
+// 4. ROUTES
+app.use("/api", router);
 
-// Capture toutes les erreurs non gérées pour éviter de faire fuiter des infos techniques
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-    console.error(`[ERREUR SERVEUR] ${new Date().toISOString()}:`, err.stack);
-
-    res.status(500).json({
-        error: "Une erreur interne est survenue. Nos alchimistes sont sur le coup."
-    });
+// Route de test directe
+app.get("/api/health", (req, res) => {
+    res.json({ status: "success", message: "L'alambic répond sur le port 5001 !" });
 });
 
-/* --- 🚀 LANCEMENT --- */
+// 5. GESTION DES ERREURS
+app.use((err: any, req: any, res: any, next: any) => {
+    console.error("❌ Erreur interceptée :", err.message);
+    res.status(500).json({ error: "Erreur interne" });
+});
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+const PORT: number = Number(process.env.PORT) || 5001;
+app.listen(PORT, "0.0.0.0", () => {
     console.log(`--- 🏺 L'Atelier de la Route du Rhum ---`);
-    console.log(`✅ Serveur sécurisé : http://localhost:${PORT}`);
-    console.log(`🛡️  Protection Helmet & Rate-Limit : Activée`);
+    console.log(`✅ Serveur débloqué sur : http://localhost:${PORT}`);
 });

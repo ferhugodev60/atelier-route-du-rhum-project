@@ -1,18 +1,17 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useScroll } from '../../hooks/useScroll.ts';
-import { LoginModal } from '../auth';
+import { useAuthStore } from '../../store/authStore';
+import LoginModal from '../auth/LoginModal';
 
 /**
  * Interface des propriétés de la Navbar.
- * onLogout est délibérément exclu car géré dans le Dashboard.
+ * Nettoyée : user et onLoginSuccess sont désormais gérés via le Store global.
  */
 interface NavbarProps {
     cartCount: number;
     onOpenCart: () => void;
-    user: { name: string } | null;
-    onLoginSuccess: (userData: { name: string }) => void;
 }
 
 const NAV_LINKS = [
@@ -23,8 +22,13 @@ const NAV_LINKS = [
     { name: 'Contact', href: '/#contact', isExternal: false },
 ];
 
-export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess }: NavbarProps) {
+export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
+    const navigate = useNavigate();
     const isScrolled = useScroll(50);
+
+    // Branchement au Store Global
+    const { user } = useAuthStore();
+
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState<'FR' | 'EN'>('FR');
@@ -91,17 +95,17 @@ export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess }: 
                             </AnimatePresence>
                         </button>
 
-                        {/* 4. ACCÈS COMPTE / LOGIN */}
+                        {/* 4. ACCÈS COMPTE / LOGIN - BRANCHÉ SUR LE STORE */}
                         {user ? (
                             <div className="hidden lg:flex items-center gap-6">
-                                <Link
-                                    to="/mon-compte"
+                                <button
+                                    onClick={() => navigate('/mon-compte')}
                                     className={`flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] transition-all rounded-full border border-rhum-gold/30 hover:border-rhum-gold ${
                                         isScrolled ? 'text-white' : 'text-rhum-gold'
                                     }`}
                                 >
-                                    Bonjour {user.name} !
-                                </Link>
+                                    Bonjour {user.firstName} !
+                                </button>
                             </div>
                         ) : (
                             <button
@@ -147,13 +151,12 @@ export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess }: 
                                 ))}
 
                                 {user ? (
-                                    <Link
-                                        to="/mon-compte"
-                                        onClick={() => setIsMobileMenuOpen(false)}
+                                    <button
+                                        onClick={() => { navigate('/mon-compte'); setIsMobileMenuOpen(false); }}
                                         className="w-full max-w-[240px] px-8 py-4 border border-rhum-gold text-rhum-gold text-[10px] font-black uppercase tracking-[0.2em] rounded-full"
                                     >
-                                        Bonjour {user.name}
-                                    </Link>
+                                        Bonjour {user.firstName}
+                                    </button>
                                 ) : (
                                     <button
                                         onClick={() => {setIsLoginModalOpen(true); setIsMobileMenuOpen(false);}}
@@ -168,10 +171,10 @@ export default function Navbar({ cartCount, onOpenCart, user, onLoginSuccess }: 
                 </AnimatePresence>
             </nav>
 
+            {/* MODAL BRANCHÉ SUR LA LOGIQUE GLOBALE */}
             <LoginModal
                 isOpen={isLoginModalOpen}
                 onClose={() => setIsLoginModalOpen(false)}
-                onLoginSuccess={onLoginSuccess}
             />
         </>
     );

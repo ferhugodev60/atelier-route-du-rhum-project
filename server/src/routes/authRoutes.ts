@@ -1,11 +1,15 @@
 import { Router } from 'express';
+// 🏺 On importe précisément les fonctions depuis le contrôleur
 import { register, login } from '../controllers/authController';
-import { validate, registerSchema } from '../middleware/validator';
 
 const router = Router();
 
-// On valide les données AVANT de lancer la fonction register
-router.post('/register', validate(registerSchema), register);
+// On s'assure que 'register' et 'login' existent bien avant de les passer à router
+if (!register || !login) {
+    console.error("❌ ERREUR CRITIQUE : Les fonctions login ou register sont undefined !");
+}
+
+router.post('/register', register);
 router.post('/login', login);
 
 export default router;

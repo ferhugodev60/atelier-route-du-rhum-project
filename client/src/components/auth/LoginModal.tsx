@@ -1,34 +1,48 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom'; // Import du hook de navigation
-import { useLogin } from '../../hooks/useAuth.ts';
+import { useNavigate } from 'react-router-dom';
+import api from '../../api/axiosInstance';
+import { useAuthStore } from '../../store/authStore';
 
 interface LoginModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onLoginSuccess: (userData: { name: string }) => void;
 }
 
-export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginModalProps) {
-    const navigate = useNavigate(); // Initialisation de la navigation
-    const { state, isPending } = useLogin();
-    const [localError, setLocalError] = useState<string | null>(null);
+export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
+    const navigate = useNavigate();
+    const setAuth = useAuthStore((state) => state.setAuth);
 
-    const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // États locaux pour la gestion du formulaire
+    const [isPending, setIsPending] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        setLocalError(null);
+        setError(null);
+        setIsPending(true);
 
         const formData = new FormData(e.currentTarget);
-        const email = formData.get('email') as string;
-        const password = formData.get('password') as string;
+        const email = formData.get('email');
+        const password = formData.get('password');
 
-        // Test des identifiants (hugo@atelier.fr / rhum2026)
-        if (email === "hugo@atelier.fr" && password === "rhum2026") {
-            onLoginSuccess({ name: "Hugo" });
+        try {
+            // 1. Appel à l'API (Endpoint sécurisé par Zod et Bcrypt)
+            const response = await api.post('/auth/login', { email, password });
+
+            // 2. Mise à jour du Store Global (User + JWT)
+            // La persistance est gérée automatiquement par Zustand
+            setAuth(response.data.user, response.data.token);
+
+            // 3. Fermeture et Redirection
             onClose();
-            navigate('/mon-compte'); // REDIRECTION IMMÉDIATE VERS L'ESPACE CLIENT
-        } else {
-            setLocalError("L'Antre reste scellée. Identifiants incorrects.");
+            navigate('/mon-compte');
+        } catch (err: any) {
+            // Extraction de l'erreur renvoyée par ton middleware de sécurité
+            const message = err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès.";
+            setError(message);
+        } finally {
+            setIsPending(false);
         }
     };
 
@@ -40,6 +54,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                     role="dialog"
                     aria-modal="true"
                 >
+                    {/* Overlay avec flou professionnel */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -48,24 +63,27 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                         onClick={onClose}
                     />
 
+                    {/* Conteneur Modal */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="relative bg-[#0a1a14] border border-rhum-gold/20 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto"
                     >
+                        {/* Ligne de design dorée */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
                         <button
                             onClick={onClose}
                             className="absolute top-4 right-5 text-rhum-gold/40 hover:text-white transition-colors text-2xl font-extralight"
+                            aria-label="Fermer"
                         >
                             &times;
                         </button>
 
                         <header className="text-center mb-8 md:mb-12">
                             <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] mt-3 font-bold">
-                                Espace client
+                                Authentification
                             </p>
                             <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight uppercase tracking-tight">
                                 Se connecter
@@ -75,7 +93,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                         <form onSubmit={handleFormSubmit} className="space-y-6">
                             <div className="space-y-2">
                                 <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.3em] text-rhum-gold/50 font-bold ml-1">
-                                    Identifiant
+                                    Identifiant (Email)
                                 </label>
                                 <input
                                     id="email"
@@ -83,7 +101,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                                     type="email"
                                     required
                                     className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-base text-rhum-cream focus:border-rhum-gold outline-none transition-all placeholder:opacity-10"
-                                    placeholder="hugo@atelier.fr"
+                                    placeholder="votre@email.com"
                                 />
                             </div>
 
@@ -109,10 +127,15 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                                 />
                             </div>
 
-                            {(state?.error || localError) && (
-                                <p className="text-red-400 text-[10px] uppercase tracking-wider text-center bg-red-400/5 py-3 border border-red-400/20">
-                                    {state?.error || localError}
-                                </p>
+                            {/* Affichage des erreurs API */}
+                            {error && (
+                                <motion.p
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    className="text-red-400 text-[10px] uppercase tracking-wider text-center bg-red-400/5 py-3 border border-red-400/20"
+                                >
+                                    {error}
+                                </motion.p>
                             )}
 
                             <button
@@ -120,7 +143,7 @@ export default function LoginModal({ isOpen, onClose, onLoginSuccess }: LoginMod
                                 disabled={isPending}
                                 className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white disabled:opacity-50 transition-all shadow-xl active:scale-[0.98] rounded-sm"
                             >
-                                {isPending ? 'Ouverture des scellés...' : "Entrer dans l'Atelier"}
+                                {isPending ? 'Vérification des scellés...' : "Entrer dans l'Atelier"}
                             </button>
                         </form>
 

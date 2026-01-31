@@ -15,7 +15,6 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
 
     return (
         <aside className="w-full lg:w-64 shrink-0 flex flex-col gap-12">
-            {/* NAVIGATION TABS */}
             <nav className="flex lg:flex-col p-1 bg-white/[0.03] lg:bg-transparent rounded-lg lg:rounded-none gap-1 lg:gap-2">
                 {menuItems.map((item) => (
                     <button
@@ -32,7 +31,6 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
                 ))}
             </nav>
 
-            {/* DÉCONNEXION DESKTOP UNIQUEMENT */}
             <button
                 onClick={onLogout}
                 className="hidden lg:flex items-center gap-4 px-6 py-4 text-[10px] uppercase tracking-[0.3em] font-black group transition-all"
@@ -44,7 +42,6 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
     );
 }
 
-// Composant icône pour éviter la répétition
 export function LogoutIcon({ className }: { className?: string }) {
     return (
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={className}>
