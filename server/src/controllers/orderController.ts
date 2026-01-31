@@ -1,24 +1,32 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma'; // Utilisation du dossier lib
+import { prisma } from '../lib/prisma';
 
 /**
  * RÉCUPÉRATION : GET /api/orders
- * Cette fonction alimente ton composant OrderHistory.tsx
+ * Filtre désormais les commandes par l'ID de l'utilisateur connecté
  */
 export const getUserOrders = async (req: Request, res: Response) => {
-    // Dans un vrai flux, on utiliserait : const userId = req.user?.id;
-    // Pour le test, on va récupérer les commandes existantes
+    // On récupère l'ID injecté par le middleware authenticateToken
+    // @ts-ignore
+    const userId = req.user?.userId;
+
+    if (!userId) {
+        return res.status(401).json({ error: "Session non identifiée." });
+    }
+
     try {
+        console.log(`📜 [ORDERS] Lecture des registres pour l'utilisateur : ${userId}`);
+
         const orders = await prisma.order.findMany({
+            where: { userId: userId }, // 🏺 FILTRE CRUCIAL : Uniquement les commandes du user
             include: {
                 items: {
-                    include: { product: true } // Pour récupérer le nom du produit
+                    include: { product: true }
                 }
             },
             orderBy: { createdAt: 'desc' }
         });
 
-        // Formattage pour correspondre à ton interface React
         const formattedOrders = orders.map(order => ({
             id: order.id,
             reference: order.reference,
@@ -33,21 +41,20 @@ export const getUserOrders = async (req: Request, res: Response) => {
 
         res.status(200).json(formattedOrders);
     } catch (error: any) {
-        console.error("🔥 [ERROR GET ORDERS]:", error.message);
-        res.status(500).json({ error: "Impossible de lire le registre des commandes." });
+        console.error("🔥 [ERROR GET_ORDERS]:", error.message);
+        res.status(500).json({ error: "Impossible de récupérer vos commandes." });
     }
 };
 
 /**
  * CRÉATION : POST /api/orders
- * Ta logique de transaction originale corrigée
  */
 export const createOrder = async (req: Request, res: Response) => {
-    // @ts-ignore - userId viendra de ton middleware auth
-    const userId = req.user?.id || req.body.userId;
+    // @ts-ignore
+    const userId = req.user?.userId; // On utilise l'ID du token pour la sécurité
     const { items } = req.body;
 
-    if (!userId) return res.status(401).json({ error: "Non authentifié" });
+    if (!userId) return res.status(401).json({ error: "Non autorisé" });
 
     try {
         const result = await prisma.$transaction(async (tx) => {
@@ -89,7 +96,7 @@ export const createOrder = async (req: Request, res: Response) => {
 
             return await tx.order.create({
                 data: {
-                    userId,
+                    userId, // Liaison automatique à l'auteur de la requête
                     reference: `ORD-${Date.now()}`,
                     total: totalOrderPrice,
                     status: "En préparation",
@@ -98,7 +105,7 @@ export const createOrder = async (req: Request, res: Response) => {
             });
         });
 
-        res.status(201).json({ message: "Commande réussie !", order: result });
+        res.status(201).json({ message: "Commande scellée !", order: result });
     } catch (error: any) {
         res.status(400).json({ error: error.message });
     }

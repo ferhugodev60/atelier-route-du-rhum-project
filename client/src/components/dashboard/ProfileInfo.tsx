@@ -1,49 +1,58 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
-import { UserProfileUpdate } from '../../types/user';
 
-/**
- * Composant de gestion des informations personnelles
- * Utilise les types centralisés pour éviter les erreurs de propriétés manquantes
- */
+// 1. DÉFINITION DU CONTRAT (Interface)
+interface ProfileFieldProps {
+    label: string;
+    value: string;
+    isEditing: boolean;
+    onChange: (v: string) => void; // On précise que 'v' est une string
+    placeholder?: string;
+}
+
 export default function ProfileInfo() {
     const { user, setAuth, token } = useAuthStore();
     const [isEditing, setIsEditing] = useState(false);
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-    // Initialisation de l'état local avec les données du Store
-    const [userData, setUserData] = useState<UserProfileUpdate>({
+    const [formData, setFormData] = useState({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
         email: user?.email || "",
         phone: user?.phone || ""
     });
 
-    /**
-     * Sauvegarde les modifications via l'API et met à jour le Store global
-     */
+    useEffect(() => {
+        if (user) {
+            setFormData({
+                firstName: user.firstName,
+                lastName: user.lastName,
+                email: user.email,
+                phone: user.phone || ""
+            });
+        }
+    }, [user]);
+
     const handleSave = async () => {
         setLoading(true);
         setStatus(null);
 
         try {
-            // Appel à ton endpoint backend sécurisé
-            const response = await api.patch('/users/me', userData);
+            const response = await api.patch('/users/me', formData);
 
-            // Si le serveur renvoie l'utilisateur mis à jour, on l'injecte dans le Store
             if (user && token) {
-                setAuth({ ...user, ...response.data }, token);
+                setAuth(response.data, token);
             }
 
-            setStatus({ type: 'success', msg: "Profil mis à jour avec succès." });
+            setStatus({ type: 'success', msg: "Vos parchemins ont été mis à jour." });
             setIsEditing(false);
         } catch (err: any) {
             setStatus({
                 type: 'error',
-                msg: err.response?.data?.error || "Erreur lors de la synchronisation."
+                msg: err.response?.data?.error || "La plume a glissé. Erreur de synchronisation."
             });
         } finally {
             setLoading(false);
@@ -52,12 +61,10 @@ export default function ProfileInfo() {
 
     return (
         <div className="max-w-2xl mx-auto lg:mx-0">
-            <header className="mb-12 flex justify-between items-start">
+            <header className="mb-12 flex justify-between items-end">
                 <div>
-                    <h2 className="text-2xl lg:text-3xl font-serif text-white tracking-tight">Mon Profil</h2>
-                    <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">
-                        Identifiants pour le retrait à l'Atelier
-                    </p>
+                    <h2 className="text-2xl lg:text-3xl font-serif text-white tracking-tight">Informations Personnelles</h2>
+                    <div className="h-1 w-12 bg-rhum-gold/30 mt-4" />
                 </div>
 
                 <button
@@ -65,110 +72,99 @@ export default function ProfileInfo() {
                         setIsEditing(!isEditing);
                         setStatus(null);
                     }}
-                    className="text-[9px] uppercase tracking-widest text-rhum-gold border border-rhum-gold/20 px-4 py-2 hover:bg-rhum-gold hover:text-rhum-green transition-all font-black rounded-sm"
+                    className={`text-[9px] uppercase tracking-[0.2em] px-6 py-2.5 font-black rounded-sm transition-all border ${
+                        isEditing
+                            ? 'border-red-500/20 text-red-400 hover:bg-red-500/5'
+                            : 'border-rhum-gold/20 text-rhum-gold hover:bg-rhum-gold/5'
+                    }`}
                 >
                     {isEditing ? "Annuler" : "Modifier"}
                 </button>
             </header>
 
-            {/* Grille des informations */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-10 gap-x-12">
-                <ProfileItem
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-16">
+                {/* L'erreur TS7006 disparaît car ProfileField sait maintenant que 'v' est une string */}
+                <ProfileField
                     label="Prénom"
-                    value={userData.firstName}
+                    value={formData.firstName}
                     isEditing={isEditing}
-                    onChange={(val) => setUserData({...userData, firstName: val})}
+                    onChange={(v) => setFormData({...formData, firstName: v})}
                 />
-                <ProfileItem
+                <ProfileField
                     label="Nom"
-                    value={userData.lastName}
+                    value={formData.lastName}
                     isEditing={isEditing}
-                    onChange={(val) => setUserData({...userData, lastName: val})}
+                    onChange={(v) => setFormData({...formData, lastName: v})}
                 />
-                <ProfileItem
-                    label="Adresse Email"
-                    value={userData.email}
+                <ProfileField
+                    label="Email"
+                    value={formData.email}
                     isEditing={isEditing}
-                    onChange={(val) => setUserData({...userData, email: val})}
+                    onChange={(v) => setFormData({...formData, email: v})}
                 />
-                <ProfileItem
+                <ProfileField
                     label="Téléphone"
-                    value={userData.phone}
+                    value={formData.phone}
                     isEditing={isEditing}
-                    onChange={(val) => setUserData({...userData, phone: val})}
+                    onChange={(v) => setFormData({...formData, phone: v})}
+                    placeholder="Ex: 06 12 34 56 78"
                 />
             </div>
 
-            {/* Message de confirmation ou d'erreur */}
-            {status && (
-                <p className={`mt-8 text-[10px] uppercase tracking-widest ${status.type === 'success' ? 'text-rhum-gold' : 'text-red-400'}`}>
-                    {status.msg}
-                </p>
-            )}
-
-            {/* Bouton de validation dynamique */}
             <AnimatePresence>
-                {isEditing && (
+                {(status || isEditing) && (
                     <motion.div
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 10 }}
-                        className="mt-12"
+                        className="mt-12 space-y-6"
                     >
-                        <button
-                            onClick={handleSave}
-                            disabled={loading}
-                            className="w-full py-4 bg-rhum-gold text-rhum-green text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl disabled:opacity-50 rounded-sm"
-                        >
-                            {loading ? "Synchronisation avec l'Atelier..." : "Enregistrer les modifications"}
-                        </button>
+                        {status && (
+                            <p className={`text-[10px] uppercase tracking-widest p-4 border text-center ${
+                                status.type === 'success' ? 'text-rhum-gold border-rhum-gold/20 bg-rhum-gold/5' : 'text-red-400 border-red-400/20 bg-red-400/5'
+                            }`}>
+                                {status.msg}
+                            </p>
+                        )}
+
+                        {isEditing && (
+                            <button
+                                onClick={handleSave}
+                                disabled={loading}
+                                className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl disabled:opacity-50 active:scale-[0.98]"
+                            >
+                                {loading ? "Signature des registres..." : "Enregistrer les modifications"}
+                            </button>
+                        )}
                     </motion.div>
                 )}
             </AnimatePresence>
-
-            {/* Footer informatif */}
-            <div className="mt-16 p-6 border border-white/5 bg-white/[0.01] rounded-sm">
-                <p className="text-[9px] uppercase tracking-widest text-rhum-gold font-black mb-2">Note de sécurité</p>
-                <p className="text-xs text-white/40 italic leading-relaxed">
-                    Ces informations permettent à notre équipe de vérifier votre identité lors du retrait de vos bouteilles. Veillez à ce qu'elles correspondent à votre pièce d'identité.
-                </p>
-            </div>
         </div>
     );
 }
 
-/**
- * Sous-composant pour un champ du profil
- */
-function ProfileItem({
-                         label,
-                         value,
-                         isEditing,
-                         onChange
-                     }: {
-    label: string,
-    value: string,
-    isEditing: boolean,
-    onChange: (val: string) => void
-}) {
+// 2. APPLICATION DE L'INTERFACE AU SOUS-COMPOSANT
+function ProfileField({ label, value, isEditing, onChange, placeholder = "" }: ProfileFieldProps) {
     return (
-        <div className="flex flex-col gap-2 border-b border-white/5 pb-4">
-            <span className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black">
+        <div className="flex flex-col gap-2 border-b border-white/5 pb-4 group">
+            <label className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black group-hover:text-rhum-gold transition-colors">
                 {label}
-            </span>
-            {isEditing ? (
-                <input
-                    type="text"
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    className="bg-transparent text-white font-serif text-lg lg:text-xl tracking-tight outline-none italic border-none p-0 focus:ring-0 w-full"
-                    autoFocus={label === "Prénom"}
-                />
-            ) : (
-                <span className="text-white font-serif text-lg lg:text-xl tracking-tight">
-                    {value || "Non renseigné"}
-                </span>
-            )}
+            </label>
+            <div className="h-8 flex items-center">
+                {isEditing ? (
+                    <input
+                        type="text"
+                        value={value}
+                        placeholder={placeholder}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="w-full bg-transparent text-white font-serif text-lg outline-none italic placeholder:opacity-10"
+                    />
+                ) : (
+                    <span className="text-white font-serif text-lg tracking-wide">
+                        {value || <span className="text-white/10 font-sans text-xs uppercase tracking-widest">Non renseigné</span>}
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
