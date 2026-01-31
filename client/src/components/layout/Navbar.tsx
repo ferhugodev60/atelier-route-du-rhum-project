@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useScroll } from '../../hooks/useScroll.ts';
 import { useAuthStore } from '../../store/authStore';
@@ -16,7 +17,6 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     const location = useLocation();
     const isScrolled = useScroll(50);
 
-    // 🏺 Correction : On dérive isAuthenticated pour éviter TS2339
     const { user, token } = useAuthStore();
     const isAuthenticated = !!user && !!token;
 
@@ -25,8 +25,8 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState<'FR' | 'EN'>('FR');
 
-    const openLogin = () => { setIsRegisterModalOpen(false); setIsLoginModalOpen(true); };
-    const openRegister = () => { setIsLoginModalOpen(false); setIsRegisterModalOpen(true); };
+    const openLogin = () => { setIsRegisterModalOpen(false); setIsLoginModalOpen(true); setIsMobileMenuOpen(false); };
+    const openRegister = () => { setIsLoginModalOpen(false); setIsRegisterModalOpen(true); setIsMobileMenuOpen(false); };
 
     const navLinks = [
         { name: 'L\'Esprit', href: '#about', isAnchor: true },
@@ -73,7 +73,7 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
                             )}
                         </button>
 
-                        {/* AUTHENTIFICATION */}
+                        {/* AUTHENTIFICATION DESKTOP */}
                         {isAuthenticated ? (
                             <button onClick={() => navigate('/mon-compte')} className="hidden lg:flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold/30 hover:border-rhum-gold text-rhum-gold hover:text-white transition-all">
                                 Bonjour {user?.firstName} !
@@ -84,15 +84,70 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
                             </button>
                         )}
 
-                        <button className="lg:hidden text-rhum-gold" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
+                        {/* HAMBURGER TRIGGER */}
+                        <button className="lg:hidden text-rhum-gold p-2 z-50" onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}>
                             <div className="space-y-1.5">
-                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-                                <span className={`block w-6 h-0.5 bg-rhum-gold ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
-                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all duration-300 ${isMobileMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
+                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all duration-300 ${isMobileMenuOpen ? 'opacity-0' : ''}`} />
+                                <span className={`block w-6 h-0.5 bg-rhum-gold transition-all duration-300 ${isMobileMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
                             </div>
                         </button>
                     </div>
                 </div>
+
+                {/* MOBILE MENU OVERLAY */}
+                <AnimatePresence>
+                    {isMobileMenuOpen && (
+                        <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: 'auto' }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="absolute top-full left-0 w-full bg-[#0a1a14] border-t border-white/5 overflow-hidden lg:hidden z-40 shadow-2xl"
+                        >
+                            <div className="flex flex-col p-10 gap-8 text-center items-center">
+                                {navLinks.map((link) => (
+                                    link.isAnchor && location.pathname === "/" ? (
+                                        <a
+                                            key={link.name}
+                                            href={link.href}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="text-rhum-cream text-[11px] uppercase tracking-[0.4em] font-bold hover:text-rhum-gold transition-colors"
+                                        >
+                                            {link.name}
+                                        </a>
+                                    ) : (
+                                        <Link
+                                            key={link.name}
+                                            to={link.href.startsWith('#') ? `/${link.href}` : link.href}
+                                            onClick={() => setIsMobileMenuOpen(false)}
+                                            className="text-rhum-cream text-[11px] uppercase tracking-[0.4em] font-bold hover:text-rhum-gold transition-colors"
+                                        >
+                                            {link.name}
+                                        </Link>
+                                    )
+                                ))}
+
+                                <div className="h-px w-12 bg-rhum-gold/20 my-2" />
+
+                                {isAuthenticated ? (
+                                    <button
+                                        onClick={() => { navigate('/mon-compte'); setIsMobileMenuOpen(false); }}
+                                        className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-black"
+                                    >
+                                        Mon Profil ({user?.firstName})
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={openLogin}
+                                        className="w-full max-w-[240px] px-8 py-4 bg-rhum-gold text-[#0a1a14] text-[10px] font-black uppercase tracking-[0.2em] rounded-sm hover:bg-white transition-colors"
+                                    >
+                                        Connexion
+                                    </button>
+                                )}
+                            </div>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </nav>
 
             <LoginModal isOpen={isLoginModalOpen} onClose={() => setIsLoginModalOpen(false)} onSwitchToRegister={openRegister} />

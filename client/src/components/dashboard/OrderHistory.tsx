@@ -1,9 +1,20 @@
 import { useEffect, useState } from 'react';
 import api from '../../api/axiosInstance';
+import { motion } from 'framer-motion';
 
+// 🏺 Typage précis des relations Prisma
 interface OrderItem {
-    name: string;
+    id: string;
     quantity: number;
+    priceAtPurchase: number;
+    productVolume?: {
+        size: number;
+        unit: string;
+        product: { name: string };
+    };
+    workshop?: {
+        title: string;
+    };
 }
 
 interface Order {
@@ -23,10 +34,11 @@ export default function OrderHistory() {
     useEffect(() => {
         const fetchOrders = async () => {
             try {
+                // Appel à votre route GET /api/orders
                 const response = await api.get('/orders');
                 setOrders(response.data);
             } catch (err: any) {
-                setError("Impossible de récupérer vos grimoires de commande.");
+                setError("Impossible de consulter les registres de l'Atelier.");
             } finally {
                 setLoading(false);
             }
@@ -34,79 +46,83 @@ export default function OrderHistory() {
         fetchOrders();
     }, []);
 
-    if (loading) return <div className="text-rhum-gold/40 animate-pulse uppercase text-[10px] tracking-widest">Lecture des registres...</div>;
-    if (error) return <div className="text-red-400 text-[10px] uppercase tracking-widest">{error}</div>;
+    /**
+     * 🏺 Helper pour formater le nom de l'article selon son type
+     */
+    const getItemName = (item: OrderItem) => {
+        if (item.workshop) return item.workshop.title;
+        if (item.productVolume) {
+            const { product, size, unit } = item.productVolume;
+            return `${product.name} (${size} ${unit})`;
+        }
+        return "Article inconnu";
+    };
+
+    if (loading) return <div className="text-rhum-gold/40 animate-pulse text-[10px] uppercase tracking-widest p-10">Lecture des registres...</div>;
+    if (error) return <div className="text-red-400 text-[10px] uppercase tracking-widest p-10">{error}</div>;
 
     return (
         <div className="space-y-8">
             <header className="mb-8">
-                <h2 className="text-2xl lg:text-3xl font-serif text-white">Historique d'achat</h2>
+                <h2 className="text-2xl lg:text-3xl font-serif text-white uppercase tracking-tight">Historique d'achat</h2>
                 <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">Retrait de bouteille à l'Atelier uniquement</p>
             </header>
 
             {orders.length === 0 ? (
-                <p className="text-white/20 italic text-sm">Aucune commande n'a encore été distillée.</p>
+                <div className="py-20 text-center border border-white/5 bg-white/[0.01]">
+                    <p className="text-white/20 italic text-sm">"Aucune commande n'a encore été distillée."</p>
+                </div>
             ) : (
-                <>
-                    {/* VERSION MOBILE : LISTE DE CARTES */}
-                    <div className="grid grid-cols-1 gap-4 lg:hidden">
-                        {orders.map((order) => (
-                            <div key={order.id} className="bg-white/[0.02] border border-white/5 p-6 space-y-4">
-                                <div className="flex justify-between items-start border-b border-white/5 pb-4">
-                                    <div>
-                                        <p className="text-[10px] text-rhum-gold font-black uppercase tracking-tighter">#{order.reference}</p>
-                                        <p className="text-[10px] text-white/40 uppercase">
-                                            {new Date(order.createdAt).toLocaleDateString('fr-FR')}
-                                        </p>
-                                    </div>
-                                    <span className="text-[8px] px-2 py-1 border border-white/10 text-white/60 uppercase font-black">{order.status}</span>
+                <div className="space-y-6">
+                    {orders.map((order) => (
+                        <motion.div
+                            key={order.id}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="bg-white/[0.02] border border-white/5 p-5 md:p-8 rounded-sm group hover:border-rhum-gold/20 transition-colors"
+                        >
+                            {/* EN-TÊTE DE COMMANDE */}
+                            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-white/5 pb-6 mb-6">
+                                <div>
+                                    <span className="text-[10px] text-rhum-gold font-black uppercase tracking-tighter">Référence</span>
+                                    <p className="text-sm font-mono text-white/90">#{order.reference}</p>
                                 </div>
-                                <div className="space-y-2">
-                                    {order.items.map((item, i) => (
-                                        <p key={i} className="text-xs text-white/80 font-serif italic">
-                                            {item.name} <span className="text-[9px] opacity-30">x{item.quantity}</span>
-                                        </p>
-                                    ))}
+                                <div>
+                                    <span className="text-[10px] text-white/30 uppercase block">Date de scellé</span>
+                                    <p className="text-xs text-white/60">
+                                        {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                    </p>
                                 </div>
-                                <p className="text-lg font-bold text-rhum-gold text-right">{order.total.toFixed(2)}€</p>
+                                <div className="md:text-right">
+                                    <span className={`text-[9px] px-3 py-1 border font-black uppercase tracking-widest ${
+                                        order.status === 'COMPLETED' ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-white/10 text-white/40'
+                                    }`}>
+                                        {order.status}
+                                    </span>
+                                </div>
                             </div>
-                        ))}
-                    </div>
 
-                    {/* VERSION DESKTOP : TABLEAU CLASSIQUE */}
-                    <div className="hidden lg:block overflow-x-auto">
-                        <table className="w-full text-left">
-                            <thead className="border-b border-white/5">
-                            <tr>
-                                <th className="py-5 text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black">Référence</th>
-                                <th className="py-5 text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black">Contenu</th>
-                                <th className="py-5 text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black text-right">Total</th>
-                            </tr>
-                            </thead>
-                            <tbody className="divide-y divide-white/5">
-                            {orders.map((order) => (
-                                <tr key={order.id} className="group hover:bg-white/[0.01] transition-colors">
-                                    <td className="py-6">
-                                        <p className="text-[11px] font-mono text-white/80">#{order.reference}</p>
-                                        <p className="text-[10px] text-white/30 uppercase">
-                                            {new Date(order.createdAt).toLocaleDateString('fr-FR')}
+                            {/* CONTENU */}
+                            <div className="space-y-4 mb-6">
+                                {order.items.map((item) => (
+                                    <div key={item.id} className="flex justify-between items-center">
+                                        <p className="text-sm md:text-base text-white/80 font-serif italic">
+                                            {getItemName(item)}
+                                            <span className="text-[10px] text-white/20 ml-2 not-italic">x{item.quantity}</span>
                                         </p>
-                                    </td>
-                                    <td className="py-6">
-                                        {order.items.map((item, i) => (
-                                            <p key={i} className="text-sm text-white/60 font-serif italic">{item.name} (x{item.quantity})</p>
-                                        ))}
-                                    </td>
-                                    <td className="py-6 text-right">
-                                        <p className="text-sm font-bold text-rhum-gold">{order.total.toFixed(2)}€</p>
-                                        <span className="text-[8px] text-white/40 uppercase tracking-tighter">{order.status}</span>
-                                    </td>
-                                </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </>
+                                        <p className="text-xs text-white/40">{(item.priceAtPurchase * item.quantity).toFixed(2)}€</p>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* TOTAL */}
+                            <div className="flex justify-between items-end pt-4 border-t border-white/5">
+                                <span className="text-[10px] uppercase tracking-[0.3em] text-white/20">Total de la transaction</span>
+                                <p className="text-2xl md:text-3xl font-serif text-rhum-gold">{order.total.toFixed(2)}€</p>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
             )}
         </div>
     );
