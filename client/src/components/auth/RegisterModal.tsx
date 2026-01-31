@@ -143,7 +143,7 @@ export default function RegisterModal({ isOpen, onClose, onSwitchToLogin }: Regi
                                     disabled={isPending}
                                     className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white disabled:opacity-50 transition-all shadow-xl active:scale-[0.98] rounded-sm"
                                 >
-                                    {isPending ? 'Enregistrement...' : "Signer le Registre"}
+                                    {isPending ? 'Enregistrement...' : "Créer un compte"}
                                 </button>
                             </form>
                         )}
