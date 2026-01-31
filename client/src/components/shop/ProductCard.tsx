@@ -58,12 +58,6 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
                         </motion.div>
                     )}
                 </AnimatePresence>
-
-                <div className={`absolute top-2 right-2 z-20 transition-opacity ${showDescription ? 'opacity-0' : 'opacity-100'}`}>
-                    <span className={`text-[8px] uppercase tracking-[0.1em] px-1.5 py-0.5 border backdrop-blur-md font-bold ${currentVolume.stock <= 5 ? 'border-red-500/60 text-red-400 bg-black/60' : 'border-rhum-gold/60 text-rhum-gold bg-black/60'}`}>
-                        {currentVolume.stock <= 0 ? "Épuisé" : currentVolume.stock <= 5 ? "Limité" : "Disponible"}
-                    </span>
-                </div>
             </div>
 
             <div className="flex justify-between items-baseline mb-4 px-1">
