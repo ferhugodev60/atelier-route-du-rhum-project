@@ -15,22 +15,55 @@ model User {
   password        String
   firstName       String
   lastName        String
-  phone           String?
-  role            String   @default("USER") // "USER" ou "ADMIN"
+  role            String   @default("USER")
   conceptionLevel Int      @default(0)
   createdAt       DateTime @default(now())
   orders          Order[]
 }
 
+model Category {
+  id          String    @id @default(uuid())
+  name        String    @unique
+  description String?
+  products    Product[]
+}
+
+// 🏺 Le modèle central pour vos bouteilles
 model Product {
-  id         String      @id @default(cuid())
-  name       String
+  id          String          @id @default(uuid())
+  name        String
+  description String?
+  image       String?
+  categoryId  String
+  category    Category        @relation(fields: [categoryId], references: [id])
+  volumes     ProductVolume[] // 🏺 Relation : un produit a plusieurs formats
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+// 🏺 Les déclinaisons de contenance pour chaque produit
+model ProductVolume {
+  id         String      @id @default(uuid())
+  size       Float // 25, 50, 1...
+  unit       String // "cl" ou "L"
   price      Float
-  category   String
-  volume     Int? // Volume en cl (ex: 20, 50, 70). Optionnel pour les ateliers.
   stock      Int         @default(0)
-  image      String?
+  productId  String
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
   orderItems OrderItem[]
+}
+
+model Workshop {
+  id           String      @id @default(uuid())
+  level        Int         @unique
+  title        String
+  description  String
+  image        String?
+  format       String
+  availability String?
+  quote        String
+  price        Float
+  orderItems   OrderItem[]
 }
 
 model Order {
@@ -45,11 +78,15 @@ model Order {
 }
 
 model OrderItem {
-  id        String   @id @default(cuid())
-  quantity  Int
-  price     Float
-  orderId   String
-  order     Order    @relation(fields: [orderId], references: [id])
-  productId String?
-  product   Product? @relation(fields: [productId], references: [id])
+  id       String @id @default(cuid())
+  quantity Int
+  price    Float
+  orderId  String
+  order    Order  @relation(fields: [orderId], references: [id])
+
+  // L'item pointe maintenant vers le volume spécifique choisi
+  volumeId   String?
+  volume     ProductVolume? @relation(fields: [volumeId], references: [id])
+  workshopId String?
+  workshop   Workshop?      @relation(fields: [workshopId], references: [id])
 }
