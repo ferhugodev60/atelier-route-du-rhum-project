@@ -15,7 +15,7 @@ const SHOP_CATEGORIES = [
     { id: "TOUS", label: "Tous", desc: "Découvrez l'intégralité de nos créations artisanales." },
     { id: "Rhum arrangé", label: "Rhum arrangé", desc: "Bouteilles contenant des fruits entiers. Rempotables à l'infini." },
     { id: "Vrac", label: "Vrac", desc: "Rhum arrangé sans fruits prêt à la consommation." },
-    { id: "Location de Dame-Jeanne", label: "Dame-Jeanne", desc: "Nos formats de prestige disponibles pour vos événements." }
+    { id: "Location de Dame-Jeanne", label: "Location de Dame-Jeanne", desc: "Nos formats de prestige disponibles pour vos événements." }
 ];
 
 export default function ShopFilters({ activeCat, onCatChange, onSortChange }: ShopFiltersProps) {
