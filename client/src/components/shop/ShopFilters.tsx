@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CAT_FRUITE, CAT_VRAC, CAT_DAME_JEANNE } from '../../data/bottles.ts';
 
 interface ShopFiltersProps {
     activeCat: string;
@@ -8,11 +7,15 @@ interface ShopFiltersProps {
     onSortChange: (sort: string) => void;
 }
 
+/**
+ * 🏺 Les IDs correspondent désormais aux noms de catégories en base de données
+ * pour correspondre au filtrage 'p.category.name' de la ShopPage.
+ */
 const SHOP_CATEGORIES = [
     { id: "TOUS", label: "Tous", desc: "Découvrez l'intégralité de nos créations artisanales." },
-    { id: CAT_FRUITE, label: "Rhum arrangé", desc: "Bouteilles contenant des fruits entiers. Rempotables à l'infini." },
-    { id: CAT_VRAC, label: "Vrac", desc: "Rhum arrangé sans fruits prêt à la consommation." },
-    { id: CAT_DAME_JEANNE, label: "Location de Dame-Jeanne", desc: "Nos formats de prestige disponibles pour vos événements." }
+    { id: "Rhum arrangé", label: "Rhum arrangé", desc: "Bouteilles contenant des fruits entiers. Rempotables à l'infini." },
+    { id: "Vrac", label: "Vrac", desc: "Rhum arrangé sans fruits prêt à la consommation." },
+    { id: "Location de Dame-Jeanne", label: "Dame-Jeanne", desc: "Nos formats de prestige disponibles pour vos événements." }
 ];
 
 export default function ShopFilters({ activeCat, onCatChange, onSortChange }: ShopFiltersProps) {
@@ -21,10 +24,10 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
     return (
         <div className="flex flex-col gap-6 mb-8 md:mb-16 border-y border-rhum-gold/10 py-6 md:py-14 md:flex-row md:justify-between md:items-end">
 
-            {/* BLOC COLLECTIONS : Centré sur mobile, aligné à gauche sur desktop */}
+            {/* COLLECTIONS */}
             <div className="flex flex-col gap-4 items-center md:items-start">
                 <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold md:ml-1 text-center">
-                    Collections
+                    Collections de l'Atelier
                 </span>
 
                 <div className="flex flex-wrap justify-center md:justify-start gap-x-6 gap-y-4 md:gap-x-10">
@@ -44,11 +47,11 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
                                 />
                             </button>
 
+                            {/* Info Tooltip */}
                             <div
                                 className="relative flex items-center"
                                 onMouseEnter={() => setHoveredInfo(cat.id)}
                                 onMouseLeave={() => setHoveredInfo(null)}
-                                onClick={() => setHoveredInfo(hoveredInfo === cat.id ? null : cat.id)}
                             >
                                 <span className="cursor-help text-[9px] w-4 h-4 md:w-5 md:h-5 flex items-center justify-center rounded-full border border-rhum-gold/20 text-rhum-gold/30 italic font-serif">i</span>
                                 <AnimatePresence>
@@ -71,16 +74,19 @@ export default function ShopFilters({ activeCat, onCatChange, onSortChange }: Sh
                 </div>
             </div>
 
-            {/* BLOC TRI : Reste réparti sur mobile pour la visibilité */}
+            {/* TRI */}
             <div className="flex items-center justify-between md:flex-col md:items-end gap-3 pt-4 border-t border-white/5 md:border-t-0 md:pt-0">
-                <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold">Trier par</span>
-                <select
-                    onChange={(e) => onSortChange(e.target.value)}
-                    className="bg-transparent text-white/60 text-[10px] uppercase tracking-[0.2em] border-b border-rhum-gold/20 py-1 pr-6 focus:outline-none cursor-pointer appearance-none"
-                >
-                    <option value="asc" className="bg-[#0a1a14]">Prix croissant</option>
-                    <option value="desc" className="bg-[#0a1a14]">Prix décroissant</option>
-                </select>
+                <span className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/30 font-bold">Ordonner par</span>
+                <div className="relative group">
+                    <select
+                        onChange={(e) => onSortChange(e.target.value)}
+                        className="bg-transparent text-white/60 text-[10px] uppercase tracking-[0.2em] border-b border-rhum-gold/20 py-1 pr-8 focus:outline-none cursor-pointer appearance-none hover:text-rhum-gold transition-colors"
+                    >
+                        <option value="asc" className="bg-[#0a1a14]">Prix croissant</option>
+                        <option value="desc" className="bg-[#0a1a14]">Prix décroissant</option>
+                    </select>
+                    <span className="absolute right-0 top-1/2 -translate-y-1/2 text-rhum-gold/30 text-[8px] pointer-events-none">▼</span>
+                </div>
             </div>
         </div>
     );
