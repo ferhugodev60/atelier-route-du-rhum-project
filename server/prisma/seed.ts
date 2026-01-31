@@ -173,6 +173,20 @@ async function main() {
         }
     });
 
+    // USER classique
+    const hashedUserPassword = await bcrypt.hash('rhum2026', 10);
+    await prisma.user.create({
+        data: {
+            email: "test@exemple.com",
+            password: hashedUserPassword,
+            firstName: "Jean",
+            lastName: "Dupont",
+            phone: "0708091011",
+            role: "USER",
+            conceptionLevel: 1
+        }
+    });
+
     console.log("✅ Alambic synchronisé : Catégories avec descriptions et volumes groupés !");
 }
 

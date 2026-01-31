@@ -3,25 +3,22 @@ import { prisma } from '../lib/prisma';
 
 /**
  * RÉCUPÉRATION : GET /api/orders
- * Filtre désormais les commandes par l'ID de l'utilisateur connecté
  */
 export const getUserOrders = async (req: Request, res: Response) => {
-    // On récupère l'ID injecté par le middleware authenticateToken
     // @ts-ignore
     const userId = req.user?.userId;
 
-    if (!userId) {
-        return res.status(401).json({ error: "Session non identifiée." });
-    }
+    if (!userId) return res.status(401).json({ error: "Session non identifiée." });
 
     try {
-        console.log(`📜 [ORDERS] Lecture des registres pour l'utilisateur : ${userId}`);
-
         const orders = await prisma.order.findMany({
-            where: { userId: userId }, // 🏺 FILTRE CRUCIAL : Uniquement les commandes du user
+            where: { userId: userId },
             include: {
                 items: {
-                    include: { product: true }
+                    include: {
+                        workshop: true,
+                        volume: { include: { product: true } }
+                    }
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -34,15 +31,18 @@ export const getUserOrders = async (req: Request, res: Response) => {
             total: order.total,
             status: order.status,
             items: order.items.map((item: any) => ({
-                name: item.product.name,
-                quantity: item.quantity
+                // On affiche soit le titre de l'atelier, soit le nom du produit + volume
+                name: item.workshop
+                    ? item.workshop.title
+                    : `${item.volume.product.name} (${item.volume.size}${item.volume.unit})`,
+                quantity: item.quantity,
+                price: item.price
             }))
         }));
 
         res.status(200).json(formattedOrders);
     } catch (error: any) {
-        console.error("🔥 [ERROR GET_ORDERS]:", error.message);
-        res.status(500).json({ error: "Impossible de récupérer vos commandes." });
+        res.status(500).json({ error: "Impossible de récupérer vos registres de commandes." });
     }
 };
 
@@ -51,62 +51,83 @@ export const getUserOrders = async (req: Request, res: Response) => {
  */
 export const createOrder = async (req: Request, res: Response) => {
     // @ts-ignore
-    const userId = req.user?.userId; // On utilise l'ID du token pour la sécurité
-    const { items } = req.body;
+    const userId = req.user?.userId;
+    const { items } = req.body; // Array de { workshopId?, volumeId?, quantity }
 
-    if (!userId) return res.status(401).json({ error: "Non autorisé" });
+    if (!userId) return res.status(401).json({ error: "Authentification requise." });
 
     try {
         const result = await prisma.$transaction(async (tx) => {
             const user = await tx.user.findUnique({ where: { id: userId } });
-            if (!user) throw new Error("Utilisateur introuvable");
+            if (!user) throw new Error("Compte utilisateur introuvable.");
 
             let totalOrderPrice = 0;
             const orderItemsData = [];
 
             for (const item of items) {
-                const product = await tx.product.findUnique({ where: { id: item.productId } });
-                if (!product) throw new Error(`Produit ${item.productId} introuvable`);
+                // --- CAS 1 : C'EST UN ATELIER ---
+                if (item.workshopId) {
+                    const workshop = await tx.workshop.findUnique({ where: { id: item.workshopId } });
+                    if (!workshop) throw new Error("Atelier introuvable.");
 
-                if (product.category === "Atelier") {
-                    const match = product.name.match(/Niveau (\d+)/);
-                    if (match) {
-                        const levelRequired = parseInt(match[1]);
-                        if (user.conceptionLevel < levelRequired - 1) {
-                            throw new Error(`Niveau ${levelRequired - 1} requis pour cet atelier.`);
+                    // 🏺 SÉCURITÉ : Vérification de la progression
+                    // La formule : Niveau de l'Atelier <= Niveau actuel + 1
+                    if (workshop.level > 0) {
+                        if (user.conceptionLevel < workshop.level - 1) {
+                            throw new Error(`Accès refusé : Vous devez valider le Niveau ${workshop.level - 1} avant de commander le niveau "${workshop.title}".`);
                         }
                     }
-                } else {
-                    if (product.stock < item.quantity) {
-                        throw new Error(`Rupture de stock pour : ${product.name}`);
-                    }
-                    await tx.product.update({
-                        where: { id: product.id },
-                        data: { stock: { decrement: item.quantity } }
+
+                    totalOrderPrice += workshop.price * item.quantity;
+                    orderItemsData.push({
+                        workshopId: workshop.id,
+                        quantity: item.quantity,
+                        price: workshop.price
                     });
                 }
 
-                totalOrderPrice += product.price * item.quantity;
-                orderItemsData.push({
-                    productId: product.id,
-                    quantity: item.quantity,
-                    price: product.price
-                });
+                // --- CAS 2 : C'EST UNE BOUTEILLE (VOLUME) ---
+                else if (item.volumeId) {
+                    const volume = await tx.productVolume.findUnique({
+                        where: { id: item.volumeId },
+                        include: { product: true }
+                    });
+                    if (!volume) throw new Error("Format de produit introuvable.");
+
+                    // Vérification et mise à jour des stocks
+                    if (volume.stock < item.quantity) {
+                        throw new Error(`Rupture de stock pour ${volume.product.name} en format ${volume.size}${volume.unit}.`);
+                    }
+
+                    await tx.productVolume.update({
+                        where: { id: volume.id },
+                        data: { stock: { decrement: item.quantity } }
+                    });
+
+                    totalOrderPrice += volume.price * item.quantity;
+                    orderItemsData.push({
+                        volumeId: volume.id,
+                        quantity: item.quantity,
+                        price: volume.price
+                    });
+                }
             }
 
+            // Création finale de la commande
             return await tx.order.create({
                 data: {
-                    userId, // Liaison automatique à l'auteur de la requête
-                    reference: `ORD-${Date.now()}`,
+                    userId,
+                    reference: `ORD-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
                     total: totalOrderPrice,
-                    status: "En préparation",
+                    status: "EN PRÉPARATION",
                     items: { create: orderItemsData }
                 }
             });
         });
 
-        res.status(201).json({ message: "Commande scellée !", order: result });
+        res.status(201).json({ message: "La commande a été scellée avec succès.", order: result });
     } catch (error: any) {
+        console.error("🔥 [CREATE_ORDER ERROR]:", error.message);
         res.status(400).json({ error: error.message });
     }
 };
