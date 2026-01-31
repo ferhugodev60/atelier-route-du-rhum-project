@@ -59,6 +59,7 @@ model Workshop {
   title        String
   description  String
   image        String?
+  color        String?
   format       String
   availability String?
   quote        String
