@@ -37,7 +37,7 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
                         <span className="text-2xl md:text-4xl font-serif text-rhum-gold leading-none">
                             {workshop.price}€
                         </span>
-                        <span className="text-[8px] uppercase tracking-widest text-rhum-gold/40 mt-1 font-bold">à l'atelier</span>
+                        <span className="text-[8px] uppercase tracking-widest text-rhum-gold/40 mt-1 font-bold">à pré-payer</span>
                     </div>
                 </header>
 
