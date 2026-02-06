@@ -19,10 +19,14 @@ export const registerSchema = z.object({
 export const orderSchema = z.object({
     body: z.object({
         items: z.array(z.object({
-            // 🏺 On accepte soit l'un, soit l'autre
             workshopId: z.string().uuid().optional(),
             volumeId: z.string().uuid().optional(),
-            quantity: z.number().int().positive("La quantité doit être supérieure à 0")
+            quantity: z.number().int().positive("La quantité doit être supérieure à 0"),
+            participants: z.array(z.object({
+                firstName: z.string().min(2, "Prénom trop court"),
+                lastName: z.string().min(2, "Nom trop court"),
+                phone: z.string().min(10, "Numéro de téléphone invalide")
+            })).optional()
         })).min(1, "Le panier ne peut pas être vide")
     })
 });

@@ -1,11 +1,22 @@
-import {Workshop} from "../../../types/workshop.ts";
+import { Workshop } from "../../../types/workshop.ts";
 
 interface WorkshopCardProps {
     workshop: Workshop;
-    onReserve: (item: Workshop) => void;
+    onReserve: (item: any) => void;
 }
 
 export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps) {
+    const handleQuickReserve = () => {
+        // 🏺 On pré-remplit l'objet avec le titre et le niveau 0
+        onReserve({
+            ...workshop,
+            cartId: `discovery-${Date.now()}`,
+            name: workshop.title, // Scelle le nom blanc
+            level: 0,             // Scelle le label Initiation
+            quantity: 1
+        });
+    };
+
     return (
         <article className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/40 shadow-2xl h-full">
             <div className="relative h-48 md:h-64 overflow-hidden">
@@ -26,6 +37,7 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
                         <span className="text-2xl md:text-4xl font-serif text-rhum-gold leading-none">
                             {workshop.price}€
                         </span>
+                        <span className="text-[8px] uppercase tracking-widest text-rhum-gold/40 mt-1 font-bold">à l'atelier</span>
                     </div>
                 </header>
 
@@ -35,7 +47,7 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
 
                 <div className="mt-auto">
                     <button
-                        onClick={() => onReserve(workshop)}
+                        onClick={handleQuickReserve}
                         className="w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.3em] text-[10px] md:text-xs hover:bg-white transition-all shadow-xl rounded-sm"
                     >
                         RÉSERVER DÈS MAINTENANT

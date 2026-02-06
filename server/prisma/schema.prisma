@@ -86,9 +86,19 @@ model OrderItem {
   orderId  String
   order    Order  @relation(fields: [orderId], references: [id])
 
-  // L'item pointe maintenant vers le volume spécifique choisi
-  volumeId   String?
-  volume     ProductVolume? @relation(fields: [volumeId], references: [id])
+  participants Participant[]
+
   workshopId String?
   workshop   Workshop?      @relation(fields: [workshopId], references: [id])
+  volumeId   String?
+  volume     ProductVolume? @relation(fields: [volumeId], references: [id])
+}
+
+model Participant {
+  id          String    @id @default(cuid())
+  firstName   String
+  lastName    String
+  phone       String
+  orderItemId String
+  orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 }

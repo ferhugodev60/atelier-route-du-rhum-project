@@ -15,11 +15,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     const [step, setStep] = useState(1);
     const [numPeople, setNumPeople] = useState(isBusiness ? 25 : 1);
     const [hasValidatedStep1, setHasValidatedStep1] = useState(false);
-
     const [participants, setParticipants] = useState<Participant[]>(() =>
         Array.from({ length: isBusiness ? 25 : 1 }, () => ({ firstName: '', lastName: '', phone: '' }))
     );
-
     const [showLevelAlert, setShowLevelAlert] = useState(false);
 
     const workshopPrice = typeof workshop.price === 'number'
@@ -45,19 +43,23 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         });
     };
 
-    const handlePreConfirm = () => {
-        const finalData = {
-            ...workshop,
-            price: workshopPrice,
-            quantity: Number(numPeople),
-            participants,
-            workshopId: workshop.id
-        };
+    /**
+     * 🏺 SCELLAGE DES DONNÉES
+     * Propagation de l'objet workshop complet (title, level, image)
+     */
+    const getFinalData = () => ({
+        ...workshop,
+        price: workshopPrice,
+        quantity: Number(numPeople),
+        participants,
+        workshopId: workshop.id
+    });
 
+    const handlePreConfirm = () => {
         if (isConceptionWorkshop && !isBusiness) {
             setShowLevelAlert(true);
         } else {
-            onConfirm(finalData);
+            onConfirm(getFinalData());
         }
     };
 
@@ -75,7 +77,6 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
 
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] flex flex-col border border-white/5 shadow-2xl">
 
-                {/* NAVIGATION HAUTE */}
                 <div className="flex border-b border-white/5 bg-black/20">
                     <button onClick={() => setStep(1)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>
                         01. Groupe
@@ -98,22 +99,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                     <button onClick={() => handlePeopleChange(numPeople + 1)} className="text-rhum-gold text-5xl hover:scale-110 transition-transform font-light">+</button>
                                 </div>
 
-                                {/* 🏺 ZONE BOUTONS ÉTAPE 1 */}
                                 <div className="space-y-4">
-                                    <button
-                                        onClick={() => { setHasValidatedStep1(true); setStep(2); }}
-                                        className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all"
-                                    >
-                                        Suivant
-                                    </button>
-
-                                    {/* NOUVEAU BOUTON RETOUR */}
-                                    <button
-                                        onClick={onClose}
-                                        className="w-full py-4 text-white/30 uppercase text-[9px] tracking-[0.3em] font-bold hover:text-white transition-colors"
-                                    >
-                                        Retour
-                                    </button>
+                                    <button onClick={() => { setHasValidatedStep1(true); setStep(2); }} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all">Suivant</button>
+                                    <button onClick={onClose} className="w-full py-4 text-white/30 uppercase text-[9px] tracking-[0.3em] font-bold hover:text-white transition-colors">Retour</button>
                                 </div>
                             </motion.div>
                         ) : (
@@ -132,34 +120,21 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                 </div>
                                 <div className="flex gap-4 sticky bottom-0 bg-[#0a1a14] pt-4">
                                     <button onClick={() => setStep(1)} className="flex-1 py-5 border border-white/10 text-white/40 uppercase text-[9px] tracking-widest font-bold">Retour</button>
-                                    <button
-                                        disabled={!isStep2Valid}
-                                        onClick={handlePreConfirm}
-                                        className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${
-                                            isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'
-                                        }`}
-                                    >
-                                        Sceller la sélection
-                                    </button>
+                                    <button disabled={!isStep2Valid} onClick={handlePreConfirm} className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}>Sceller la sélection</button>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
 
-                {/* ALERTE DE SÉCURITÉ */}
                 <AnimatePresence>
                     {showLevelAlert && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[110] bg-[#0a1a14]/98 backdrop-blur-2xl flex items-center justify-center p-8 text-center">
                             <div className="max-w-sm w-full space-y-10">
-                                <div className="w-16 h-16 border border-rhum-gold/30 rounded-full flex items-center justify-center mx-auto">
-                                    <span className="text-rhum-gold text-2xl font-serif">!</span>
-                                </div>
-                                <p className="text-white font-serif italic text-xl leading-relaxed">
-                                    "Confirmez-vous que tous les participants ont validé les niveaux précédents ?"
-                                </p>
+                                <div className="w-16 h-16 border border-rhum-gold/30 rounded-full flex items-center justify-center mx-auto"><span className="text-rhum-gold text-2xl font-serif">!</span></div>
+                                <p className="text-white font-serif italic text-xl leading-relaxed">"Confirmez-vous que tous les participants ont validé les niveaux précédents ?"</p>
                                 <div className="flex flex-col gap-4">
-                                    <button onClick={() => onConfirm({ ...workshop, price: workshopPrice, quantity: Number(numPeople), participants, workshopId: workshop.id })} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl">Oui, je confirme</button>
+                                    <button onClick={() => onConfirm(getFinalData())} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl">Oui, je confirme</button>
                                     <button onClick={() => setShowLevelAlert(false)} className="text-white/30 uppercase tracking-[0.2em] text-[9px] font-bold hover:text-white transition-colors">Vérifier à nouveau</button>
                                 </div>
                             </div>

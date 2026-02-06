@@ -6,7 +6,7 @@ import ConceptionCard from './ConceptionCard.tsx';
 import ShopBanner from './ShopBanner.tsx';
 import WorkshopModal from "./WorkshopModal.tsx";
 import ReservationModal from "./ReservationModal.tsx";
-import {Workshop} from "../../../types/workshop.ts";
+import { Workshop } from "../../../types/workshop.ts";
 
 interface WorkshopsProps {
     onAddToCart: (item: any, qty: number) => void;
@@ -33,15 +33,15 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     }, []);
 
     const handleConfirmReservation = (data: any) => {
+        // 🏺 On force le titre et le niveau pour l'affichage du panier
         onAddToCart({
-            id: data.id,
-            name: data.title,
-            price: data.price,
-            image: data.image,
-            type: "Atelier",
-            participants: data.participants,
-            workshopId: data.id
+            ...data,
+            cartId: `${data.id || data.workshopId}-${Date.now()}`,
+            name: data.title || data.name,
+            level: data.level,
+            quantity: data.quantity
         }, data.quantity);
+
         setReservationData(null);
     };
 
@@ -55,7 +55,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-xs md:text-sm mb-3 md:mb-4 font-bold">Nos Formules</h2>
-                    <h3 className="text-4xl md:text-6xl font-serif text-white">La Carte de l'Atelier</h3>
+                    <h3 className="text-4xl md:text-6xl font-serif text-white uppercase tracking-tighter">La Carte de l'Atelier</h3>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-12 items-stretch">
@@ -74,7 +74,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                 <div className="mt-20">
                     <div className="flex flex-col items-center text-center mb-10">
                         <span className="text-rhum-gold font-sans tracking-[0.3em] uppercase text-[10px] font-black mb-2">La boutique</span>
-                        <h4 className="text-2xl md:text-4xl font-serif text-white">Retrait à l'Atelier</h4>
+                        <h4 className="text-2xl md:text-4xl font-serif text-white uppercase">Retrait à l'Atelier</h4>
                     </div>
                     <ShopBanner />
                 </div>
