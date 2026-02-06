@@ -1,4 +1,4 @@
-import {Workshop} from "../../../types/workshop.ts";
+import { Workshop } from "../../../types/workshop.ts";
 
 interface ConceptionCardProps {
     workshops: Workshop[];
@@ -15,7 +15,7 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
                 </header>
 
                 <div className="relative">
-                    <div className="absolute left-[15px] md:left-[19px] top-2 bottom-2 w-px bg-rhum-gold/10" />
+                    {/* 🏺 La ligne verticale a été retirée ici pour épurer le design */}
 
                     <ul className="space-y-4 md:space-y-6 relative z-10">
                         {workshops.map((item) => (
@@ -23,7 +23,7 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
                                 <div className="flex items-center gap-4 md:gap-7 min-w-0">
                                     <div
                                         className="w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center border border-rhum-gold/20"
-                                        style={{ backgroundColor: `${item.color}20` }} // Opacité 20%
+                                        style={{ backgroundColor: `${item.color}30` }}
                                     >
                                         <span className="text-rhum-gold font-black text-base md:text-xl">{item.level}</span>
                                     </div>

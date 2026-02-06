@@ -42,7 +42,7 @@ async function main() {
         data: {
             name: "Ananas & Vanille",
             description: "Une macération solaire rempotable à l'infini. Gardez les fruits et complétez avec votre rhum blanc.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
             categoryId: catRhum.id,
             volumes: {
                 create: [
@@ -58,7 +58,7 @@ async function main() {
         data: {
             name: "Mangue & Passion",
             description: "Format Vrac : une infusion intense sans fruits, prête pour une dégustation immédiate.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
             categoryId: catVrac.id,
             volumes: {
                 create: [
@@ -74,7 +74,7 @@ async function main() {
         data: {
             name: "Dame Jeanne (Location)",
             description: "Location d'une dame-jeanne traditionnelle en verre avec son panier d'osier.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
             categoryId: catDame.id,
             volumes: {
                 create: [
@@ -93,7 +93,7 @@ async function main() {
             level: 0,
             title: "L'Atelier Découverte",
             description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBimgI_mFmhWc_9qoKqs0nfK6ftBG24VbNzNQwc6zGMty6NlSEdoNK4J5E6P-eXoOfzp4B6AxYi-RaQIJhwBbOwFVuE0HHw72rc3AZ9dIKyltqYJVWgnaQHA-DmyIVut7ja4Xt2RIMc2U=s680-w680-h510-rw",
             format: "1h30 de dégustation guidée et de partage historique.",
             quote: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
             price: 60.0

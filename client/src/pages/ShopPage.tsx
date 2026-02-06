@@ -72,8 +72,8 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
                     <h1 className="text-3xl md:text-7xl font-serif text-rhum-gold tracking-[0.2em] uppercase mb-4">
                         La BOUTIQUE
                     </h1>
-                    <p className="text-rhum-cream/60 font-sans max-w-xl mx-auto italic text-[11px] md:text-lg">
-                        "Chaque flacon est une promesse de voyage, distillée avec passion dans notre atelier."
+                    <p className="text-rhum-cream/60 font-sans max-w-xl mx-auto text-[11px] md:text-lg mt-10">
+                        Chaque flacon est une promesse de voyage, distillée avec passion dans notre atelier.
                     </p>
                 </header>
 
