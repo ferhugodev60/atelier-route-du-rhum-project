@@ -29,7 +29,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
     const getItemLabel = (item: CartItem) => {
         if (item.workshopId) {
-            // 🏺 Niveau 0 = Initiation, Niveaux 1-4 = Conception
             return typeof item.level === 'number' && item.level > 0
                 ? `CONCEPTION · NIVEAU ${item.level}`
                 : 'INITIATION & DÉGUSTATION';
@@ -90,7 +89,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                         <span className="text-[7px] uppercase tracking-[0.4em] text-rhum-gold/60 mb-1 block font-black italic">
                                                             {getItemLabel(item)}
                                                         </span>
-                                                        {/* 🏺 Affiche le titre exact (nom blanc) */}
                                                         <h4 className="text-white font-serif text-lg leading-tight uppercase tracking-tighter">
                                                             {item.name || "Article sans nom"}
                                                         </h4>
@@ -107,7 +105,8 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                     }
                                                 </p>
                                             </div>
-                                            <p className="text-white/40 font-serif italic text-sm">{(item.price * item.quantity).toFixed(2)}€</p>
+                                            {/* 🏺 Formatage simplifié du prix par item */}
+                                            <p className="text-white/40 font-serif italic text-sm">{item.price * item.quantity}€</p>
                                         </div>
                                     </div>
                                 ))
@@ -123,7 +122,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                 )}
                                 <div className="flex justify-between items-baseline mb-8">
                                     <span className="text-rhum-cream/20 text-[9px] uppercase tracking-[0.4em] font-black">Total de l'Ordre</span>
-                                    <span className="text-3xl font-serif text-rhum-gold">{total.toFixed(2)}€</span>
+                                    <span className="text-3xl font-serif text-rhum-gold">{total}€</span>
                                 </div>
                                 <button
                                     disabled={isSubmitting}
