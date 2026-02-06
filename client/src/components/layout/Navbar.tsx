@@ -29,9 +29,9 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     const openRegister = () => { setIsLoginModalOpen(false); setIsRegisterModalOpen(true); setIsMobileMenuOpen(false); };
 
     const navLinks = [
-        { name: 'L\'Esprit', href: '#about', isAnchor: true },
-        { name: 'Ateliers', href: '#workshops', isAnchor: true },
-        { name: 'La Cave', href: '/boutique', isAnchor: false },
+        { name: 'à propos', href: '#about', isAnchor: true },
+        { name: 'Nos Ateliers', href: '#workshops', isAnchor: true },
+        { name: 'Boutique', href: '/boutique', isAnchor: false },
         { name: 'Contact', href: '#contact', isAnchor: true },
     ];
 

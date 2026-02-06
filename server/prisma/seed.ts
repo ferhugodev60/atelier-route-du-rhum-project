@@ -46,9 +46,9 @@ async function main() {
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 25, unit: "Centilitres", price: 20.0, stock: 10 },
-                    { size: 50, unit: "Centilitres", price: 39.0, stock: 15 },
-                    { size: 1, unit: "Litre", price: 75.0, stock: 5 }
+                    { size: 25, unit: " Centilitres", price: 20.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 15 },
+                    { size: 1, unit: " Litre", price: 75.0, stock: 5 }
                 ]
             }
         }
@@ -62,9 +62,9 @@ async function main() {
             categoryId: catVrac.id,
             volumes: {
                 create: [
-                    { size: 33, unit: "Centilitres", price: 25.0, stock: 10 },
-                    { size: 70, unit: "Centilitres", price: 65.0, stock: 15 },
-                    { size: 1, unit: "Litre", price: 75.0, stock: 5 }
+                    { size: 33, unit: " Centilitres", price: 25.0, stock: 10 },
+                    { size: 70, unit: " Centilitres", price: 65.0, stock: 15 },
+                    { size: 1, unit: " Litre", price: 75.0, stock: 5 }
                 ]
             }
         }
@@ -78,8 +78,8 @@ async function main() {
             categoryId: catDame.id,
             volumes: {
                 create: [
-                    { size: 3, unit: "Litres", price: 150.0, stock: 10 },
-                    { size: 6, unit: "Litres", price: 300.0, stock: 10 }
+                    { size: 3, unit: " Litres", price: 150.0, stock: 10 },
+                    { size: 6, unit: " Litres", price: 300.0, stock: 10 }
                 ]
             }
         }
@@ -92,10 +92,10 @@ async function main() {
         data: {
             level: 0,
             title: "L'Atelier Découverte",
-            description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.\"",
+            description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
             format: "1h30 de dégustation guidée et de partage historique.",
-            quote: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.\"",
+            quote: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
             price: 60.0
         }
     });
@@ -104,7 +104,7 @@ async function main() {
     await prisma.workshop.create({
         data: {
             level: 1,
-            title: "Niveau 1 : L'Atelier Fruits",
+            title: "L'Atelier Fruits",
             description: "Maitrise des acides de fruits",
             color: "#1b6319",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -119,7 +119,7 @@ async function main() {
     await prisma.workshop.create({
         data: {
             level: 2,
-            title: "Niveau 2 : L'Atelier Épices",
+            title: "L'Atelier Épices",
             description: "Le caractère et la structure de votre nectar",
             color: "#be5aff",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -134,7 +134,7 @@ async function main() {
     await prisma.workshop.create({
         data: {
             level: 3,
-            title: "Niveau 3 : L'Atelier Plantes",
+            title: "L'Atelier Plantes",
             description: "L'exploration botanique et florale",
             color: "#0074D9",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
@@ -149,7 +149,7 @@ async function main() {
     await prisma.workshop.create({
         data: {
             level: 4,
-            title: "Niveau 4 : L'Atelier Mixologie",
+            title: "L'Atelier Mixologie",
             description: "L'art ultime du service et du cocktail.",
             color: "#500101",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
