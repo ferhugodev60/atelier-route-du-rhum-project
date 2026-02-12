@@ -59,7 +59,7 @@ export default function OrderHistory() {
     return (
         <div className="space-y-8">
             <header className="mb-8">
-                <h2 className="text-2xl lg:text-3xl font-serif text-white uppercase tracking-tight">Historique d'achat</h2>
+                <h2 className="text-2xl lg:text-3xl font-serif text-white">Historique d'achat</h2>
                 <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">
                     Retrait de bouteilles à l'Atelier uniquement
                 </p>

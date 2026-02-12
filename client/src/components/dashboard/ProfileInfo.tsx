@@ -3,13 +3,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 
-// 1. DÉFINITION DU CONTRAT (Interface)
 interface ProfileFieldProps {
     label: string;
     value: string;
     isEditing: boolean;
-    onChange: (v: string) => void; // On précise que 'v' est une string
+    onChange: (v: string) => void;
     placeholder?: string;
+    readOnly?: boolean; // Ajout d'une propriété pour bloquer l'édition
 }
 
 export default function ProfileInfo() {
@@ -41,18 +41,19 @@ export default function ProfileInfo() {
         setStatus(null);
 
         try {
+            // On envoie les données au serveur (l'e-mail est ignoré par le backend par sécurité)
             const response = await api.patch('/users/me', formData);
 
             if (user && token) {
                 setAuth(response.data, token);
             }
 
-            setStatus({ type: 'success', msg: "Vos parchemins ont été mis à jour." });
+            setStatus({ type: 'success', msg: "Vos informations ont été mises à jour avec succès." });
             setIsEditing(false);
         } catch (err: any) {
             setStatus({
                 type: 'error',
-                msg: err.response?.data?.error || "La plume a glissé. Erreur de synchronisation."
+                msg: err.response?.data?.error || "Une erreur est survenue lors de la mise à jour des données."
             });
         } finally {
             setLoading(false);
@@ -78,12 +79,11 @@ export default function ProfileInfo() {
                             : 'border-rhum-gold/20 text-rhum-gold hover:bg-rhum-gold/5'
                     }`}
                 >
-                    {isEditing ? "Annuler" : "Modifier"}
+                    {isEditing ? "Annuler" : "Modifier le profil"}
                 </button>
             </header>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-16">
-                {/* L'erreur TS7006 disparaît car ProfileField sait maintenant que 'v' est une string */}
                 <ProfileField
                     label="Prénom"
                     value={formData.firstName}
@@ -97,10 +97,11 @@ export default function ProfileInfo() {
                     onChange={(v) => setFormData({...formData, lastName: v})}
                 />
                 <ProfileField
-                    label="Email"
+                    label="Adresse Email"
                     value={formData.email}
                     isEditing={isEditing}
-                    onChange={(v) => setFormData({...formData, email: v})}
+                    readOnly={true} // L'email ne peut jamais être modifié ici
+                    onChange={() => {}}
                 />
                 <ProfileField
                     label="Téléphone"
@@ -133,7 +134,7 @@ export default function ProfileInfo() {
                                 disabled={loading}
                                 className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl disabled:opacity-50 active:scale-[0.98]"
                             >
-                                {loading ? "Signature des registres..." : "Enregistrer les modifications"}
+                                {loading ? "Mise à jour en cours..." : "Enregistrer les modifications"}
                             </button>
                         )}
                     </motion.div>
@@ -143,15 +144,17 @@ export default function ProfileInfo() {
     );
 }
 
-// 2. APPLICATION DE L'INTERFACE AU SOUS-COMPOSANT
-function ProfileField({ label, value, isEditing, onChange, placeholder = "" }: ProfileFieldProps) {
+function ProfileField({ label, value, isEditing, onChange, placeholder = "", readOnly = false }: ProfileFieldProps) {
+    // Si le champ est en lecture seule, on force l'affichage du texte même en mode édition
+    const shouldShowInput = isEditing && !readOnly;
+
     return (
         <div className="flex flex-col gap-2 border-b border-white/5 pb-4 group">
             <label className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black group-hover:text-rhum-gold transition-colors">
                 {label}
             </label>
             <div className="h-8 flex items-center">
-                {isEditing ? (
+                {shouldShowInput ? (
                     <input
                         type="text"
                         value={value}
@@ -160,7 +163,7 @@ function ProfileField({ label, value, isEditing, onChange, placeholder = "" }: P
                         className="w-full bg-transparent text-white font-serif text-lg outline-none italic placeholder:opacity-10"
                     />
                 ) : (
-                    <span className="text-white font-serif text-lg tracking-wide">
+                    <span className={`font-serif text-lg tracking-wide ${readOnly ? 'text-white/40' : 'text-white'}`}>
                         {value || <span className="text-white/10 font-sans text-xs uppercase tracking-widest">Non renseigné</span>}
                     </span>
                 )}
