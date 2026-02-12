@@ -93,7 +93,6 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                         alt={detail.title}
                         className={`w-full h-full object-cover opacity-60 transition-all duration-700 ${isLocked ? 'grayscale scale-105' : 'group-hover:scale-110'}`}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#0a1a14] via-transparent to-transparent" />
                 </div>
 
                 <div className="flex-1 flex flex-col bg-[#0a1a14]">
