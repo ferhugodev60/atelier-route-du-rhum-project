@@ -24,7 +24,7 @@ export default function ShopBanner() {
 
             <div className="relative z-20 p-8 md:p-16 max-w-4xl">
                 <header>
-                    <h4 className="font-serif text-2xl md:text-4xl mb-6 italic text-rhum-gold uppercase tracking-[0.3em] drop-shadow-md">
+                    <h4 className="font-serif text-2xl md:text-4xl mb-6 text-rhum-gold uppercase tracking-[0.3em] drop-shadow-md">
                         ACHAT DE BOUTEILLES
                     </h4>
                     <div className="w-16 md:w-24 h-px bg-rhum-gold/40 mx-auto mb-8" />

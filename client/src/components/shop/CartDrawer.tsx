@@ -24,23 +24,25 @@ interface CartDrawerProps {
 export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDrawerProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderError, setOrderError] = useState<string | null>(null);
+    const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
     const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
     const getItemLabel = (item: CartItem) => {
         if (item.workshopId) {
             return typeof item.level === 'number' && item.level > 0
-                ? `CONCEPTION · NIVEAU ${item.level}`
+                ? `FORMATION · NIVEAU ${item.level}`
                 : 'INITIATION & DÉGUSTATION';
         }
-        return 'ÉLIXIR DE LA CAVE';
+        return 'SÉLECTION CAVE';
     };
 
     /**
-     * 🏺 DÉCLENCHEMENT DU PAIEMENT STRIPE
-     * Utilise la redirection par URL transmise par le backend.
+     * INITIALISATION DU PROCESSUS DE PAIEMENT
      */
     const handleCheckout = async () => {
+        if (!hasAcceptedTerms || isSubmitting) return;
+
         setIsSubmitting(true);
         setOrderError(null);
 
@@ -63,14 +65,14 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
             if (url) {
                 window.location.href = url;
             } else {
-                throw new Error("L'alambic n'a pas pu générer l'URL de paiement.");
+                throw new Error("Le serveur n'a pas pu générer l'URL de paiement.");
             }
 
         } catch (error: any) {
-            console.error("Erreur de paiement :", error);
+            console.error("Erreur technique de paiement :", error);
             setOrderError(
                 error.response?.data?.error ||
-                "L'alambic de paiement a échoué. Veuillez réessayer."
+                "Une erreur est survenue lors de l'initialisation du paiement. Veuillez réessayer."
             );
         } finally {
             setIsSubmitting(false);
@@ -93,7 +95,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-                                    <p className="text-rhum-cream italic font-serif text-lg">"Votre sélection est vide..."</p>
+                                    <p className="text-rhum-cream italic font-serif text-lg">Votre panier est actuellement vide.</p>
                                 </div>
                             ) : (
                                 items.map((item) => (
@@ -109,7 +111,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                             {getItemLabel(item)}
                                                         </span>
                                                         <h4 className="text-white font-serif text-lg leading-tight uppercase tracking-tighter">
-                                                            {item.name || "Article sans nom"}
+                                                            {item.name || "Article"}
                                                         </h4>
                                                     </div>
                                                     <button onClick={() => onRemove(item.cartId)} className="text-white/10 hover:text-red-400 transition-colors p-1">
@@ -119,8 +121,8 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                                                 <p className="text-rhum-gold/60 text-[9px] uppercase tracking-[0.2em] mt-2 font-bold italic">
                                                     {item.workshopId
-                                                        ? `${item.participants?.length || item.quantity} Voyageur(s)`
-                                                        : `Qté : ${item.quantity}`
+                                                        ? `${item.participants?.length || item.quantity} Participant(s)`
+                                                        : `Quantité : ${item.quantity}`
                                                     }
                                                 </p>
                                             </div>
@@ -133,24 +135,40 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                         {items.length > 0 && (
                             <div className="p-8 border-t border-rhum-gold/10 bg-black/40">
-                                {/* 🏺 Correction de la variable ici : orderError au lieu de error */}
                                 {orderError && (
                                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-[9px] uppercase tracking-wider text-center mb-6 bg-red-400/5 py-3 border border-red-400/20 px-4">
                                         {orderError}
                                     </motion.p>
                                 )}
+
+                                {/* CASE À COCHER CGV ALIGNÉE */}
+                                <div
+                                    className="flex items-center gap-3 mb-8 group cursor-pointer"
+                                    onClick={() => setHasAcceptedTerms(!hasAcceptedTerms)}
+                                >
+                                    <div className={`w-4 h-4 border flex-shrink-0 transition-colors flex items-center justify-center ${hasAcceptedTerms ? 'bg-rhum-gold border-rhum-gold' : 'border-white/20 bg-white/5'}`}>
+                                        {hasAcceptedTerms && <span className="text-[10px] text-rhum-green font-black">✓</span>}
+                                    </div>
+                                    <label className="text-[10px] text-white/40 uppercase tracking-widest leading-none pointer-events-none">
+                                        J'ai lu et j'accepte les <button className="text-rhum-gold underline hover:text-white transition-colors">Conditions Générales de Vente</button>
+                                    </label>
+                                </div>
+
                                 <div className="flex justify-between items-baseline mb-8">
-                                    <span className="text-rhum-cream/20 text-[9px] uppercase tracking-[0.4em] font-black">Total de l'Ordre</span>
+                                    <span className="text-rhum-cream/20 text-[9px] uppercase tracking-[0.4em] font-black">Total de la commande</span>
                                     <span className="text-3xl font-serif text-rhum-gold">{total}€</span>
                                 </div>
+
                                 <button
-                                    disabled={isSubmitting}
+                                    disabled={isSubmitting || !hasAcceptedTerms}
                                     onClick={handleCheckout}
                                     className={`w-full py-5 font-black uppercase tracking-[0.4em] text-[10px] transition-all rounded-sm shadow-2xl ${
-                                        isSubmitting ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-rhum-gold text-rhum-green hover:bg-white active:scale-[0.98]'
+                                        (isSubmitting || !hasAcceptedTerms)
+                                            ? 'bg-white/5 text-white/20 cursor-not-allowed'
+                                            : 'bg-rhum-gold text-rhum-green hover:bg-white active:scale-[0.98]'
                                     }`}
                                 >
-                                    {isSubmitting ? 'SCELLAGE DU PAIEMENT...' : 'CONFIRMER ET PAYER'}
+                                    {isSubmitting ? 'Traitement en cours...' : 'Confirmer et payer'}
                                 </button>
                             </div>
                         )}

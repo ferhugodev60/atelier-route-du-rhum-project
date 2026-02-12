@@ -6,11 +6,13 @@ export default function PaymentError() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isVisible, setIsVisible] = useState(false);
 
+    // Détection du paramètre d'annulation transmis par Stripe
     const isCancelled = searchParams.get('payment_cancelled') === 'true';
 
     useEffect(() => {
         if (isCancelled) {
             setIsVisible(true);
+            // Fermeture automatique après 8 secondes
             const timer = setTimeout(() => handleClose(), 8000);
             return () => clearTimeout(timer);
         }
@@ -18,6 +20,7 @@ export default function PaymentError() {
 
     const handleClose = () => {
         setIsVisible(false);
+        // Nettoyage de l'URL pour éviter la répétition du message
         searchParams.delete('payment_cancelled');
         setSearchParams(searchParams);
     };
@@ -32,22 +35,24 @@ export default function PaymentError() {
                     className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[200] w-full max-w-md px-4"
                 >
                     <div className="bg-[#0a1a14] border border-red-900/50 p-6 shadow-2xl flex items-center gap-6 backdrop-blur-xl">
+                        {/* Icône d'avertissement */}
                         <div className="flex-shrink-0 w-12 h-12 border border-red-500/20 rounded-full flex items-center justify-center text-red-500 text-xl font-serif">
                             !
                         </div>
 
                         <div className="flex-1">
                             <p className="text-[10px] uppercase tracking-[0.3em] text-red-400 font-black mb-1">
-                                Transaction Interrompue
+                                Paiement Annulé
                             </p>
                             <p className="text-white/60 font-serif italic text-sm">
-                                "L'alambic n'a pas reçu votre signature. Votre sélection est toujours en attente."
+                                La transaction a été interrompue. Votre panier a été conservé pour vous permettre de finaliser votre commande ultérieurement.
                             </p>
                         </div>
 
                         <button
                             onClick={handleClose}
                             className="text-white/20 hover:text-white transition-colors text-xl"
+                            aria-label="Fermer la notification"
                         >
                             &times;
                         </button>
