@@ -6,7 +6,9 @@ import CartDrawer from './components/shop/CartDrawer.tsx';
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 import CustomerDashboard from "./pages/CustomerDashboard.tsx";
 import LoginModal from './components/auth/LoginModal';
-import RegisterModal from './components/auth/RegisterModal'; // 🏺 Import scellé
+import RegisterModal from './components/auth/RegisterModal';
+import PaymentSuccess from "./components/shop/PaymentSuccess.tsx";
+import PaymentError from "./components/shop/PaymentError.tsx"; // 🏺 Import scellé
 
 const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 
@@ -89,6 +91,8 @@ export default function App() {
                 {/* 🏺 LES DEUX VERROUS D'ACCÈS */}
                 <LoginModal />
                 <RegisterModal />
+                <PaymentSuccess />
+                <PaymentError />
 
                 <CartDrawer
                     isOpen={isCartOpen}

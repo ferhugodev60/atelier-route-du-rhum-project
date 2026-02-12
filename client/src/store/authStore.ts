@@ -1,20 +1,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { User } from '../types/user';
+import api from '../api/axiosInstance.ts'; // 🏺 Import indispensable pour l'appel API
 
 interface AuthState {
     user: User | null;
     token: string | null;
-    // 🏺 États pour piloter l'affichage des modales
     isLoginOpen: boolean;
     isRegisterOpen: boolean;
 
+    // Actions existantes
     setAuth: (user: User, token: string) => void;
     logout: () => void;
-
-    // 🏺 Actions pour ouvrir/fermer les modales
     setLoginOpen: (open: boolean) => void;
     setRegisterOpen: (open: boolean) => void;
+
+    // 🏺 Nouvelle action : Synchronisation de l'alchimiste
+    checkAuth: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,7 +27,6 @@ export const useAuthStore = create<AuthState>()(
             isLoginOpen: false,
             isRegisterOpen: false,
 
-            // La connexion ferme automatiquement les modales
             setAuth: (user, token) => set({
                 user,
                 token,
@@ -33,7 +34,10 @@ export const useAuthStore = create<AuthState>()(
                 isRegisterOpen: false
             }),
 
-            logout: () => set({ user: null, token: null }),
+            logout: () => {
+                localStorage.removeItem('rhum-atlier-auth');
+                set({ user: null, token: null });
+            },
 
             setLoginOpen: (open) => set({
                 isLoginOpen: open,
@@ -44,6 +48,28 @@ export const useAuthStore = create<AuthState>()(
                 isRegisterOpen: open,
                 isLoginOpen: false
             }),
+
+            /**
+             * 🏺 SYNCHRONISATION
+             * Récupère les données fraîches de l'utilisateur (niveau, profil, etc.)
+             */
+            checkAuth: async () => {
+                try {
+                    // On utilise le préfixe défini dans votre index.ts : /api/users/me
+                    const response = await api.get('/users/me');
+                    if (response.data) {
+                        set({
+                            user: response.data,
+                            isAuthenticated: true // Si vous avez ce flag, sinon retirez
+                        } as any);
+                        console.log("🏺 Profil de l'alchimiste synchronisé.");
+                    }
+                } catch (error) {
+                    console.error("❌ Échec de la synchronisation de l'identité.");
+                    // En cas d'erreur 401, on déconnecte proprement
+                    set({ user: null, token: null });
+                }
+            },
         }),
         {
             name: 'rhum-atlier-auth',
