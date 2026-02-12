@@ -2,19 +2,12 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axiosInstance';
 import { motion } from 'framer-motion';
 
-// 🏺 Typage précis des relations Prisma
+// 🏺 Alignement sur le formatage du Backend (orderController.ts)
 interface OrderItem {
-    id: string;
+    name: string;      // Le backend combine déjà titre/volume/unité
     quantity: number;
-    priceAtPurchase: number;
-    productVolume?: {
-        size: number;
-        unit: string;
-        product: { name: string };
-    };
-    workshop?: {
-        title: string;
-    };
+    price: number;
+    participants: string[]; // Noms des voyageurs pour les ateliers
 }
 
 interface Order {
@@ -47,15 +40,17 @@ export default function OrderHistory() {
     }, []);
 
     /**
-     * 🏺 Helper pour formater le nom de l'article selon son type
+     * 🏺 Helper pour le style des statuts
      */
-    const getItemName = (item: OrderItem) => {
-        if (item.workshop) return item.workshop.title;
-        if (item.productVolume) {
-            const { product, size, unit } = item.productVolume;
-            return `${product.name} (${size} ${unit})`;
+    const getStatusStyle = (status: string) => {
+        switch (status) {
+            case 'PAYÉ':
+                return 'border-green-500/30 text-green-400 bg-green-500/5';
+            case 'EN PRÉPARATION':
+                return 'border-rhum-gold/30 text-rhum-gold bg-rhum-gold/5';
+            default:
+                return 'border-white/10 text-white/40';
         }
-        return "Article inconnu";
     };
 
     if (loading) return <div className="text-rhum-gold/40 animate-pulse text-[10px] uppercase tracking-widest p-10">Lecture des registres...</div>;
@@ -65,7 +60,9 @@ export default function OrderHistory() {
         <div className="space-y-8">
             <header className="mb-8">
                 <h2 className="text-2xl lg:text-3xl font-serif text-white uppercase tracking-tight">Historique d'achat</h2>
-                <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold">Retrait de bouteille à l'Atelier uniquement</p>
+                <p className="text-rhum-gold/40 text-[10px] uppercase tracking-[0.3em] mt-2 font-bold italic">
+                    Retrait de flacon à l'Atelier uniquement
+                </p>
             </header>
 
             {orders.length === 0 ? (
@@ -94,23 +91,33 @@ export default function OrderHistory() {
                                     </p>
                                 </div>
                                 <div className="md:text-right">
-                                    <span className={`text-[9px] px-3 py-1 border font-black uppercase tracking-widest ${
-                                        order.status === 'COMPLETED' ? 'border-green-500/30 text-green-400 bg-green-500/5' : 'border-white/10 text-white/40'
-                                    }`}>
+                                    <span className={`text-[9px] px-3 py-1 border font-black uppercase tracking-widest ${getStatusStyle(order.status)}`}>
                                         {order.status}
                                     </span>
                                 </div>
                             </div>
 
                             {/* CONTENU */}
-                            <div className="space-y-4 mb-6">
-                                {order.items.map((item) => (
-                                    <div key={item.id} className="flex justify-between items-center">
-                                        <p className="text-sm md:text-base text-white/80 font-serif italic">
-                                            {getItemName(item)}
-                                            <span className="text-[10px] text-white/20 ml-2 not-italic">x{item.quantity}</span>
-                                        </p>
-                                        <p className="text-xs text-white/40">{(item.priceAtPurchase * item.quantity).toFixed(2)}€</p>
+                            <div className="space-y-6 mb-6">
+                                {order.items.map((item, index) => (
+                                    <div key={index} className="space-y-2">
+                                        <div className="flex justify-between items-center">
+                                            <p className="text-sm md:text-base text-white/80 font-serif italic">
+                                                {item.name}
+                                                <span className="text-[10px] text-white/20 ml-2 not-italic">x{item.quantity}</span>
+                                            </p>
+                                            <p className="text-xs text-white/40">{(item.price * item.quantity).toFixed(2)}€</p>
+                                        </div>
+
+                                        {/* 🏺 Affichage des participants si atelier */}
+                                        {item.participants.length > 0 && (
+                                            <div className="pl-4 border-l border-rhum-gold/10">
+                                                <p className="text-[8px] uppercase tracking-widest text-rhum-gold/40 mb-1">Voyageurs enregistrés :</p>
+                                                <p className="text-[10px] text-white/30 italic">
+                                                    {item.participants.join(', ')}
+                                                </p>
+                                            </div>
+                                        )}
                                     </div>
                                 ))}
                             </div>
