@@ -19,6 +19,14 @@ app.use(cors({
     allowedHeaders: ["Content-Type", "Authorization"]
 }));
 
+/**
+ * 🏺 WEBHOOK STRIPE (IMPORTANT)
+ * Cette ligne doit impérativement être placée AVANT express.json().
+ * Elle intercepte les signaux de Stripe en format brut pour la vérification.
+ */
+app.use('/api/checkout/webhook', express.raw({ type: 'application/json' }));
+
+// Middleware pour parser le JSON pour toutes les autres routes
 app.use(express.json());
 
 // 3. LOGGER (Pour confirmer que le signal passe)

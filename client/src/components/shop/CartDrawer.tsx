@@ -36,23 +36,42 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
         return 'ÉLIXIR DE LA CAVE';
     };
 
+    /**
+     * 🏺 DÉCLENCHEMENT DU PAIEMENT STRIPE
+     * Utilise la redirection par URL transmise par le backend.
+     */
     const handleCheckout = async () => {
         setIsSubmitting(true);
         setOrderError(null);
-        try {
-            const formattedItems = items.map(item => ({
-                workshopId: item.workshopId,
-                volumeId: item.volumeId,
-                quantity: item.quantity,
-                participants: item.participants
-            }));
 
-            const response = await api.post('/orders', { items: formattedItems });
-            if (response.status === 201) {
-                window.location.href = "/mon-compte?order_success=true";
+        try {
+            const response = await api.post('/checkout/create-session', {
+                items: items.map(item => ({
+                    cartId: item.cartId,
+                    workshopId: item.workshopId,
+                    volumeId: item.volumeId,
+                    name: item.name,
+                    price: item.price,
+                    quantity: item.quantity,
+                    image: item.image,
+                    participants: item.participants
+                }))
+            });
+
+            const { url } = response.data;
+
+            if (url) {
+                window.location.href = url;
+            } else {
+                throw new Error("L'alambic n'a pas pu générer l'URL de paiement.");
             }
+
         } catch (error: any) {
-            setOrderError(error.response?.data?.error || "L'alambic a rencontré un problème.");
+            console.error("Erreur de paiement :", error);
+            setOrderError(
+                error.response?.data?.error ||
+                "L'alambic de paiement a échoué. Veuillez réessayer."
+            );
         } finally {
             setIsSubmitting(false);
         }
@@ -105,7 +124,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                     }
                                                 </p>
                                             </div>
-                                            {/* 🏺 Formatage simplifié du prix par item */}
                                             <p className="text-white/40 font-serif italic text-sm">{item.price * item.quantity}€</p>
                                         </div>
                                     </div>
@@ -115,8 +133,9 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                         {items.length > 0 && (
                             <div className="p-8 border-t border-rhum-gold/10 bg-black/40">
+                                {/* 🏺 Correction de la variable ici : orderError au lieu de error */}
                                 {orderError && (
-                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-[9px] uppercase tracking-widest text-center mb-6 bg-red-400/5 py-3 border border-red-400/20 px-4">
+                                    <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-red-400 text-[9px] uppercase tracking-wider text-center mb-6 bg-red-400/5 py-3 border border-red-400/20 px-4">
                                         {orderError}
                                     </motion.p>
                                 )}
@@ -131,7 +150,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         isSubmitting ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-rhum-gold text-rhum-green hover:bg-white active:scale-[0.98]'
                                     }`}
                                 >
-                                    {isSubmitting ? 'SCELLAGE DU REGISTRE...' : 'CONFIRMER LA COMMANDE'}
+                                    {isSubmitting ? 'SCELLAGE DU PAIEMENT...' : 'CONFIRMER ET PAYER'}
                                 </button>
                             </div>
                         )}
