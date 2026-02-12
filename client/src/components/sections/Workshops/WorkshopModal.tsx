@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
-import { Link } from 'react-router-dom'; // 🏺 Pour la redirection vers la connexion
 import { Workshop } from "../../../types/workshop.ts";
 import { useAuthStore } from "../../../store/authStore";
 
@@ -12,7 +11,7 @@ interface WorkshopModalProps {
 }
 
 export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopModalProps) {
-    const { user } = useAuthStore();
+    const { user, setLoginOpen } = useAuthStore();
     const currentLevel = user?.conceptionLevel ?? 0;
 
     useEffect(() => {
@@ -20,9 +19,16 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
         return () => { document.body.style.overflow = 'unset'; };
     }, []);
 
-    // 🏺 Logique de progression
     const isAlreadyDone = detail.level > 0 && currentLevel >= detail.level;
     const isLocked = detail.level > 0 && detail.level > currentLevel + 1;
+
+    /**
+     * 🏺 Déclenche l'authentification sans changer d'URL
+     */
+    const handleLoginTrigger = () => {
+        onClose(); // Ferme la modale de l'atelier
+        setLoginOpen(true); // Ouvre la modale de connexion via le store
+    };
 
     const handleReservation = () => {
         onReserve({
@@ -35,24 +41,19 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
         onClose();
     };
 
-    /**
-     * 🏺 Le bouton s'adapte sans jamais bloquer la lecture
-     */
     const renderFooterButton = () => {
-        // CAS 1 : Utilisateur non connecté
+        // CAS 1 : Non connecté - Utilisation de l'action Store
         if (!user) {
             return (
-                <Link
-                    to="/mon-compte"
-                    onClick={onClose}
+                <button
+                    onClick={handleLoginTrigger}
                     className="w-full bg-rhum-gold text-rhum-green py-4 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-xl rounded-sm flex items-center justify-center"
                 >
                     Se connecter pour réserver
-                </Link>
+                </button>
             );
         }
 
-        // CAS 2 : Niveau déjà validé
         if (isAlreadyDone) {
             return (
                 <button disabled className="w-full border border-rhum-gold/20 text-rhum-gold/40 py-4 font-black uppercase tracking-[0.3em] text-[10px] rounded-sm cursor-not-allowed">
@@ -61,7 +62,6 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
             );
         }
 
-        // CAS 3 : Niveau trop élevé pour l'instant
         if (isLocked) {
             return (
                 <button disabled className="w-full bg-black/40 text-white/20 py-4 font-black uppercase tracking-[0.3em] text-[10px] rounded-sm cursor-not-allowed">
@@ -70,7 +70,6 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
             );
         }
 
-        // CAS 4 : Disponible
         return (
             <button
                 onClick={handleReservation}
@@ -94,6 +93,7 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                         alt={detail.title}
                         className={`w-full h-full object-cover opacity-60 transition-all duration-700 ${isLocked ? 'grayscale scale-105' : 'group-hover:scale-110'}`}
                     />
+                    <div className="absolute inset-0 bg-gradient-to-t md:bg-gradient-to-r from-[#0a1a14] via-transparent to-transparent" />
                 </div>
 
                 <div className="flex-1 flex flex-col bg-[#0a1a14]">
@@ -105,20 +105,17 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                         <p className="text-rhum-gold italic text-base font-serif">{detail.description}</p>
                     </header>
 
-                    {/* 🏺 Contenu : Toujours accessible pour la lecture */}
                     <div className="flex-1 overflow-y-auto p-6 md:p-8 space-y-6 custom-scrollbar">
                         <div className="p-4 bg-white/[0.03] border-l-2 border-rhum-gold/40">
                             <p className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold mb-1.5 font-bold">Format :</p>
                             <p className="text-white/90 text-sm">{detail.format}</p>
                         </div>
-
                         {detail.availability && (
                             <div className="p-4 bg-white/[0.03] border-l-2 border-rhum-gold/40">
                                 <p className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold mb-1.5 font-bold">Disponibilités :</p>
                                 <p className="text-white/90 text-sm font-sans leading-relaxed">{detail.availability}</p>
                             </div>
                         )}
-
                         <p className="text-rhum-cream/60 italic text-base leading-relaxed font-serif">"{detail.quote}"</p>
                     </div>
 

@@ -5,10 +5,16 @@ import { User } from '../types/user';
 interface AuthState {
     user: User | null;
     token: string | null;
-    // Action pour enregistrer la session
+    // 🏺 États pour piloter l'affichage des modales
+    isLoginOpen: boolean;
+    isRegisterOpen: boolean;
+
     setAuth: (user: User, token: string) => void;
-    // Action pour vider la session
     logout: () => void;
+
+    // 🏺 Actions pour ouvrir/fermer les modales
+    setLoginOpen: (open: boolean) => void;
+    setRegisterOpen: (open: boolean) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -16,12 +22,31 @@ export const useAuthStore = create<AuthState>()(
         (set) => ({
             user: null,
             token: null,
-            setAuth: (user, token) => set({ user, token }),
+            isLoginOpen: false,
+            isRegisterOpen: false,
+
+            // La connexion ferme automatiquement les modales
+            setAuth: (user, token) => set({
+                user,
+                token,
+                isLoginOpen: false,
+                isRegisterOpen: false
+            }),
+
             logout: () => set({ user: null, token: null }),
+
+            setLoginOpen: (open) => set({
+                isLoginOpen: open,
+                isRegisterOpen: false
+            }),
+
+            setRegisterOpen: (open) => set({
+                isRegisterOpen: open,
+                isLoginOpen: false
+            }),
         }),
         {
             name: 'rhum-atlier-auth',
-            // On peut ajouter une version pour forcer le vidage du cache si le type change
             version: 1
         }
     )

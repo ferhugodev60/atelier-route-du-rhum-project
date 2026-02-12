@@ -1,21 +1,12 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 
-// 1. Définition de l'interface avec la prop de basculement
-interface LoginModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    onSwitchToRegister: () => void; // Requis pour la synchronisation avec la Navbar
-}
+export default function LoginModal() {
+    // 🏺 Pilotage via le store global
+    const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth } = useAuthStore();
 
-export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: LoginModalProps) {
-    const navigate = useNavigate();
-    const setAuth = useAuthStore((state) => state.setAuth);
-
-    // États locaux pour la gestion du formulaire
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -29,18 +20,11 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
         const password = formData.get('password');
 
         try {
-            // Appel à l'API sur le port 5001 (configuré précédemment)
             const response = await api.post('/auth/login', { email, password });
-
-            // Mise à jour du Store Global (User + JWT)
+            // setAuth met à jour l'utilisateur et ferme la modale
             setAuth(response.data.user, response.data.token);
-
-            // Fermeture et Redirection
-            onClose();
-            navigate('/mon-compte');
         } catch (err: any) {
-            const message = err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès.";
-            setError(message);
+            setError(err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès.");
         } finally {
             setIsPending(false);
         }
@@ -48,46 +32,27 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
 
     return (
         <AnimatePresence>
-            {isOpen && (
-                <div
-                    className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6"
-                    role="dialog"
-                    aria-modal="true"
-                >
-                    {/* Overlay avec flou professionnel */}
+            {isLoginOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                         className="absolute inset-0 bg-black/98 backdrop-blur-md"
-                        onClick={onClose}
+                        onClick={() => setLoginOpen(false)}
                     />
 
-                    {/* Conteneur Modal */}
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
                         className="relative bg-[#0a1a14] border border-rhum-gold/20 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto"
                     >
-                        {/* Ligne de design dorée */}
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
-                        <button
-                            onClick={onClose}
-                            className="absolute top-4 right-5 text-rhum-gold/40 hover:text-white transition-colors text-2xl font-extralight"
-                            aria-label="Fermer"
-                        >
-                            &times;
-                        </button>
+                        <button onClick={() => setLoginOpen(false)} className="absolute top-4 right-5 text-rhum-gold/40 hover:text-white text-2xl font-extralight">&times;</button>
 
                         <header className="text-center mb-8 md:mb-12">
-                            <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] mt-3 font-bold">
-                                Authentification
-                            </p>
-                            <h2 className="text-2xl md:text-4xl font-serif text-white leading-tight uppercase tracking-tight">
-                                Se connecter
-                            </h2>
+                            <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] mt-3 font-bold">Authentification</p>
+                            <h2 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tight">Se connecter</h2>
                         </header>
 
                         <form onSubmit={handleFormSubmit} className="space-y-6">
@@ -110,6 +75,7 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                                     <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.3em] text-rhum-gold/50 font-bold ml-1">
                                         Mot de passe
                                     </label>
+                                    {/* 🏺 Retour du bouton Mot de passe oublié */}
                                     <button
                                         type="button"
                                         className="text-[9px] uppercase tracking-widest text-rhum-gold/30 hover:text-rhum-gold transition-colors"
@@ -127,7 +93,6 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                                 />
                             </div>
 
-                            {/* Affichage des erreurs API */}
                             {error && (
                                 <motion.p
                                     initial={{ opacity: 0, x: -10 }}
@@ -138,12 +103,8 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                                 </motion.p>
                             )}
 
-                            <button
-                                type="submit"
-                                disabled={isPending}
-                                className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white disabled:opacity-50 transition-all shadow-xl active:scale-[0.98] rounded-sm"
-                            >
-                                {isPending ? 'Vérification des scellés...' : "Entrer dans l'Atelier"}
+                            <button type="submit" disabled={isPending} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-xl rounded-sm">
+                                {isPending ? 'VÉRIFICATION DES SCELLÉS...' : "Entrer dans l'Atelier"}
                             </button>
                         </form>
 
@@ -151,13 +112,14 @@ export default function LoginModal({ isOpen, onClose, onSwitchToRegister }: Logi
                             <p className="text-[10px] text-rhum-cream/40 uppercase tracking-widest">
                                 Pas encore membre ?{" "}
                                 <button
-                                    onClick={onSwitchToRegister}
+                                    onClick={() => setRegisterOpen(true)}
                                     className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 decoration-rhum-gold/30"
                                 >
                                     REJOIGNEZ NOUS
                                 </button>
                             </p>
 
+                            {/* 🏺 Retour du bouton Administration */}
                             <div className="pt-2">
                                 <p className="text-[9px] text-rhum-cream/30 uppercase tracking-[0.2em] leading-relaxed">
                                     Accès réservé

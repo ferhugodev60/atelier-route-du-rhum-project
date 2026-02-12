@@ -5,6 +5,8 @@ import ScrollReveal from './components/animations/ScrollReveal.tsx';
 import CartDrawer from './components/shop/CartDrawer.tsx';
 import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 import CustomerDashboard from "./pages/CustomerDashboard.tsx";
+import LoginModal from './components/auth/LoginModal';
+import RegisterModal from './components/auth/RegisterModal'; // 🏺 Import scellé
 
 const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 
@@ -43,40 +45,27 @@ export default function App() {
         localStorage.setItem('atelier_cart', JSON.stringify(cartItems));
     }, [cartItems]);
 
-    /**
-     * @param product Le produit parent (null pour un atelier)
-     * @param detail Le volume spécifique ou l'objet atelier complet
-     * @param qty La quantité choisie
-     */
     const addToCart = (product: any, detail: any, qty: number) => {
-        // 🏺 Utilisation du cartId unique pour les ateliers, sinon l'id simple
         const uniqueId = detail.cartId || detail.id;
-
         setCartItems(prev => {
             const existing = prev.find(i => i.cartId === uniqueId);
-
             if (existing) {
                 return prev.map(i => i.cartId === uniqueId
                     ? { ...i, quantity: i.quantity + qty }
                     : i
                 );
             }
-
-            // 🏺 Création de l'item avec toutes les propriétés pour le CartDrawer
-            const newItem = {
+            return [...prev, {
                 cartId: uniqueId,
-                // On vérifie le nom pour éviter le "ARTICLE SANS NOM"
                 name: product ? `${product.name} (${detail.size}${detail.unit})` : (detail.name || detail.title),
                 price: detail.price,
                 image: product?.image || detail.image,
                 quantity: qty,
                 workshopId: !product ? (detail.workshopId || detail.id) : undefined,
                 volumeId: product ? detail.id : undefined,
-                level: detail.level,                 // Pour le label doré
-                participants: detail.participants    // Pour la transmission API
-            };
-
-            return [...prev, newItem];
+                level: detail.level,
+                participants: detail.participants
+            }];
         });
         setIsCartOpen(true);
     };
@@ -93,13 +82,13 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<HomePage onAddToCart={addToCart} />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addToCart} />} />
-                        <Route path="/mon-compte" element={
-                            <ProtectedRoute>
-                                <CustomerDashboard />
-                            </ProtectedRoute>
-                        } />
+                        <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
                     </Routes>
                 </Suspense>
+
+                {/* 🏺 LES DEUX VERROUS D'ACCÈS */}
+                <LoginModal />
+                <RegisterModal />
 
                 <CartDrawer
                     isOpen={isCartOpen}
