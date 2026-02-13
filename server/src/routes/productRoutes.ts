@@ -8,28 +8,33 @@ import { upload } from '../config/cloudinary';
 const router = Router();
 
 // --- 🛍️ CATALOGUE PRODUITS ---
-router.get('/products', getShopProducts);
+// Accessible via GET /api/products
+router.get('/', getShopProducts);
 
+// Accessible via POST /api/products
 router.post(
-    '/products',
+    '/',
     authenticateToken,
     isAdmin,
-    upload.single('image'), // Champ 'image' attendu dans le FormData
+    upload.single('image'), // Gestion du fichier via Cloudinary
     createProduct
 );
 
 // --- 🎓 FORMATIONS PROFESSIONNELLES ---
+// Accessible via GET /api/products/workshops
 router.get('/workshops', getWorkshops);
 
+// Accessible via POST /api/products/workshops
 router.post(
     '/workshops',
     authenticateToken,
     isAdmin,
-    upload.single('image'), // Champ 'image' attendu dans le FormData
+    upload.single('image'),
     createWorkshop
 );
 
 // --- 👤 ESPACE PERSONNEL ---
+// Accessible via GET /api/products/me
 router.get('/me', authenticateToken, getMe);
 
 export default router;

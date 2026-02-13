@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Link } from 'react-router-dom'; // Import essentiel pour la navigation
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 
 export default function LoginModal() {
-    // 🏺 Pilotage via le store global
     const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth } = useAuthStore();
 
     const [isPending, setIsPending] = useState(false);
@@ -21,7 +21,6 @@ export default function LoginModal() {
 
         try {
             const response = await api.post('/auth/login', { email, password });
-            // setAuth met à jour l'utilisateur et ferme la modale
             setAuth(response.data.user, response.data.token);
         } catch (err: any) {
             setError(err.response?.data?.error || "L'Antre reste scellée. Vérifiez vos accès.");
@@ -75,7 +74,6 @@ export default function LoginModal() {
                                     <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.3em] text-rhum-gold/50 font-bold ml-1">
                                         Mot de passe
                                     </label>
-                                    {/* 🏺 Retour du bouton Mot de passe oublié */}
                                     <button
                                         type="button"
                                         className="text-[9px] uppercase tracking-widest text-rhum-gold/30 hover:text-rhum-gold transition-colors"
@@ -119,13 +117,17 @@ export default function LoginModal() {
                                 </button>
                             </p>
 
-                            {/* 🏺 Retour du bouton Administration */}
                             <div className="pt-2">
                                 <p className="text-[9px] text-rhum-cream/30 uppercase tracking-[0.2em] leading-relaxed">
                                     Accès réservé
-                                    <a href="/admin" className="block mt-4 text-rhum-gold/40 hover:text-rhum-gold transition-colors font-bold border border-rhum-gold/10 py-3 rounded-sm mx-auto max-w-[200px] hover:bg-white/5">
+                                    {/* Utilisation de Link pour une navigation fluide sans erreur 404 */}
+                                    <Link
+                                        to="/admin"
+                                        onClick={() => setLoginOpen(false)} // Ferme la modale lors de la redirection
+                                        className="block mt-4 text-rhum-gold/40 hover:text-rhum-gold transition-colors font-bold border border-rhum-gold/10 py-3 rounded-sm mx-auto max-w-[200px] hover:bg-white/5"
+                                    >
                                         Console Administrateur
-                                    </a>
+                                    </Link>
                                 </p>
                             </div>
                         </footer>

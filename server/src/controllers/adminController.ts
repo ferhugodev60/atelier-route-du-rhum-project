@@ -1,7 +1,11 @@
 import { Request, Response } from 'express';
-import { prisma } from '../lib/prisma'; // Assurez-vous que le chemin est correct
+import { prisma } from '../lib/prisma';
 
-// --- 📈 STATISTIQUES ---
+interface RequestWithFile extends Request {
+    file?: Express.Multer.File;
+}
+
+// --- 📈 STATISTIQUES (Dashboard) ---
 export const getStats = async (req: Request, res: Response) => {
     try {
         const aggregate = await prisma.order.aggregate({
@@ -14,10 +18,9 @@ export const getStats = async (req: Request, res: Response) => {
                 user: { select: { firstName: true, lastName: true } }
             },
             orderBy: { createdAt: 'desc' },
-            take: 10 // On limite aux 10 dernières pour la performance
+            take: 10
         });
 
-        // Alerte sur les stocks bas (moins de 5 unités)
         const lowStockVolumes = await prisma.productVolume.findMany({
             where: { stock: { lt: 5 } },
             include: { product: true }
@@ -29,18 +32,54 @@ export const getStats = async (req: Request, res: Response) => {
             recentOrders,
             lowStockAlerts: lowStockVolumes
         });
-    } catch (error: any) {
+    } catch (error) {
         res.status(500).json({ error: "Erreur lors du calcul des statistiques." });
     }
 };
 
-// --- 📦 GESTION DU STOCK (MULTI-VOLUMES) ---
-/**
- * Correction de l'erreur TS2724
- * On cible le volumeId car le stock dépend désormais de la contenance
- */
+// --- 📦 GESTION DES PRODUITS (Boutique) ---
+
+// Modifier une bouteille
+export const updateProduct = async (req: RequestWithFile, res: Response) => {
+    // Force le type en string pour éviter l'erreur TS2322
+    const id = req.params.id as string;
+
+    try {
+        const { name, description, categoryId } = req.body;
+
+        const updateData: any = { name, description, categoryId };
+        if (req.file) {
+            updateData.image = req.file.path;
+        }
+
+        const product = await prisma.product.update({
+            where: { id: id }, // Utilisation de l'id casté
+            data: updateData
+        });
+
+        res.json({ message: "Bouteille mise à jour avec succès", product });
+    } catch (error) {
+        res.status(404).json({ error: "Produit introuvable ou erreur de mise à jour." });
+    }
+};
+
+// Supprimer une bouteille
+export const deleteProduct = async (req: Request, res: Response) => {
+    const id = req.params.id as string; // Assertion de type
+
+    try {
+        await prisma.product.delete({
+            where: { id: id } // Le "onDelete: Cascade" gère les volumes
+        });
+        res.json({ message: "Bouteille et volumes associés supprimés." });
+    } catch (error) {
+        res.status(404).json({ error: "Impossible de supprimer ce produit." });
+    }
+};
+
+// --- 📦 GESTION DU STOCK ---
 export const updateProductStock = async (req: Request, res: Response) => {
-    const volumeId = req.params.volumeId as string;
+    const volumeId = req.params.volumeId as string; // Assertion de type
     const { newStock } = req.body;
 
     try {
@@ -51,7 +90,7 @@ export const updateProductStock = async (req: Request, res: Response) => {
         });
 
         res.json({
-            message: `Stock mis à jour pour ${updatedVolume.product.name} (${updatedVolume.size}${updatedVolume.unit})`,
+            message: `Stock mis à jour pour ${updatedVolume.product.name}`,
             newStock: updatedVolume.stock
         });
     } catch (error) {
@@ -59,37 +98,17 @@ export const updateProductStock = async (req: Request, res: Response) => {
     }
 };
 
-// --- 🏷️ MISE À JOUR PRODUIT ---
-export const updateProduct = async (req: Request, res: Response) => {
-    const id = req.params.id as string;
-
-    try {
-        const product = await prisma.product.update({
-            where: { id },
-            data: req.body // Pour mettre à jour le nom ou la description
-        });
-        res.json(product);
-    } catch (error) {
-        res.status(404).json({ error: "Produit introuvable." });
-    }
-};
-
-// --- 🎓 VALIDATION NIVEAU ÉLÈVE ---
+// --- 🎓 FORMATIONS (Validation) ---
 export const validateUserLevel = async (req: Request, res: Response) => {
-    const userId = req.params.userId as string;
-    const { newLevel } = req.body; // Le niveau à attribuer (0 à 4)
+    const userId = req.params.userId as string; // Assertion de type
+    const { newLevel } = req.body;
 
     try {
         const updatedUser = await prisma.user.update({
             where: { id: userId },
             data: { conceptionLevel: parseInt(newLevel) }
         });
-
-        console.log(`🎓 [ADMIN] Passage au Niveau ${newLevel} validé pour ${updatedUser.firstName}`);
-        res.json({
-            message: `Niveau de ${updatedUser.firstName} ${updatedUser.lastName} mis à jour : ${newLevel}`,
-            userLevel: updatedUser.conceptionLevel
-        });
+        res.json({ message: "Niveau validé", userLevel: updatedUser.conceptionLevel });
     } catch (error) {
         res.status(404).json({ error: "Utilisateur introuvable." });
     }
