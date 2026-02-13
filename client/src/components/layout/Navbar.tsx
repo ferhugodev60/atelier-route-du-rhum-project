@@ -4,8 +4,6 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useScroll } from '../../hooks/useScroll.ts';
 import { useAuthStore } from '../../store/authStore';
 
-// 🏺 Plus besoin d'importer les modales ici, elles sont dans App.tsx
-
 interface NavbarProps {
     cartCount: number;
     onOpenCart: () => void;
@@ -16,16 +14,16 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     const location = useLocation();
     const isScrolled = useScroll(50);
 
-    // 🏺 On récupère les actions du store global
     const { user, token, setLoginOpen } = useAuthStore();
     const isAuthenticated = !!user && !!token;
+
+    // 🏺 Logique de redirection dynamique selon le rôle
+    const isAdmin = user?.role === 'ADMIN';
+    const profilePath = isAdmin ? '/admin/dashboard' : '/mon-compte';
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [currentLang, setCurrentLang] = useState<'FR' | 'EN'>('FR');
 
-    /**
-     * 🏺 Utilisation du Store Global pour ouvrir la connexion
-     */
     const handleOpenLogin = () => {
         setIsMobileMenuOpen(false);
         setLoginOpen(true);
@@ -77,8 +75,12 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
 
                     {/* AUTHENTIFICATION DESKTOP */}
                     {isAuthenticated ? (
-                        <button onClick={() => navigate('/mon-compte')} className="hidden lg:flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold/30 hover:border-rhum-gold text-rhum-gold hover:text-white transition-all">
-                            Bonjour {user?.firstName} !
+                        <button
+                            onClick={() => navigate(profilePath)}
+                            className="hidden lg:flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold/30 hover:border-rhum-gold text-rhum-gold hover:text-white transition-all"
+                        >
+                            {/* Texte adaptatif selon le rôle */}
+                            {isAdmin ? '🔧 GESTION' : `Bonjour ${user?.firstName} !`}
                         </button>
                     ) : (
                         <button onClick={handleOpenLogin} className="hidden lg:block px-8 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-[#0a1a14] transition-all">
@@ -133,10 +135,10 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
 
                             {isAuthenticated ? (
                                 <button
-                                    onClick={() => { navigate('/mon-compte'); setIsMobileMenuOpen(false); }}
+                                    onClick={() => { navigate(profilePath); setIsMobileMenuOpen(false); }}
                                     className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-black"
                                 >
-                                    Mon Profil ({user?.firstName})
+                                    {isAdmin ? 'Console Administration' : `Mon Profil (${user?.firstName})`}
                                 </button>
                             ) : (
                                 <button

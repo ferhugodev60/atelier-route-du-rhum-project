@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom';
 import { LayoutDashboard, ShoppingBag, GraduationCap, LogOut } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+import Logo from '../../assets/logo/logo.png';
 
 export default function Sidebar() {
     const { logout } = useAuthStore();
@@ -8,14 +9,19 @@ export default function Sidebar() {
     const navItems = [
         { name: 'Tableau de bord', path: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Boutique', path: '/admin/boutique', icon: ShoppingBag },
-        { name: 'Formations', path: '/admin/formations', icon: GraduationCap },
+        { name: 'Ateliers', path: '/admin/ateliers', icon: GraduationCap },
     ];
 
     return (
         <aside className="w-64 h-screen bg-[#0a1a14] border-r border-rhum-gold/10 flex flex-col sticky top-0">
-            <header className="p-8 border-b border-rhum-gold/5">
-                <h1 className="text-rhum-gold font-serif text-xl uppercase tracking-tighter">Console Admin</h1>
-                <p className="text-[8px] text-rhum-gold/40 uppercase tracking-[0.3em] mt-2">Gestion d'Établissement</p>
+            {/* --- HEADER ÉPURÉ AVEC GRAND LOGO --- */}
+            {/* Utilisation de flex, justify-center et items-center pour un centrage parfait */}
+            <header className="py-10 border-b border-rhum-gold/5 flex justify-center items-center">
+                <img
+                    src={Logo}
+                    alt="Logo de l'entreprise"
+                    className="w-44 object-contain"
+                />
             </header>
 
             <nav className="flex-1 p-6 space-y-2">

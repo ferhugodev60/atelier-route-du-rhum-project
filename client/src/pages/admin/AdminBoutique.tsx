@@ -47,7 +47,7 @@ export default function AdminBoutique() {
             <header className="flex justify-between items-center border-b border-rhum-gold/10 pb-6">
                 <div>
                     <h2 className="text-2xl font-serif text-white uppercase tracking-tight">Catalogue Boutique</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1">Gestion des nectars et flaconnages</p>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1">Gestion des bouteilles et des stocks</p>
                 </div>
                 <button
                     onClick={() => setIsAddOpen(true)}
