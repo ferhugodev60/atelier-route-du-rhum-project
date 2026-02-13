@@ -29,7 +29,6 @@ model Category {
   products    Product[]
 }
 
-// 🏺 Le modèle central pour vos bouteilles
 model Product {
   id          String          @id @default(uuid())
   name        String
@@ -37,16 +36,15 @@ model Product {
   image       String?
   categoryId  String
   category    Category        @relation(fields: [categoryId], references: [id])
-  volumes     ProductVolume[] // 🏺 Relation : un produit a plusieurs formats
+  volumes     ProductVolume[]
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 }
 
-// 🏺 Les déclinaisons de contenance pour chaque produit
 model ProductVolume {
   id         String      @id @default(uuid())
-  size       Float // 25, 50, 1...
-  unit       String // "cl" ou "L"
+  size       Float
+  unit       String
   price      Float
   stock      Int         @default(0)
   productId  String
@@ -59,7 +57,7 @@ model Workshop {
   level        Int         @unique
   title        String
   description  String
-  image        String?
+  image        String? // Stockera l'URL sécurisée Cloudinary
   color        String?
   format       String
   availability String?

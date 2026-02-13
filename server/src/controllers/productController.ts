@@ -7,8 +7,9 @@ interface RequestWithFile extends Request {
 
 export const createProduct = async (req: RequestWithFile, res: Response) => {
     try {
-        // 'volumes' doit être envoyé comme un tableau JSON (ex: "[{"size":25,"unit":"cl","price":20,"stock":10}]")
         const { name, description, categoryId, volumes } = req.body;
+
+        // Extraction de l'URL Cloudinary après upload réussi
         const imageUrl = req.file ? req.file.path : null;
 
         const parsedVolumes = typeof volumes === 'string' ? JSON.parse(volumes) : volumes;
@@ -33,7 +34,6 @@ export const createProduct = async (req: RequestWithFile, res: Response) => {
     }
 };
 
-// Récupérer les produits de la boutique (Hors ateliers)
 export const getShopProducts = async (req: Request, res: Response) => {
     try {
         const products = await prisma.product.findMany({
@@ -50,6 +50,6 @@ export const getShopProducts = async (req: Request, res: Response) => {
         });
         res.json(products);
     } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la lecture de la boutique." });
+        res.status(500).json({ error: "Erreur lors de la lecture du catalogue." });
     }
 };
