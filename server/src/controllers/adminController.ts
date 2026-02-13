@@ -40,26 +40,47 @@ export const getStats = async (req: Request, res: Response) => {
 // --- 📦 GESTION DES PRODUITS (Boutique) ---
 
 // Modifier une bouteille
-export const updateProduct = async (req: RequestWithFile, res: Response) => {
-    // Force le type en string pour éviter l'erreur TS2322
+export const updateProduct = async (req: any, res: Response) => {
+    // Force le type en string pour la compatibilité Prisma
     const id = req.params.id as string;
 
     try {
-        const { name, description, categoryId } = req.body;
+        const { name, description, categoryId, volumes } = req.body;
 
         const updateData: any = { name, description, categoryId };
+
+        // Mise à jour de l'image si un nouveau fichier est fourni
         if (req.file) {
             updateData.image = req.file.path;
         }
 
+        // Synchronisation des volumes (Formats, Prix, Stocks)
+        if (volumes) {
+            const parsedVolumes = typeof volumes === 'string' ? JSON.parse(volumes) : volumes;
+
+            updateData.volumes = {
+                // Supprime les anciens formats pour éviter les doublons
+                deleteMany: {},
+                // Recrée la liste complète mise à jour
+                create: parsedVolumes.map((v: any) => ({
+                    size: parseFloat(v.size),
+                    unit: v.unit,
+                    price: parseFloat(v.price),
+                    stock: parseInt(v.stock)
+                }))
+            };
+        }
+
         const product = await prisma.product.update({
-            where: { id: id }, // Utilisation de l'id casté
-            data: updateData
+            where: { id: id },
+            data: updateData,
+            include: { volumes: true } // Retourne l'objet complet mis à jour
         });
 
-        res.json({ message: "Bouteille mise à jour avec succès", product });
+        res.json({ message: "Référence mise à jour avec succès", product });
     } catch (error) {
-        res.status(404).json({ error: "Produit introuvable ou erreur de mise à jour." });
+        console.error("🔥 [UPDATE_ERROR]:", error);
+        res.status(404).json({ error: "Impossible de mettre à jour cette référence." });
     }
 };
 
