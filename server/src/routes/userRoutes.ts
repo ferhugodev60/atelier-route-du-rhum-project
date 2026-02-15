@@ -1,22 +1,32 @@
 import { Router } from 'express';
-import { getMe, updateMe } from '../controllers/userController';
-import { authenticateToken } from '../middleware/authMiddleware';
+import {
+    getMe,
+    updateMe,
+    getAllUsers,
+    updateUserProfile,
+    validateUserLevel
+} from '../controllers/userController';
+import { authenticateToken, isAdmin } from '../middleware/authMiddleware';
 
 const router = Router();
 
 /**
- * @route   GET /api/users/me
- * @desc    Récupérer les informations de l'utilisateur (inclut le conceptionLevel)
- * @access  Privé (User)
+ * --- 👤 ROUTES CLIENTS ---
  */
 router.get('/me', authenticateToken, getMe);
+router.patch('/me', authenticateToken, updateMe);
 
 /**
- * @route   PATCH /api/users/me
- * @desc    Mettre à jour les informations de profil (Prénom, Nom, Téléphone)
- * @access  Privé (User)
- * @note    Le contrôleur doit empêcher la modification du rôle ou du niveau
+ * --- 🏛️ ROUTES ADMINISTRATION ---
  */
-router.patch('/me', authenticateToken, updateMe);
+
+// Consultation globale de la clientèle
+router.get('/', authenticateToken, isAdmin, getAllUsers);
+
+// Mise à jour complète d'une fiche client
+router.put('/:id', authenticateToken, isAdmin, updateUserProfile);
+
+// Validation rapide de la progression pédagogique
+router.patch('/:userId/level', authenticateToken, isAdmin, validateUserLevel);
 
 export default router;

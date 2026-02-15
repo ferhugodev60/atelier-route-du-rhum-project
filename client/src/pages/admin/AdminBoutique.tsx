@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
+import { Search } from 'lucide-react'; // 🏺 Import de l'icône
 import AddProductModal from '../../components/admin/AddProductModal';
-import EditProductModal from '../../components/admin/EditProductModal'; // Nouvelle modale
+import EditProductModal from '../../components/admin/EditProductModal';
 
 export default function AdminBoutique() {
     const [products, setProducts] = useState<any[]>([]);
+    const [searchTerm, setSearchTerm] = useState(''); // 🏺 État pour la recherche
 
     // Pilotage des modales
     const [isAddOpen, setIsAddOpen] = useState(false);
@@ -20,10 +22,17 @@ export default function AdminBoutique() {
         }
     };
 
+    // 🏺 Logique de filtrage dynamique
+    const filteredProducts = useMemo(() => {
+        return products.filter(product =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            product.category.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+    }, [products, searchTerm]);
+
     const handleDelete = async (id: string, name: string) => {
         if (window.confirm(`Confirmer la suppression définitive de "${name}" ?`)) {
             try {
-                // Suppression en base de données
                 await api.delete(`/admin/products/${id}`);
                 fetchProducts();
                 alert("Référence supprimée.");
@@ -44,17 +53,31 @@ export default function AdminBoutique() {
 
     return (
         <section className="space-y-8 font-sans">
-            <header className="flex justify-between items-center border-b border-rhum-gold/10 pb-6">
+            <header className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-rhum-gold/10 pb-6 gap-6">
                 <div>
                     <h2 className="text-2xl font-serif text-white uppercase tracking-tight">Catalogue Boutique</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1">Gestion des bouteilles et des stocks</p>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1 font-bold">Gestion des références et inventaires</p>
                 </div>
-                <button
-                    onClick={() => setIsAddOpen(true)}
-                    className="bg-rhum-gold text-rhum-green px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all shadow-lg"
-                >
-                    + Nouvelle bouteille
-                </button>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                    {/* 🏺 Barre de recherche identique à la section Clientèle */}
+                    <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-sm">
+                        <Search size={14} className="text-rhum-gold/40" />
+                        <input
+                            type="text"
+                            placeholder="RECHERCHER..."
+                            className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => setIsAddOpen(true)}
+                        className="bg-rhum-gold text-rhum-green px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg whitespace-nowrap w-full sm:w-auto"
+                    >
+                        + Nouvelle Référence
+                    </button>
+                </div>
             </header>
 
             <div className="overflow-x-auto">
@@ -68,7 +91,7 @@ export default function AdminBoutique() {
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                    {products.map(product => (
+                    {filteredProducts.map(product => (
                         <tr key={product.id} className="group hover:bg-white/[0.01] transition-colors">
                             <td className="py-6">
                                 <div className="flex items-center gap-4">
@@ -113,22 +136,16 @@ export default function AdminBoutique() {
                     ))}
                     </tbody>
                 </table>
+
+                {filteredProducts.length === 0 && (
+                    <div className="py-20 text-center italic text-white/20 text-sm font-serif">
+                        Aucun produit ne correspond à votre recherche.
+                    </div>
+                )}
             </div>
 
-            {/* Modale d'Ajout */}
-            <AddProductModal
-                isOpen={isAddOpen}
-                onClose={() => setIsAddOpen(false)}
-                onRefresh={fetchProducts}
-            />
-
-            {/* Modale de Modification */}
-            <EditProductModal
-                isOpen={isEditOpen}
-                product={selectedProduct}
-                onClose={() => setIsEditOpen(false)}
-                onRefresh={fetchProducts}
-            />
+            <AddProductModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onRefresh={fetchProducts} />
+            <EditProductModal isOpen={isEditOpen} product={selectedProduct} onClose={() => setIsEditOpen(false)} onRefresh={fetchProducts} />
         </section>
     );
 }
