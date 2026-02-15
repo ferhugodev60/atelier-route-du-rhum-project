@@ -13,24 +13,44 @@ export default function AdminCategories() {
 
     const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        await api.post('/categories', Object.fromEntries(formData));
-        e.currentTarget.reset();
-        fetchCats();
+
+        // 🏺 On capture la référence du formulaire AVANT l'asynchrone
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
+        try {
+            await api.post('/categories', Object.fromEntries(formData));
+
+            // 🏺 On utilise la référence stockée pour réinitialiser les champs
+            form.reset();
+            fetchCats();
+        } catch (error) {
+            console.error("Erreur lors de la création de la catégorie");
+        }
     };
 
     const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const formData = new FormData(e.currentTarget);
-        await api.put(`/categories/${selectedCategory.id}`, Object.fromEntries(formData));
-        setIsEditModalOpen(false);
-        fetchCats();
+        const form = e.currentTarget;
+        const formData = new FormData(form);
+
+        try {
+            await api.put(`/categories/${selectedCategory.id}`, Object.fromEntries(formData));
+            setIsEditModalOpen(false);
+            fetchCats();
+        } catch (error) {
+            console.error("Erreur lors de la mise à jour");
+        }
     };
 
     const handleDelete = async (id: string) => {
         if (window.confirm("Supprimer cette catégorie ?")) {
-            try { await api.delete(`/categories/${id}`); fetchCats(); }
-            catch { alert("Erreur : Des produits y sont rattachés."); }
+            try {
+                await api.delete(`/categories/${id}`);
+                fetchCats();
+            } catch {
+                alert("Erreur : Des produits y sont rattachés.");
+            }
         }
     };
 
@@ -65,11 +85,17 @@ export default function AdminCategories() {
                         <div className="flex justify-between items-start mb-4">
                             <div>
                                 <h3 className="text-rhum-gold font-bold text-sm uppercase tracking-wider">{cat.name}</h3>
-                                <p className="text-[9px] text-rhum-cream/40 uppercase mt-1">{cat._count.products} références actives</p>
+                                <p className="text-[9px] text-rhum-cream/40 uppercase mt-1">
+                                    {cat._count?.products || 0} références actives
+                                </p>
                             </div>
                             <div className="flex gap-4">
-                                <button onClick={() => { setSelectedCategory(cat); setIsEditModalOpen(true); }} className="text-rhum-gold/30 hover:text-white transition-colors"><Edit3 size={16} /></button>
-                                <button onClick={() => handleDelete(cat.id)} className="text-red-400/20 hover:text-red-400 transition-colors"><Trash2 size={16} /></button>
+                                <button onClick={() => { setSelectedCategory(cat); setIsEditModalOpen(true); }} className="text-rhum-gold/30 hover:text-white transition-colors">
+                                    <Edit3 size={16} />
+                                </button>
+                                <button onClick={() => handleDelete(cat.id)} className="text-red-400/20 hover:text-red-400 transition-colors">
+                                    <Trash2 size={16} />
+                                </button>
                             </div>
                         </div>
                         {cat.description && (
@@ -85,7 +111,9 @@ export default function AdminCategories() {
             {isEditModalOpen && (
                 <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
                     <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-lg p-8 rounded-sm shadow-2xl relative">
-                        <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-rhum-gold/40 hover:text-white"><X size={20} /></button>
+                        <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-rhum-gold/40 hover:text-white">
+                            <X size={20} />
+                        </button>
                         <h2 className="text-xl font-serif text-white uppercase mb-8">Éditer la catégorie</h2>
                         <form onSubmit={handleUpdate} className="space-y-6">
                             <div className="space-y-2">
@@ -96,7 +124,9 @@ export default function AdminCategories() {
                                 <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-bold">Description complète</label>
                                 <textarea name="description" rows={5} defaultValue={selectedCategory.description} className="w-full bg-white/5 border border-rhum-gold/10 p-3 text-rhum-cream outline-none focus:border-rhum-gold" />
                             </div>
-                            <button type="submit" className="w-full bg-rhum-gold text-rhum-green py-4 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all">Mettre à jour la structure</button>
+                            <button type="submit" className="w-full bg-rhum-gold text-rhum-green py-4 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all">
+                                Mettre à jour la structure
+                            </button>
                         </form>
                     </div>
                 </div>
