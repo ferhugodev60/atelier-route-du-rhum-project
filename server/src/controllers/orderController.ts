@@ -3,22 +3,16 @@ import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
 
-/**
- * Extension de l'interface Request pour inclure l'utilisateur authentifié
- */
 interface AuthRequest extends Request {
-    user?: {
-        userId: string;
-        role: string;
-    };
+    user?: { userId: string; role: string; };
 }
 
 /**
- * Définition du type complexe incluant toutes les relations nécessaires
- * pour l'historique et la génération de PDF.
+ * Type complexe pour inclure les relations nécessaires (Produits, Séances, Participants)
  */
 type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
+        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
         items: {
             include: {
                 workshop: true;
@@ -30,16 +24,45 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 }>;
 
 /**
- * RÉCUPÉRATION : GET /api/orders
+ * RÉCUPÉRATION DES COMMANDES : GET /api/orders
+ * Branchement logique : Liste Admin (tous) ou Liste Client (personnel)
  */
-export const getUserOrders = async (req: AuthRequest, res: Response) => {
+export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
+    const isAdmin = req.user?.role === 'ADMIN';
+
     if (!userId) return res.status(401).json({ error: "Session non identifiée." });
 
     try {
         const orders = await prisma.order.findMany({
-            where: { userId: userId },
+            where: isAdmin ? {} : { userId },
             include: {
+                user: { select: { firstName: true, lastName: true, email: true } },
+                _count: { select: { items: true } }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        res.status(200).json(orders);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la récupération du registre." });
+    }
+};
+
+/**
+ * DÉTAILS DE LA COMMANDE : GET /api/orders/:id
+ * Correction TS2322 : Cast de l'id en string
+ */
+export const getOrderDetails = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string; // 🏺 Transtypage explicite en string
+    const userId = req.user?.userId;
+    const isAdmin = req.user?.role === 'ADMIN';
+
+    try {
+        const order = await prisma.order.findUnique({
+            where: { id },
+            include: {
+                user: true,
                 items: {
                     include: {
                         workshop: true,
@@ -47,49 +70,52 @@ export const getUserOrders = async (req: AuthRequest, res: Response) => {
                         participants: true
                     }
                 }
-            },
-            orderBy: { createdAt: 'desc' }
-        }) as OrderWithRelations[];
+            }
+        }) as OrderWithRelations | null;
 
-        const formattedOrders = orders.map((order: OrderWithRelations) => ({
-            id: order.id,
-            reference: order.reference,
-            createdAt: order.createdAt,
-            total: order.total,
-            status: order.status,
-            items: order.items.map((item) => ({
-                name: item.workshop
-                    ? item.workshop.title
-                    : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
-                quantity: item.quantity,
-                price: item.price,
-                participants: item.participants.map(p => `${p.firstName} ${p.lastName}`)
-            }))
-        }));
+        if (!order) return res.status(404).json({ error: "Document introuvable." });
 
-        res.status(200).json(formattedOrders);
-    } catch (error: any) {
-        res.status(500).json({ error: "Impossible de récupérer vos commandes." });
+        if (!isAdmin && order.userId !== userId) {
+            return res.status(403).json({ error: "Accès non autorisé." });
+        }
+
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'extraction des détails." });
     }
 };
 
 /**
- * GÉNÉRATION ET TÉLÉCHARGEMENT DU PDF
+ * MISE À JOUR DU STATUT : PATCH /api/orders/:id/status (ADMIN)
+ * Correction TS2322 : Cast de l'id en string
  */
-export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
-    const { orderId } = req.params;
-    const userId = req.user?.userId;
-
-    // Résolution de TS2322 : On garantit que orderId est une string unique
-    if (!orderId || typeof orderId !== 'string') {
-        return res.status(400).json({ error: "Identifiant de commande invalide." });
-    }
+export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
+    const id = req.params.id as string; // 🏺 Transtypage explicite en string
+    const { status } = req.body;
 
     try {
-        // Utilisation de findFirst pour filtrer par ID et UserId simultanément
+        const order = await prisma.order.update({
+            where: { id },
+            data: { status }
+        });
+        res.json(order);
+    } catch (error) {
+        res.status(400).json({ error: "Échec de la mise à jour logistique." });
+    }
+};
+
+/**
+ * GÉNÉRATION PDF : GET /api/orders/:orderId/download
+ * Correction TS2322 : Cast de l'orderId en string
+ */
+export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
+    const orderId = req.params.orderId as string; // 🏺 Transtypage explicite en string
+    const userId = req.user?.userId;
+
+    try {
         const order = await prisma.order.findFirst({
             where: {
-                id: orderId,
+                id: orderId, // Utilisation de l'id casté
                 userId: userId
             },
             include: {
@@ -100,29 +126,22 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                     }
                 }
             }
-        }) as OrderWithRelations | null; // Résolution de TS2339 par le cast
+        }) as OrderWithRelations | null;
 
         if (!order) return res.status(404).json({ error: "Document introuvable." });
 
         const doc = new PDFDocument({ size: 'A4', margin: 50 });
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Commande_${order.reference}.pdf`);
-
         doc.pipe(res);
 
-        // Header professionnel
         doc.fontSize(20).text('RÉCAPITULATIF DE COMMANDE', { align: 'center' });
         doc.moveDown(2);
 
-        // Infos Commande
         doc.fontSize(10).font('Helvetica-Bold').text(`Référence : ${order.reference}`);
         doc.font('Helvetica').text(`Date : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`);
         doc.moveDown();
         doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
-
-        // Articles
-        doc.fontSize(12).font('Helvetica-Bold').text('Détails de la sélection :', { underline: true });
         doc.moveDown();
 
         order.items.forEach((item) => {
@@ -139,23 +158,18 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         doc.moveDown();
         doc.moveTo(350, doc.y).lineTo(550, doc.y).stroke();
         doc.moveDown();
-
-        // Total
         doc.fontSize(14).font('Helvetica-Bold').text(`TOTAL RÉGLÉ : ${order.total.toFixed(2)}€`, { align: 'right' });
 
-        // Footer
         doc.moveDown(10);
         doc.fontSize(9).font('Helvetica-Oblique').text(
-            "Ce document certifie votre achat. Veuillez le présenter lors de votre retrait en établissement ou au début de votre séance de formation.",
+            "Ce document certifie votre achat. Veuillez le présenter lors de votre retrait ou au début de votre séance de formation.",
             { align: 'center' }
         );
 
         doc.end();
     } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la génération du PDF." });
+        res.status(500).json({ error: "Erreur de génération du PDF." });
     }
 };
 
-export const createOrder = async (req: AuthRequest, res: Response) => {
-    // Logique gérée par le Webhook Stripe
-};
+export const createOrder = async (req: AuthRequest, res: Response) => { /* Géré par Webhook Stripe */ };

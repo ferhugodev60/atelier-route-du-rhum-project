@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import {LayoutDashboard, ShoppingBag, GraduationCap, LogOut, Tag, Users} from 'lucide-react';
+import {LayoutDashboard, ShoppingBag, GraduationCap, LogOut, Tag, Users, ClipboardList} from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Logo from '../../assets/logo/logo.png';
 
@@ -11,6 +11,11 @@ export default function Sidebar() {
         { name: 'Boutique', path: '/admin/boutique', icon: ShoppingBag },
         { name: 'Catégories', path: '/admin/categories', icon: Tag },
         { name: 'Ateliers', path: '/admin/ateliers', icon: GraduationCap },
+        {
+            name: 'Commandes',
+            path: '/admin/orders',
+            icon: ClipboardList
+        },
         { name: 'Clientèle', path: '/admin/customers', icon: Users }
     ];
 

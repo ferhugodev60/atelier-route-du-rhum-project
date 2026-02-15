@@ -14,6 +14,7 @@ import ToastContainer from "./components/ui/ToastContainer.tsx";
 import AdminCategories from "./pages/admin/AdminCategories.tsx";
 import AdminWorkshops from "./pages/admin/AdminWorkshops.tsx";
 import AdminCustomers from "./pages/admin/AdminCustomers.tsx";
+import AdminOrders from "./pages/admin/AdminOrders.tsx";
 
 // --- Imports Admin (Lazy Loading pour la performance) ---
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -85,6 +86,7 @@ export default function App() {
                             <Route path="categories" element={<AdminCategories />} />
                             <Route path="ateliers" element={<AdminWorkshops />} />
                             <Route path="customers" element={<AdminCustomers />} />
+                            <Route path="orders" element={<AdminOrders />} />
                         </Route>
                     </Routes>
                 </Suspense>
