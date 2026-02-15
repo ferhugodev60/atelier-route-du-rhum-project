@@ -1,14 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search } from 'lucide-react'; // 🏺 Import de l'icône
+import { Search, Edit3, Trash2, Package } from 'lucide-react';
 import AddProductModal from '../../components/admin/AddProductModal';
 import EditProductModal from '../../components/admin/EditProductModal';
 
 export default function AdminBoutique() {
     const [products, setProducts] = useState<any[]>([]);
-    const [searchTerm, setSearchTerm] = useState(''); // 🏺 État pour la recherche
+    const [searchTerm, setSearchTerm] = useState('');
 
-    // Pilotage des modales
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -22,7 +21,6 @@ export default function AdminBoutique() {
         }
     };
 
-    // 🏺 Logique de filtrage dynamique
     const filteredProducts = useMemo(() => {
         return products.filter(product =>
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -35,7 +33,6 @@ export default function AdminBoutique() {
             try {
                 await api.delete(`/admin/products/${id}`);
                 fetchProducts();
-                alert("Référence supprimée.");
             } catch (error) {
                 alert("Erreur lors de la suppression.");
             }
@@ -52,15 +49,15 @@ export default function AdminBoutique() {
     }, []);
 
     return (
-        <section className="space-y-8 font-sans">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-rhum-gold/10 pb-6 gap-6">
+        <section className="space-y-10 font-sans">
+            <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
-                    <h2 className="text-2xl font-serif text-white uppercase tracking-tight">Catalogue Boutique</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1 font-bold">Gestion des références et inventaires</p>
+                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Catalogue Boutique</h2>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Gestion des références et stocks</p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                    {/* 🏺 Barre de recherche identique à la section Clientèle */}
+                <div className="flex items-center gap-6">
+                    {/* --- BARRE DE RECHERCHE STYLE CLIENTÈLE --- */}
                     <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-sm">
                         <Search size={14} className="text-rhum-gold/40" />
                         <input
@@ -73,64 +70,88 @@ export default function AdminBoutique() {
 
                     <button
                         onClick={() => setIsAddOpen(true)}
-                        className="bg-rhum-gold text-rhum-green px-6 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-lg whitespace-nowrap w-full sm:w-auto"
+                        className="bg-rhum-gold text-rhum-green px-8 py-3.5 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl whitespace-nowrap"
                     >
                         + Nouvelle Référence
                     </button>
                 </div>
             </header>
 
-            <div className="overflow-x-auto">
+            {/* --- TABLEAU FORMAT CLIENTÈLE --- */}
+            <div className="overflow-x-auto bg-white/[0.01] border border-white/5">
                 <table className="w-full text-left border-collapse">
                     <thead>
                     <tr className="border-b border-white/5 text-[9px] uppercase tracking-[0.2em] text-rhum-gold/40">
-                        <th className="py-4 font-bold">Produit</th>
-                        <th className="py-4 font-bold">Catégorie</th>
-                        <th className="py-4 font-bold">Formats & Stocks</th>
-                        <th className="py-4 font-bold text-right">Actions</th>
+                        <th className="py-6 px-8 font-black">Identité Produit</th>
+                        <th className="py-6 px-8 font-black">Catégorie</th>
+                        <th className="py-6 px-8 font-black">Inventaire & Tarifs</th>
+                        <th className="py-6 px-8 font-black text-right">Actions</th>
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                     {filteredProducts.map(product => (
-                        <tr key={product.id} className="group hover:bg-white/[0.01] transition-colors">
-                            <td className="py-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-12 h-12 bg-white/5 overflow-hidden border border-white/5">
+                        <tr key={product.id} className="group hover:bg-white/[0.02] transition-colors">
+                            {/* Colonne Identité avec Image */}
+                            <td className="py-6 px-8">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-14 h-14 bg-white/5 overflow-hidden border border-white/5 shadow-inner">
                                         <img
                                             src={product.image}
                                             alt={product.name}
                                             className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
                                         />
                                     </div>
-                                    <span className="text-rhum-cream text-sm font-medium">{product.name}</span>
+                                    <div>
+                                        <p className="text-white text-sm font-bold uppercase tracking-tight">
+                                            {product.name}
+                                        </p>
+                                        <p className="text-[8px] text-white/20 uppercase mt-1 tracking-widest">
+                                            ID : {product.id.slice(0, 8)}...
+                                        </p>
+                                    </div>
                                 </div>
                             </td>
-                            <td className="py-6 text-xs text-rhum-gold/60">{product.category.name}</td>
-                            <td className="py-6">
-                                <div className="space-y-1">
+
+                            {/* Colonne Catégorie */}
+                            <td className="py-6 px-8">
+                                    <span className="text-[10px] text-rhum-gold/60 font-black uppercase tracking-widest border border-rhum-gold/10 px-3 py-1 rounded-sm">
+                                        {product.category.name}
+                                    </span>
+                            </td>
+
+                            {/* Colonne Stocks style Fiche Client */}
+                            <td className="py-6 px-8">
+                                <div className="space-y-2">
                                     {product.volumes.map((v: any) => (
-                                        <div key={v.id} className="text-[10px] text-rhum-cream/60 uppercase">
-                                            {v.size}{v.unit} — <span className="text-rhum-gold">{v.price}€</span>
-                                            <span className={`ml-2 ${v.stock < 5 ? 'text-red-400 font-bold' : 'text-green-400/50'}`}>
-                                                    ({v.stock} en stock)
+                                        <div key={v.id} className="flex items-center gap-3">
+                                            <div className={`w-1.5 h-3 rounded-full ${v.stock < 5 ? 'bg-red-400 animate-pulse' : 'bg-rhum-gold'}`} />
+                                            <span className="text-[10px] text-rhum-cream/60 uppercase tracking-tighter">
+                                                    {v.size}{v.unit} — <b className="text-rhum-gold">{v.price}€</b>
+                                                    <span className="ml-2 opacity-40">({v.stock} pcs)</span>
                                                 </span>
                                         </div>
                                     ))}
                                 </div>
                             </td>
-                            <td className="py-6 text-right space-x-4">
-                                <button
-                                    onClick={() => openEdit(product)}
-                                    className="text-[9px] uppercase tracking-widest text-rhum-gold/40 hover:text-white transition-colors"
-                                >
-                                    Modifier
-                                </button>
-                                <button
-                                    onClick={() => handleDelete(product.id, product.name)}
-                                    className="text-[9px] uppercase tracking-widest text-red-400/40 hover:text-red-400 transition-colors"
-                                >
-                                    Supprimer
-                                </button>
+
+                            {/* Colonne Actions */}
+                            <td className="py-6 px-8 text-right">
+                                <div className="flex justify-end gap-5">
+                                    <button
+                                        onClick={() => openEdit(product)}
+                                        className="text-rhum-gold/30 hover:text-white transition-colors"
+                                        title="Modifier la fiche"
+                                    >
+                                        <Edit3 size={18} />
+                                    </button>
+                                    <button
+                                        onClick={() => handleDelete(product.id, product.name)}
+                                        className="text-red-400/20 hover:text-red-400 transition-colors"
+                                        title="Supprimer la référence"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                     ))}
@@ -138,8 +159,8 @@ export default function AdminBoutique() {
                 </table>
 
                 {filteredProducts.length === 0 && (
-                    <div className="py-20 text-center italic text-white/20 text-sm font-serif">
-                        Aucun produit ne correspond à votre recherche.
+                    <div className="py-24 text-center italic text-white/10 text-sm font-serif tracking-widest">
+                        Aucune référence ne correspond à votre recherche.
                     </div>
                 )}
             </div>
