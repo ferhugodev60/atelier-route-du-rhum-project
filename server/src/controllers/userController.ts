@@ -5,11 +5,9 @@ import { prisma } from '../lib/prisma';
  * --- 👤 PARTIE CLIENT (Auto-gestion) ---
  */
 
-// Récupérer son propre profil
 export const getMe = async (req: Request, res: Response) => {
     // @ts-ignore
     const userId = req.user?.userId;
-
     if (!userId) return res.status(401).json({ error: "Session invalide." });
 
     try {
@@ -26,15 +24,13 @@ export const getMe = async (req: Request, res: Response) => {
                 createdAt: true
             }
         });
-
         if (!user) return res.status(404).json({ error: "Profil introuvable." });
         return res.json(user);
-    } catch (error: any) {
+    } catch (error) {
         return res.status(500).json({ error: "Erreur de lecture du profil." });
     }
 };
 
-// Mettre à jour ses informations personnelles
 export const updateMe = async (req: Request, res: Response) => {
     // @ts-ignore
     const userId = req.user?.userId;
@@ -54,20 +50,19 @@ export const updateMe = async (req: Request, res: Response) => {
             }
         });
         return res.json(updatedUser);
-    } catch (error: any) {
+    } catch (error) {
         return res.status(500).json({ error: "Échec de la mise à jour." });
     }
 };
 
 /**
- * --- 🏛️ PARTIE ADMINISTRATION (Gestion Clientèle) ---
+ * --- 🏛️ PARTIE ADMINISTRATION ---
  */
 
-// Récupérer l'intégralité de la clientèle
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
         const users = await prisma.user.findMany({
-            where: { role: 'USER' }, // On exclut les administrateurs du listing
+            where: { role: 'USER' },
             select: {
                 id: true,
                 email: true,
@@ -76,7 +71,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
                 phone: true,
                 conceptionLevel: true,
                 createdAt: true,
-                _count: { select: { orders: true } } // Statistiques d'achat
+                _count: { select: { orders: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
@@ -86,9 +81,27 @@ export const getAllUsers = async (req: Request, res: Response) => {
     }
 };
 
-// Modifier une fiche client (Admin uniquement)
+// 🏺 Nouveau : Dossier détaillé avec historique des commandes
+export const getUserDetails = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+    try {
+        const customer = await prisma.user.findUnique({
+            where: { id },
+            include: {
+                orders: {
+                    orderBy: { createdAt: 'desc' }
+                }
+            }
+        });
+        if (!customer) return res.status(404).json({ error: "Client introuvable." });
+        res.json(customer);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la lecture du dossier." });
+    }
+};
+
 export const updateUserProfile = async (req: Request, res: Response) => {
-    const id = req.params.id as string; // Sécurité de type Prisma
+    const id = req.params.id as string;
     const { firstName, lastName, phone, conceptionLevel, email } = req.body;
 
     try {
@@ -104,11 +117,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
         });
         res.json(updatedUser);
     } catch (error) {
-        res.status(404).json({ error: "Client introuvable ou erreur de données." });
+        res.status(404).json({ error: "Erreur de données." });
     }
 };
 
-// Valider spécifiquement un niveau de cursus
 export const validateUserLevel = async (req: Request, res: Response) => {
     const userId = req.params.userId as string;
     const { newLevel } = req.body;
@@ -120,6 +132,6 @@ export const validateUserLevel = async (req: Request, res: Response) => {
         });
         res.json({ message: "Progression validée", userLevel: updatedUser.conceptionLevel });
     } catch (error) {
-        res.status(404).json({ error: "Impossible de valider le niveau." });
+        res.status(404).json({ error: "Validation impossible." });
     }
 };

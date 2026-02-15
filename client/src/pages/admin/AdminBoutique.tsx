@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search, Edit3, Trash2, Package } from 'lucide-react';
+import { Search, Edit3, Trash2 } from 'lucide-react';
 import AddProductModal from '../../components/admin/AddProductModal';
 import EditProductModal from '../../components/admin/EditProductModal';
 
