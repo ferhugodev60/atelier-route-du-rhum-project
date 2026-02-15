@@ -14,25 +14,34 @@ interface ShopPageProps {
 
 export default function ShopPage({ onAddToCart }: ShopPageProps) {
     const [products, setProducts] = useState<Product[]>([]);
+    // 🏺 État pour les catégories dynamiques
+    const [categories, setCategories] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCat, setActiveCat] = useState<string>("TOUS");
     const [sortOrder, setSortOrder] = useState<string>("default");
     const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
-    // 🏺 Chargement des élixirs depuis le serveur
     useEffect(() => {
         window.scrollTo(0, 0);
-        const fetchInventory = async () => {
+
+        const fetchData = async () => {
             try {
-                const { data } = await api.get('/shop/products');
-                setProducts(data);
+                // 🏺 Chargement simultané des produits et des catégories
+                const [productsRes, categoriesRes] = await Promise.all([
+                    api.get('/shop/products'),
+                    api.get('/categories')
+                ]);
+
+                setProducts(productsRes.data);
+                setCategories(categoriesRes.data);
             } catch (err) {
                 console.error("Erreur lors de la lecture de la cave :", err);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchInventory();
+
+        fetchData();
     }, []);
 
     // LOGIQUE DE FILTRAGE ET TRI
@@ -56,7 +65,7 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
-                <p className="text-rhum-gold font-serif italic animate-pulse">Chauffage de l'alambic...</p>
+                <p className="text-rhum-gold font-serif italic animate-pulse tracking-widest uppercase text-xs">Extraction des essences...</p>
             </div>
         );
     }
@@ -65,19 +74,21 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen bg-[#0a1a14] pt-40 md:pt-60 pb-20 px-4 md:px-6"
+            className="min-h-screen bg-[#0a1a14] pt-40 md:pt-60 pb-20 px-4 md:px-6 font-sans"
         >
             <div className="max-w-7xl mx-auto">
                 <header className="text-center mb-10 md:mb-16">
                     <h1 className="text-3xl md:text-7xl font-serif text-rhum-gold tracking-[0.2em] uppercase mb-4">
                         La BOUTIQUE
                     </h1>
-                    <p className="text-rhum-cream/60 font-sans max-w-xl mx-auto text-[11px] md:text-lg mt-10">
-                        Chaque flacon est une promesse de voyage, distillée avec passion dans notre atelier.
+                    <p className="text-rhum-cream/60 max-w-xl mx-auto text-[11px] md:text-sm uppercase tracking-widest mt-10 leading-relaxed">
+                        Chaque flacon est une promesse de voyage, distillée avec passion dans notre établissement
                     </p>
                 </header>
 
+                {/* 🏺 On passe les catégories récupérées au composant de filtrage */}
                 <ShopFilters
+                    categories={categories}
                     activeCat={activeCat}
                     onCatChange={setActiveCat}
                     onSortChange={setSortOrder}
@@ -99,8 +110,8 @@ export default function ShopPage({ onAddToCart }: ShopPageProps) {
 
                 {processedProducts.length === 0 && (
                     <div className="py-24 text-center border border-white/5 bg-white/[0.02]">
-                        <p className="font-serif italic text-rhum-cream/30 text-xl">
-                            Cet élixir n'a pas encore été mis en bouteille...
+                        <p className="font-serif italic text-rhum-cream/30 text-xl tracking-wider">
+                            Cet élixir n'a pas encore été mis en flacon...
                         </p>
                     </div>
                 )}

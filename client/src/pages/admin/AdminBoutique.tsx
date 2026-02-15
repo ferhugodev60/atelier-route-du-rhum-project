@@ -53,7 +53,7 @@ export default function AdminBoutique() {
                     onClick={() => setIsAddOpen(true)}
                     className="bg-rhum-gold text-rhum-green px-6 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all shadow-lg"
                 >
-                    + Nouvelle Référence
+                    + Nouvelle bouteille
                 </button>
             </header>
 

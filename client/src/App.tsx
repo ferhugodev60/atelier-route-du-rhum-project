@@ -11,6 +11,7 @@ import PaymentSuccess from "./components/shop/PaymentSuccess.tsx";
 import PaymentError from "./components/shop/PaymentError.tsx";
 import { useCartStore } from './store/cartStore';
 import ToastContainer from "./components/ui/ToastContainer.tsx";
+import AdminCategories from "./pages/admin/AdminCategories.tsx";
 
 // --- Imports Admin (Lazy Loading pour la performance) ---
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -79,6 +80,7 @@ export default function App() {
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
                             <Route path="boutique" element={<AdminBoutique />} />
+                            <Route path="categories" element={<AdminCategories />} />
                         </Route>
                     </Routes>
                 </Suspense>
