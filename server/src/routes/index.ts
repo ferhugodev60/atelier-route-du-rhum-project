@@ -7,6 +7,7 @@ import userRoutes from "./userRoutes";
 import productRoutes from "./productRoutes";
 import checkoutRoutes from "./checkoutRoutes";
 import categoryRoutes from "./categoryRoutes";
+import workshopRoutes from "./workshopRoutes";
 
 const router = Router();
 
@@ -19,5 +20,6 @@ router.use("/admin", adminRoutes);
 router.use('/users', userRoutes);
 router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
+router.use("/workshops", workshopRoutes);
 
 export default router;
