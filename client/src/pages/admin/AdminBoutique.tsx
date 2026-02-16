@@ -80,7 +80,7 @@ export default function AdminBoutique() {
                         onClick={() => setIsAddOpen(true)}
                         className="bg-rhum-gold text-rhum-green px-8 py-3.5 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all shadow-xl whitespace-nowrap"
                     >
-                        + Nouvelle Référence
+                        + Nouvelle Bouteille
                     </button>
                 </div>
             </header>
@@ -111,9 +111,6 @@ export default function AdminBoutique() {
                                         <p className="text-white text-sm font-bold uppercase tracking-tight">
                                             {product.name}
                                         </p>
-                                        <p className="text-[8px] text-white/20 uppercase mt-1 tracking-widest">
-                                            ID : {product.id.slice(0, 8)}...
-                                        </p>
                                     </div>
                                 </div>
                             </td>
@@ -131,7 +128,7 @@ export default function AdminBoutique() {
                                             <div className={`w-1.5 h-3 rounded-full ${v.stock < 5 ? 'bg-red-400 animate-pulse' : 'bg-rhum-gold'}`} />
                                             <span className="text-[10px] text-rhum-cream/60 uppercase tracking-tighter">
                                                     {v.size}{v.unit} — <b className="text-rhum-gold">{v.price}€</b>
-                                                    <span className="ml-2 opacity-40">({v.stock} pcs)</span>
+                                                    <span className="ml-2 opacity-40">({v.stock} bouteilles)</span>
                                                 </span>
                                         </div>
                                     ))}
@@ -142,14 +139,14 @@ export default function AdminBoutique() {
                                 <div className="flex justify-end gap-5">
                                     <button
                                         onClick={() => openEdit(product)}
-                                        className="text-rhum-gold/30 hover:text-white transition-colors"
+                                        className="text-rhum-gold/70 hover:text-white transition-colors"
                                         title="Modifier la fiche"
                                     >
                                         <Edit3 size={18} />
                                     </button>
                                     <button
                                         onClick={() => handleDelete(product.id, product.name)}
-                                        className="text-red-400/20 hover:text-red-400 transition-colors"
+                                        className="text-red-400/70 hover:text-red-400 transition-colors"
                                         title="Supprimer la référence"
                                     >
                                         <Trash2 size={18} />
