@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TrendingUp, ShoppingCart, AlertTriangle, Users, ArrowUpRight } from 'lucide-react';
 import api from '../../api/axiosInstance';
@@ -6,6 +7,7 @@ import api from '../../api/axiosInstance';
 export default function AdminDashboard() {
     const [stats, setStats] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const navigate = useNavigate();
 
     useEffect(() => {
         api.get('/admin/stats')
@@ -33,7 +35,7 @@ export default function AdminDashboard() {
                 </div>
             </header>
 
-            {/* --- 📊 INDICATEURS CLÉS --- */}
+            {/* --- 📊 INDICATEURS CLÉS INTERACTIFS --- */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard
                     title="Chiffre d'Affaires"
@@ -44,22 +46,28 @@ export default function AdminDashboard() {
                     title="Ventes Totales"
                     value={stats?.totalSales}
                     icon={<ShoppingCart className="text-rhum-gold" />}
+                    onClick={() => navigate('/admin/orders')} // Redirection vers les commandes
                 />
                 <StatCard
                     title="Alertes Stocks"
                     value={stats?.lowStockAlerts.length}
                     icon={<AlertTriangle className={stats?.lowStockAlerts.length > 0 ? "text-red-400 animate-pulse" : "text-rhum-gold/20"} />}
+                    onClick={() => navigate('/admin/boutique')} // Redirection vers la boutique
                 />
                 <StatCard
                     title="Clientèle"
                     value={stats?.totalUsers || "0"}
                     icon={<Users className="text-rhum-gold" />}
+                    onClick={() => navigate('/admin/customers')} // Redirection vers la clientèle
                 />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
                 {/* --- ⚠️ INVENTAIRE CRITIQUE --- */}
-                <div className="bg-white/[0.02] border border-rhum-gold/10 p-8 rounded-sm shadow-xl">
+                <div
+                    onClick={() => navigate('/admin/boutique')}
+                    className="bg-white/[0.02] border border-rhum-gold/10 p-8 rounded-sm shadow-xl cursor-pointer hover:bg-white/[0.04] transition-all"
+                >
                     <h3 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-black mb-8 border-b border-white/5 pb-4 flex items-center justify-between">
                         Stocks à Réapprovisionner
                         <AlertTriangle size={12} className="opacity-40" />
@@ -85,13 +93,22 @@ export default function AdminDashboard() {
                     </div>
                 </div>
 
-                {/* --- 🕒 DERNIÈRES TRANSACTIONS --- */}
-                <div className="bg-white/[0.02] border border-rhum-gold/10 p-8 rounded-sm shadow-xl">
-                    <h3 className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black mb-8 border-b border-white/5 pb-4">
-                        Flux de Ventes Récents
-                    </h3>
+                {/* --- 🕒 DERNIÈRES TRANSACTIONS (LIMITÉES À 5) --- */}
+                <div
+                    onClick={() => navigate('/admin/orders')}
+                    className="bg-white/[0.02] border border-rhum-gold/10 p-8 rounded-sm shadow-xl cursor-pointer hover:bg-white/[0.04] transition-all"
+                >
+                    <div className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
+                        <h3 className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black">
+                            Flux de Ventes Récents
+                        </h3>
+                        <span className="text-[8px] text-white/20 uppercase font-bold italic">
+                            5 derniers ventes
+                        </span>
+                    </div>
                     <div className="space-y-6">
-                        {stats?.recentOrders.map((order: any) => (
+                        {/* Limitation aux 5 dernières commandes */}
+                        {stats?.recentOrders?.slice(0, 5).map((order: any) => (
                             <div key={order.id} className="flex justify-between items-center group">
                                 <div className="flex items-center gap-4">
                                     <div className="p-2 bg-white/5 rounded-full">
@@ -105,11 +122,14 @@ export default function AdminDashboard() {
                                 <div className="text-right">
                                     <p className="text-rhum-gold font-serif text-sm font-bold">{order.total.toFixed(2)}€</p>
                                     <span className="text-[7px] border border-rhum-gold/20 text-rhum-gold px-2 py-0.5 rounded-sm uppercase font-black">
-                                        {order.status}
+                                        Confirmé
                                     </span>
                                 </div>
                             </div>
                         ))}
+                        {(!stats?.recentOrders || stats.recentOrders.length === 0) && (
+                            <p className="text-[10px] text-rhum-cream/20 uppercase italic text-center py-6">Aucun flux transactionnel récent.</p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -117,11 +137,12 @@ export default function AdminDashboard() {
     );
 }
 
-function StatCard({ title, value, icon }: { title: string, value: any, icon: React.ReactNode }) {
+function StatCard({ title, value, icon, onClick }: { title: string, value: any, icon: React.ReactNode, onClick?: () => void }) {
     return (
         <motion.div
-            whileHover={{ y: -4, backgroundColor: "rgba(255, 255, 255, 0.04)" }}
-            className="bg-white/[0.03] border border-rhum-gold/10 p-8 rounded-sm space-y-4 transition-all"
+            whileHover={onClick ? { y: -4, backgroundColor: "rgba(255, 255, 255, 0.04)" } : {}}
+            onClick={onClick}
+            className={`bg-white/[0.03] border border-rhum-gold/10 p-8 rounded-sm space-y-4 transition-all ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <p className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/40 font-black">{title}</p>
