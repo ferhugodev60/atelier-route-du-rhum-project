@@ -1,4 +1,5 @@
 import { Workshop } from "../../../types/workshop.ts";
+import { useAuthStore } from "../../../store/authStore"; // 🏺 Store unique pour l'auth et les modales
 
 interface WorkshopCardProps {
     workshop: Workshop;
@@ -6,38 +7,51 @@ interface WorkshopCardProps {
 }
 
 export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps) {
+    // 🏺 Extraction de l'utilisateur et de la méthode d'ouverture de session
+    const { user, setLoginOpen } = useAuthStore();
+
+    /**
+     * 🏺 LOGIQUE DE RÉSERVATION SÉCURISÉE
+     * Basée sur la présence de l'objet "user"
+     */
     const handleQuickReserve = () => {
-        // 🏺 On pré-remplit l'objet avec le titre et le niveau 0
+        if (!user) {
+            // Si non identifié, on ouvre la modale de connexion du store
+            setLoginOpen(true);
+            return;
+        }
+
+        // Si identifié, on procède à la mise au panier de la séance
         onReserve({
             ...workshop,
             cartId: `discovery-${Date.now()}`,
-            name: workshop.title, // Scelle le nom blanc
-            level: 0,             // Scelle le label Initiation
+            name: workshop.title,
+            level: 0,
             quantity: 1
         });
     };
 
     return (
-        <article className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/40 shadow-2xl h-full">
+        <article className="group flex flex-col bg-[#081c15] rounded-sm overflow-hidden border border-rhum-gold/40 shadow-2xl h-full font-sans">
             <div className="relative h-48 md:h-64 overflow-hidden">
+                {/* 🏺 Rétablissement du dégradé vert profond */}
                 <div className="absolute inset-0 bg-gradient-to-t from-[#081c15] via-transparent to-transparent z-10" />
                 <img
                     src={workshop.image}
                     alt={workshop.title}
-                    className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-110"
+                    className="w-full h-full object-cover opacity-80 transition-transform duration-1000 group-hover:scale-105"
                 />
             </div>
 
             <div className="p-6 md:p-10 flex flex-col flex-grow">
                 <header className="flex justify-between items-start mb-6 md:mb-8">
-                    <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight max-w-[60%]">
+                    <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight max-w-[65%] tracking-tight">
                         {workshop.title}
                     </h4>
                     <div className="flex flex-col items-end text-right">
                         <span className="text-2xl md:text-4xl font-serif text-rhum-gold leading-none">
-                            {workshop.price}€
+                            {workshop.price} €
                         </span>
-                        <span className="text-[8px] uppercase tracking-widest text-rhum-gold/40 mt-1 font-bold">à pré-payer</span>
                     </div>
                 </header>
 
@@ -50,7 +64,8 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
                         onClick={handleQuickReserve}
                         className="w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.3em] text-[10px] md:text-xs hover:bg-white transition-all shadow-xl rounded-sm"
                     >
-                        RÉSERVER DÈS MAINTENANT
+                        {/* 🏺 Libellé dynamique selon l'état de connexion */}
+                        {user ? 'Réserver dès maintenant' : 'Se connecter pour réserver'}
                     </button>
                 </div>
             </div>
