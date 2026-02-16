@@ -103,7 +103,7 @@ export default function AdminDashboard() {
                             Flux de Ventes Récents
                         </h3>
                         <span className="text-[8px] text-white/20 uppercase font-bold italic">
-                            5 derniers ventes
+                            5 dernières ventes
                         </span>
                     </div>
                     <div className="space-y-6">

@@ -2,11 +2,14 @@ import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
 import { Search, Mail, Phone, User } from 'lucide-react';
 import CustomerDetailsModal from '../../components/admin/CustomerDetailsModal';
+import AdminPagination from '../../components/admin/AdminPagination'; // 🏺 Intégration pagination
 
 export default function AdminCustomers() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10; // 🏺 Limite de 10 membres par page
 
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -21,12 +24,22 @@ export default function AdminCustomers() {
 
     useEffect(() => { fetchCustomers(); }, []);
 
+    // Réinitialisation de la page lors d'une recherche
+    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+
     const filteredCustomers = useMemo(() => {
         return customers.filter(c =>
             `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
             c.email.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [customers, searchTerm]);
+
+    // 🏺 Logique de découpage pour la pagination
+    const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+    const displayedCustomers = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredCustomers.slice(start, start + itemsPerPage);
+    }, [filteredCustomers, currentPage]);
 
     const openCustomerDetails = (customer: any) => {
         setSelectedCustomer(customer);
@@ -63,7 +76,7 @@ export default function AdminCustomers() {
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                    {filteredCustomers.map(customer => (
+                    {displayedCustomers.map(customer => (
                         <tr
                             key={customer.id}
                             onClick={() => openCustomerDetails(customer)}
@@ -103,7 +116,6 @@ export default function AdminCustomers() {
                                         ))}
                                     </div>
                                     <span className="text-[9px] text-rhum-gold font-black uppercase tracking-widest">
-                                            {/* Logic de texte pour le Niveau 0 */}
                                         {customer.conceptionLevel === 0 ? "Sans Certification" : `Niveau ${customer.conceptionLevel}`}
                                         </span>
                                 </div>
@@ -117,12 +129,19 @@ export default function AdminCustomers() {
                     </tbody>
                 </table>
 
-                {(filteredCustomers.length === 0 && !loading) && (
+                {(displayedCustomers.length === 0 && !loading) && (
                     <div className="py-24 text-center italic text-white/10 text-sm font-serif tracking-widest">
                         Aucune fiche client ne correspond à votre recherche.
                     </div>
                 )}
             </div>
+
+            {/* 🏺 Navigation entre les pages */}
+            <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+            />
 
             <CustomerDetailsModal
                 isOpen={isDetailsOpen}

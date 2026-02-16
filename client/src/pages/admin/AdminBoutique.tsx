@@ -3,10 +3,13 @@ import api from '../../api/axiosInstance';
 import { Search, Edit3, Trash2 } from 'lucide-react';
 import AddProductModal from '../../components/admin/AddProductModal';
 import EditProductModal from '../../components/admin/EditProductModal';
+import AdminPagination from '../../components/admin/AdminPagination';
 
 export default function AdminBoutique() {
     const [products, setProducts] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10; // 🏺 Limite de 10 bouteilles par page
 
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -21,12 +24,22 @@ export default function AdminBoutique() {
         }
     };
 
+    useEffect(() => { fetchProducts(); }, []);
+    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+
     const filteredProducts = useMemo(() => {
         return products.filter(product =>
             product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             product.category.name.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [products, searchTerm]);
+
+    // 🏺 Découpage du catalogue
+    const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+    const displayedProducts = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredProducts.slice(start, start + itemsPerPage);
+    }, [filteredProducts, currentPage]);
 
     const handleDelete = async (id: string, name: string) => {
         if (window.confirm(`Confirmer la suppression définitive de "${name}" ?`)) {
@@ -44,10 +57,6 @@ export default function AdminBoutique() {
         setIsEditOpen(true);
     };
 
-    useEffect(() => {
-        fetchProducts();
-    }, []);
-
     return (
         <section className="space-y-10 font-sans">
             <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
@@ -57,7 +66,6 @@ export default function AdminBoutique() {
                 </div>
 
                 <div className="flex items-center gap-6">
-                    {/* --- BARRE DE RECHERCHE STYLE CLIENTÈLE --- */}
                     <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-sm">
                         <Search size={14} className="text-rhum-gold/40" />
                         <input
@@ -77,7 +85,6 @@ export default function AdminBoutique() {
                 </div>
             </header>
 
-            {/* --- TABLEAU FORMAT CLIENTÈLE --- */}
             <div className="overflow-x-auto bg-white/[0.01] border border-white/5">
                 <table className="w-full text-left border-collapse">
                     <thead>
@@ -89,9 +96,8 @@ export default function AdminBoutique() {
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                    {filteredProducts.map(product => (
+                    {displayedProducts.map(product => (
                         <tr key={product.id} className="group hover:bg-white/[0.02] transition-colors">
-                            {/* Colonne Identité avec Image */}
                             <td className="py-6 px-8">
                                 <div className="flex items-center gap-5">
                                     <div className="w-14 h-14 bg-white/5 overflow-hidden border border-white/5 shadow-inner">
@@ -112,14 +118,12 @@ export default function AdminBoutique() {
                                 </div>
                             </td>
 
-                            {/* Colonne Catégorie */}
                             <td className="py-6 px-8">
                                     <span className="text-[10px] text-rhum-gold/60 font-black uppercase tracking-widest border border-rhum-gold/10 px-3 py-1 rounded-sm">
                                         {product.category.name}
                                     </span>
                             </td>
 
-                            {/* Colonne Stocks style Fiche Client */}
                             <td className="py-6 px-8">
                                 <div className="space-y-2">
                                     {product.volumes.map((v: any) => (
@@ -134,7 +138,6 @@ export default function AdminBoutique() {
                                 </div>
                             </td>
 
-                            {/* Colonne Actions */}
                             <td className="py-6 px-8 text-right">
                                 <div className="flex justify-end gap-5">
                                     <button
@@ -158,12 +161,18 @@ export default function AdminBoutique() {
                     </tbody>
                 </table>
 
-                {filteredProducts.length === 0 && (
+                {displayedProducts.length === 0 && (
                     <div className="py-24 text-center italic text-white/10 text-sm font-serif tracking-widest">
                         Aucune référence ne correspond à votre recherche.
                     </div>
                 )}
             </div>
+
+            <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+            />
 
             <AddProductModal isOpen={isAddOpen} onClose={() => setIsAddOpen(false)} onRefresh={fetchProducts} />
             <EditProductModal isOpen={isEditOpen} product={selectedProduct} onClose={() => setIsEditOpen(false)} onRefresh={fetchProducts} />

@@ -2,14 +2,19 @@ import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
 import { Search, ArrowUpRight } from 'lucide-react';
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal';
+import AdminPagination from '../../components/admin/AdminPagination';
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10; // 🏺 Limite de 10 dossiers par page
 
     const fetchOrders = () => api.get('/orders').then(res => setOrders(res.data));
     useEffect(() => { fetchOrders(); }, []);
+
+    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
     const filteredOrders = useMemo(() => {
         return orders.filter(o =>
@@ -17,6 +22,13 @@ export default function AdminOrders() {
             `${o.user.firstName} ${o.user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
         );
     }, [orders, searchTerm]);
+
+    // 🏺 Calcul de la pagination
+    const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+    const displayedOrders = useMemo(() => {
+        const start = (currentPage - 1) * itemsPerPage;
+        return filteredOrders.slice(start, start + itemsPerPage);
+    }, [filteredOrders, currentPage]);
 
     return (
         <section className="space-y-10 font-sans">
@@ -26,7 +38,7 @@ export default function AdminOrders() {
                     <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Retraits et Réservations</p>
                 </div>
 
-                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-sm">
+                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-sm">
                     <Search size={14} className="text-rhum-gold/40" />
                     <input
                         type="text"
@@ -44,12 +56,12 @@ export default function AdminOrders() {
                         <th className="py-6 px-8 font-black">Référence & Date</th>
                         <th className="py-6 px-8 font-black">Identité Client</th>
                         <th className="py-6 px-8 font-black">Règlement</th>
-                        <th className="py-6 px-8 font-black">État du Retrait</th> {/* 🏺 Modifié */}
+                        <th className="py-6 px-8 font-black">État du Retrait</th>
                         <th className="py-6 px-8 font-black text-right">Dossier</th>
                     </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
-                    {filteredOrders.map(order => (
+                    {displayedOrders.map(order => (
                         <tr key={order.id} className="group hover:bg-white/[0.02] transition-colors">
                             <td className="py-6 px-8">
                                 <p className="text-white text-sm font-bold uppercase">{order.reference}</p>
@@ -84,6 +96,12 @@ export default function AdminOrders() {
                     </tbody>
                 </table>
             </div>
+
+            <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={(page) => setCurrentPage(page)}
+            />
 
             <OrderDetailsModal
                 isOpen={!!selectedOrderId}
