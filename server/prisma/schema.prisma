@@ -54,27 +54,31 @@ model ProductVolume {
 
 model Workshop {
   id           String      @id @default(uuid())
-  level        Int         @unique
+  level        Int
+  type         String      @default("PARTICULIER") // 🏺 "PARTICULIER" ou "ENTREPRISE"
   title        String
   description  String
-  image        String? // Stockera l'URL sécurisée Cloudinary
+  image        String?
   color        String?
   format       String
   availability String?
   quote        String
   price        Float
   orderItems   OrderItem[]
+
+  @@unique([level, type])
 }
 
 model Order {
-  id        String      @id @default(cuid())
-  reference String      @unique
-  status    String      @default("EN PRÉPARATION")
-  total     Float
-  userId    String
-  user      User        @relation(fields: [userId], references: [id])
-  items     OrderItem[]
-  createdAt DateTime    @default(now())
+  id         String      @id @default(cuid())
+  reference  String      @unique
+  status     String      @default("EN ATTENTE")
+  total      Float
+  isBusiness Boolean     @default(false)
+  userId     String
+  user       User        @relation(fields: [userId], references: [id])
+  items      OrderItem[]
+  createdAt  DateTime    @default(now())
 }
 
 model OrderItem {

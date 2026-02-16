@@ -37,7 +37,6 @@ async function main() {
 
     console.log('--- 📦 Création du Produit Unique avec Multi-Volumes ---');
 
-    // 🏺 UN SEUL PRODUIT "Ananas & Vanille" décliné en 3 volumes
     await prisma.product.create({
         data: {
             name: "Ananas & Vanille",
@@ -87,10 +86,11 @@ async function main() {
 
     console.log('--- 🎓 Ateliers (Découverte + Conception) ---');
 
-    // Atelier Découverte : Indépendant du parcours de conception
+    // --- OFFRES PARTICULIERS (EXISTANTES) ---
     await prisma.workshop.create({
         data: {
             level: 0,
+            type: "PARTICULIER",
             title: "L'Atelier Découverte",
             description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
             image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBimgI_mFmhWc_9qoKqs0nfK6ftBG24VbNzNQwc6zGMty6NlSEdoNK4J5E6P-eXoOfzp4B6AxYi-RaQIJhwBbOwFVuE0HHw72rc3AZ9dIKyltqYJVWgnaQHA-DmyIVut7ja4Xt2RIMc2U=s680-w680-h510-rw",
@@ -100,10 +100,10 @@ async function main() {
         }
     });
 
-    // Niveau 1
     await prisma.workshop.create({
         data: {
             level: 1,
+            type: "PARTICULIER",
             title: "L'Atelier Fruits",
             description: "Maitrise des acides de fruits",
             color: "#1b6319",
@@ -115,10 +115,10 @@ async function main() {
         }
     });
 
-    // Niveau 2
     await prisma.workshop.create({
         data: {
             level: 2,
+            type: "PARTICULIER",
             title: "L'Atelier Épices",
             description: "Le caractère et la structure de votre nectar",
             color: "#be5aff",
@@ -130,10 +130,10 @@ async function main() {
         }
     });
 
-    // Niveau 3
     await prisma.workshop.create({
         data: {
             level: 3,
+            type: "PARTICULIER",
             title: "L'Atelier Plantes",
             description: "L'exploration botanique et florale",
             color: "#0074D9",
@@ -145,10 +145,10 @@ async function main() {
         }
     });
 
-    // Niveau 4 : L'aboutissement
     await prisma.workshop.create({
         data: {
             level: 4,
+            type: "PARTICULIER",
             title: "L'Atelier Mixologie",
             description: "L'art ultime du service et du cocktail.",
             color: "#500101",
@@ -157,6 +157,83 @@ async function main() {
             availability: "Du Mardi au Jeudi de 10h à 20h (Repas de 2h inclus)",
             quote: "Une immersion complète de 8 heures pour maîtriser les techniques de bar professionnelles et créer vos propres cocktails signatures.",
             price: 420.0
+        }
+    });
+
+    // --- 🏺 OFFRES ENTREPRISE (AJOUTS) ---
+    // Les tarifs sont ajustés : 50€ pour le niveau 0 et -20€ pour les niveaux 1-4
+    console.log('--- 🏢 Offres Entreprise ---');
+
+    await prisma.workshop.create({
+        data: {
+            level: 0,
+            type: "ENTREPRISE",
+            title: "L'Atelier Découverte (Entreprise)",
+            description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
+            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBimgI_mFmhWc_9qoKqs0nfK6ftBG24VbNzNQwc6zGMty6NlSEdoNK4J5E6P-eXoOfzp4B6AxYi-RaQIJhwBbOwFVuE0HHw72rc3AZ9dIKyltqYJVWgnaQHA-DmyIVut7ja4Xt2RIMc2U=s680-w680-h510-rw",
+            format: "Séance privatisée : 1h30 de dégustation guidée et de partage historique.",
+            quote: "La même immersion technique adaptée au format séminaire pour vos équipes.",
+            price: 50.0
+        }
+    });
+
+    await prisma.workshop.create({
+        data: {
+            level: 1,
+            type: "ENTREPRISE",
+            title: "L'Atelier Fruits (Entreprise)",
+            description: "Maitrise des acides de fruits",
+            color: "#1b6319",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            format: "Expérience Entreprise : 2h30 avec une bouteille d'1 litre incluse.",
+            availability: "Sur réservation (Lundi au Samedi)",
+            quote: "Une session de cohésion autour de l'art de la macération fruitière.",
+            price: 120.0
+        }
+    });
+
+    await prisma.workshop.create({
+        data: {
+            level: 2,
+            type: "ENTREPRISE",
+            title: "L'Atelier Épices (Entreprise)",
+            description: "Le caractère et la structure de votre nectar",
+            color: "#be5aff",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            format: "Expérience Entreprise : 3h avec l'épisothèque incluse pour chaque participant.",
+            availability: "Sur réservation (Lundi au Samedi)",
+            quote: "Développez la créativité de vos collaborateurs via l'alchimie des épices.",
+            price: 150.0
+        }
+    });
+
+    await prisma.workshop.create({
+        data: {
+            level: 3,
+            type: "ENTREPRISE",
+            title: "L'Atelier Plantes (Entreprise)",
+            description: "L'exploration botanique et florale",
+            color: "#0074D9",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            format: "Expérience Entreprise : 4h avec la pharmatech incluse pour chaque participant.",
+            availability: "Sur réservation (Lundi au Samedi)",
+            quote: "Un voyage sensoriel et botanique pour renforcer les liens de vos équipes.",
+            price: 190.0
+        }
+    });
+
+    await prisma.workshop.create({
+        data: {
+            level: 4,
+            type: "ENTREPRISE",
+            title: "L'Atelier Mixologie (Entreprise)",
+            description: "L'art ultime du service et du cocktail.",
+            color: "#500101",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+            format: "Journée Séminaire : 8h d'immersion totale, repas inclus, création de 6 recettes.",
+            availability: "Sur réservation (Lundi au Jeudi)",
+            quote: "L'excellence du service et de la mixologie pour vos événements de prestige.",
+            price: 400.0
         }
     });
 
@@ -169,11 +246,10 @@ async function main() {
             firstName: "Hugo",
             lastName: "Frr",
             role: "ADMIN",
-            conceptionLevel: 0 // Hugo commence à 0
+            conceptionLevel: 0
         }
     });
 
-    // USER classique
     const hashedUserPassword = await bcrypt.hash('rhum2026', 10);
     await prisma.user.create({
         data: {
@@ -187,7 +263,7 @@ async function main() {
         }
     });
 
-    console.log("✅ Alambic synchronisé : Catégories avec descriptions et volumes groupés !");
+    console.log("✅ Alambic synchronisé : Particuliers et Entreprises intégrés avec succès !");
 }
 
 main()

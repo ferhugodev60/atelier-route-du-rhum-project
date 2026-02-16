@@ -12,31 +12,39 @@ export const createCheckoutSession = async (req: any, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Identification requise." });
 
     try {
-        // 🏺 VERROU DE SÉCURITÉ : Vérification des stocks avant paiement
+        // 🏺 VALIDATION DES ARTICLES ET DES PRIX EN BASE
         for (const item of items) {
-            if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({
-                    where: { id: item.volumeId },
-                    select: { stock: true, product: { select: { name: true } } }
-                });
+            if (item.workshopId) {
+                const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
+                if (!ws) throw new Error("Séance de formation introuvable.");
 
+                // 🏺 VERROU ENTREPRISE : Vérification du quota de 25 participants
+                if (ws.type === "ENTREPRISE" && item.quantity < 25) {
+                    return res.status(400).json({ error: "Les réservations entreprises requièrent un minimum de 25 places." });
+                }
+
+                // 🏺 SÉCURITÉ : On utilise le prix défini en base (50€ ou 120€ pour entreprise)
+                item.price = ws.price;
+                item.isBusiness = (ws.type === "ENTREPRISE");
+            } else if (item.volumeId) {
+                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId } });
                 if (!vol || vol.stock < item.quantity) {
-                    return res.status(400).json({
-                        error: `Stock insuffisant pour ${vol?.product.name || 'un flacon'}. Disponible : ${vol?.stock || 0}`
-                    });
+                    return res.status(400).json({ error: `Stock insuffisant pour ${item.name}.` });
                 }
             }
         }
 
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+        const hasBusinessItem = items.some((i: any) => i.isBusiness);
 
-        // 1. Création de la commande "EN ATTENTE" (sauvegarde des participants et articles)
+        // 1. Création du dossier de vente
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
-                reference: `ORD-${Date.now()}`,
+                reference: hasBusinessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
                 total: totalAmount,
                 status: 'EN_ATTENTE_PAIEMENT',
+                isBusiness: hasBusinessItem,
                 items: {
                     create: items.map((item: any) => ({
                         quantity: item.quantity,
@@ -47,7 +55,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                             create: item.participants?.map((p: any) => ({
                                 firstName: p.firstName,
                                 lastName: p.lastName,
-                                phone: p.phone || null
+                                phone: p.phone || ""
                             }))
                         } : undefined
                     }))
@@ -55,26 +63,25 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         });
 
-        // 2. Préparation des lignes pour l'interface Stripe
+        // 2. Interface Stripe
         const line_items = items.map((item: any) => ({
             price_data: {
                 currency: 'eur',
                 unit_amount: Math.round(item.price * 100),
                 product_data: {
                     name: item.name,
-                    description: item.workshopId ? "Séance de formation technique" : `Flacon de ${item.size} ${item.unit}`,
+                    description: item.isBusiness ? "Offre Séminaire & Cohésion" : "Formation Technique Individuelle",
                     images: item.image ? [item.image] : []
                 },
             },
             quantity: item.quantity,
         }));
 
-        // 3. Création de la session avec redirection vers /boutique en cas d'annulation
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items,
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/profile?payment_success=true&orderId=${pendingOrder.id}`,
+            success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true&orderId=${pendingOrder.id}`,
             cancel_url: `${process.env.FRONTEND_URL}/boutique?payment_cancelled=true`,
             customer_email: req.user.email,
             metadata: { orderId: pendingOrder.id, userId: userId }
@@ -82,7 +89,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        res.status(500).json({ error: "Erreur lors de la validation du dossier de vente." });
+        console.error("Erreur Session Stripe:", error.message);
+        res.status(500).json({ error: "Échec de l'initialisation du dossier de vente." });
     }
 };
 
@@ -109,17 +117,15 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     include: { items: { include: { workshop: true } }, user: true }
                 });
 
-                // 🏺 MISE À JOUR DES STOCKS ET DU CURSUS
                 for (const item of order.items) {
-                    // Décrémentation du stock pour les flacons
                     if (item.volumeId) {
                         await tx.productVolume.update({
                             where: { id: item.volumeId },
                             data: { stock: { decrement: item.quantity } }
                         });
                     }
-                    // Mise à jour du niveau si c'est une formation
-                    if (item.workshop && item.workshop.level > 0) {
+                    // 🏺 Validation du cursus : uniquement pour les particuliers
+                    if (item.workshop && item.workshop.level > 0 && !order.isBusiness) {
                         await tx.user.update({
                             where: { id: userId as string },
                             data: { conceptionLevel: { set: item.workshop.level } }
@@ -134,7 +140,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                 }
             });
         } catch (error: any) {
-            console.error("Erreur traitement Webhook:", error.message);
+            console.error("Erreur Webhook traitement:", error.message);
         }
     }
     res.json({ received: true });
