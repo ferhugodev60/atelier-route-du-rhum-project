@@ -13,6 +13,8 @@ interface ReservationModalProps {
 export default function ReservationModal({ workshop, onClose, onConfirm }: ReservationModalProps) {
     const isBusiness = workshop?.isBusiness || false;
     const [step, setStep] = useState(1);
+
+    // 🏺 Initialisation selon la nature de la séance
     const [numPeople, setNumPeople] = useState(isBusiness ? 25 : 1);
     const [hasValidatedStep1, setHasValidatedStep1] = useState(false);
     const [participants, setParticipants] = useState<Participant[]>(() =>
@@ -31,6 +33,11 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         return () => { document.body.style.overflow = 'unset'; };
     }, []);
 
+    /**
+     * 🏺 GESTION DU VOLUME
+     * Entreprise : Min 25, pas de max.
+     * Particulier : Min 1, Max 10.
+     */
     const handlePeopleChange = (val: number) => {
         const newCount = isBusiness ? Math.max(25, val) : Math.max(1, Math.min(10, val));
         setNumPeople(newCount);
@@ -43,16 +50,12 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         });
     };
 
-    /**
-     * 🏺 SCELLAGE DES DONNÉES
-     * Propagation de l'objet workshop complet (title, level, image)
-     */
     const getFinalData = () => ({
         ...workshop,
         price: workshopPrice,
         quantity: Number(numPeople),
         participants,
-        workshopId: workshop.id
+        workshopId: workshop.id || workshop.workshopId
     });
 
     const handlePreConfirm = () => {
@@ -69,17 +72,17 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         setParticipants(newParticipants);
     };
 
-    const isStep2Valid = participants.every(p => p.firstName.trim() && p.lastName.trim() && p.phone.trim());
+    const isStep2Valid = participants.every(p => p.firstName.trim() && p.lastName.trim());
 
     return createPortal(
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden font-sans">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/98 backdrop-blur-md" onClick={onClose} />
 
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] flex flex-col border border-white/5 shadow-2xl">
 
                 <div className="flex border-b border-white/5 bg-black/20">
                     <button onClick={() => setStep(1)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>
-                        01. Groupe
+                        01. Volume
                     </button>
                     <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>
                         02. Coordonnées
@@ -90,8 +93,12 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                     <AnimatePresence mode="wait">
                         {step === 1 ? (
                             <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full flex flex-col justify-center text-center">
-                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-bold">{isBusiness ? 'Taille du groupe (Min. 25)' : 'Nombre de places'}</p>
-                                <h5 className="text-3xl md:text-4xl font-serif text-white mb-12 uppercase tracking-tighter">{workshop.title}</h5>
+                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">
+                                    {isBusiness ? 'Taille du groupe (Min. 25)' : 'Nombre de places'}
+                                </p>
+                                <h5 className="text-3xl md:text-4xl font-serif text-white mb-12 uppercase tracking-tighter">
+                                    {workshop.title || workshop.name}
+                                </h5>
 
                                 <div className="flex items-center justify-center gap-12 mb-16">
                                     <button onClick={() => handlePeopleChange(numPeople - 1)} className="text-rhum-gold text-5xl hover:scale-110 transition-transform font-light">−</button>
@@ -100,8 +107,8 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                 </div>
 
                                 <div className="space-y-4">
-                                    <button onClick={() => { setHasValidatedStep1(true); setStep(2); }} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all">Suivant</button>
-                                    <button onClick={onClose} className="w-full py-4 text-white/30 uppercase text-[9px] tracking-[0.3em] font-bold hover:text-white transition-colors">Retour</button>
+                                    <button onClick={() => { setHasValidatedStep1(true); setStep(2); }} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all shadow-xl">Valider le volume</button>
+                                    <button onClick={onClose} className="w-full py-4 text-white/30 uppercase text-[9px] tracking-[0.3em] font-bold hover:text-white transition-colors">Annuler</button>
                                 </div>
                             </motion.div>
                         ) : (
@@ -114,19 +121,22 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                 <input placeholder="Prénom" value={p.firstName} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full italic" />
                                                 <input placeholder="Nom" value={p.lastName} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full italic" />
                                             </div>
-                                            <input placeholder="Téléphone" value={p.phone} onChange={e => updateParticipant(i, 'phone', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold italic" />
+                                            <input placeholder="Téléphone (Optionnel)" value={p.phone} onChange={e => updateParticipant(i, 'phone', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold italic" />
                                         </div>
                                     ))}
                                 </div>
                                 <div className="flex gap-4 sticky bottom-0 bg-[#0a1a14] pt-4">
                                     <button onClick={() => setStep(1)} className="flex-1 py-5 border border-white/10 text-white/40 uppercase text-[9px] tracking-widest font-bold">Retour</button>
-                                    <button disabled={!isStep2Valid} onClick={handlePreConfirm} className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}>Sceller la sélection</button>
+                                    <button disabled={!isStep2Valid} onClick={handlePreConfirm} className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}>
+                                        Confirmer la sélection
+                                    </button>
                                 </div>
                             </motion.div>
                         )}
                     </AnimatePresence>
                 </div>
 
+                {/* ALERTE NIVEAU (Uniquement Particuliers Conception) */}
                 <AnimatePresence>
                     {showLevelAlert && (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[110] bg-[#0a1a14]/98 backdrop-blur-2xl flex items-center justify-center p-8 text-center">

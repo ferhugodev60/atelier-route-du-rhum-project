@@ -1,6 +1,7 @@
 export interface Workshop {
     id: string;
     level: number;
+    type: 'PARTICULIER' | 'ENTREPRISE';
     title: string;
     description: string;
     image: string;
