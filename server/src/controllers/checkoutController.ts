@@ -12,52 +12,77 @@ export const createCheckoutSession = async (req: any, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Identification requise." });
 
     try {
-        const line_items = [];
+        // 🏺 VERROU DE SÉCURITÉ : Vérification des stocks avant paiement
         for (const item of items) {
-            let priceData: any = {
-                currency: 'eur',
-                unit_amount: 0,
-                product_data: {
-                    name: item.name,
-                    images: item.image ? [item.image] : []
-                },
-            };
+            if (item.volumeId) {
+                const vol = await prisma.productVolume.findUnique({
+                    where: { id: item.volumeId },
+                    select: { stock: true, product: { select: { name: true } } }
+                });
 
-            if (item.workshopId) {
-                const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
-                if (!ws) throw new Error(`Article ${item.name} introuvable.`);
-                priceData.unit_amount = Math.round(ws.price * 100);
-            } else if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId } });
-                if (!vol) throw new Error(`Produit ${item.name} introuvable.`);
-                priceData.unit_amount = Math.round(vol.price * 100);
+                if (!vol || vol.stock < item.quantity) {
+                    return res.status(400).json({
+                        error: `Stock insuffisant pour ${vol?.product.name || 'un flacon'}. Disponible : ${vol?.stock || 0}`
+                    });
+                }
             }
-            line_items.push({ price_data: priceData, quantity: item.quantity });
         }
 
+        const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+
+        // 1. Création de la commande "EN ATTENTE" (sauvegarde des participants et articles)
+        const pendingOrder = await prisma.order.create({
+            data: {
+                userId,
+                reference: `ORD-${Date.now()}`,
+                total: totalAmount,
+                status: 'EN_ATTENTE_PAIEMENT',
+                items: {
+                    create: items.map((item: any) => ({
+                        quantity: item.quantity,
+                        price: item.price,
+                        workshopId: item.workshopId || null,
+                        volumeId: item.volumeId || null,
+                        participants: item.workshopId ? {
+                            create: item.participants?.map((p: any) => ({
+                                firstName: p.firstName,
+                                lastName: p.lastName,
+                                phone: p.phone || null
+                            }))
+                        } : undefined
+                    }))
+                }
+            }
+        });
+
+        // 2. Préparation des lignes pour l'interface Stripe
+        const line_items = items.map((item: any) => ({
+            price_data: {
+                currency: 'eur',
+                unit_amount: Math.round(item.price * 100),
+                product_data: {
+                    name: item.name,
+                    description: item.workshopId ? "Séance de formation technique" : `Flacon de ${item.size} ${item.unit}`,
+                    images: item.image ? [item.image] : []
+                },
+            },
+            quantity: item.quantity,
+        }));
+
+        // 3. Création de la session avec redirection vers /boutique en cas d'annulation
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items,
             mode: 'payment',
-            success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true`,
-            cancel_url: `${process.env.FRONTEND_URL}/#workshops?payment_cancelled=true`,
-            metadata: {
-                userId: userId,
-                // Synchronisation de la clé "quantity" pour le service d'e-mail
-                cartItems: JSON.stringify(items.map((i: any) => ({
-                    workshopId: i.workshopId || null,
-                    volumeId: i.volumeId || null,
-                    name: i.name,
-                    quantity: i.quantity,
-                    price: i.price,
-                    participants: i.participants || []
-                })))
-            }
+            success_url: `${process.env.FRONTEND_URL}/profile?payment_success=true&orderId=${pendingOrder.id}`,
+            cancel_url: `${process.env.FRONTEND_URL}/boutique?payment_cancelled=true`,
+            customer_email: req.user.email,
+            metadata: { orderId: pendingOrder.id, userId: userId }
         });
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        res.status(500).json({ error: "Erreur lors de la création de la session de paiement." });
+        res.status(500).json({ error: "Erreur lors de la validation du dossier de vente." });
     }
 };
 
@@ -73,59 +98,43 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
+        const orderId = session.metadata?.orderId;
         const userId = session.metadata?.userId;
-        const cartItems = JSON.parse(session.metadata?.cartItems || '[]');
 
         try {
             await prisma.$transaction(async (tx) => {
-                const order = await tx.order.create({
-                    data: {
-                        userId: userId as string,
-                        reference: `ORD-${Date.now()}`,
-                        total: (session.amount_total || 0) / 100,
-                        status: "PAYÉ",
-                        items: {
-                            create: cartItems.map((item: any) => ({
-                                quantity: item.quantity,
-                                price: item.price,
-                                workshopId: item.workshopId,
-                                volumeId: item.volumeId,
-                                participants: item.workshopId ? {
-                                    create: item.participants.map((p: any) => ({
-                                        firstName: p.firstName,
-                                        lastName: p.lastName,
-                                        phone: p.phone
-                                    }))
-                                } : undefined
-                            }))
-                        }
-                    }
+                const order = await tx.order.update({
+                    where: { id: orderId },
+                    data: { status: "PAYÉ" },
+                    include: { items: { include: { workshop: true } }, user: true }
                 });
 
-                const user = await tx.user.findUnique({ where: { id: userId as string } });
-                if (user) {
-                    // Transmission des données nettoyées au service d'e-mail
-                    await sendOrderConfirmationEmail(user.email, {
-                        reference: order.reference,
-                        total: order.total,
-                        items: cartItems
-                    });
+                // 🏺 MISE À JOUR DES STOCKS ET DU CURSUS
+                for (const item of order.items) {
+                    // Décrémentation du stock pour les flacons
+                    if (item.volumeId) {
+                        await tx.productVolume.update({
+                            where: { id: item.volumeId },
+                            data: { stock: { decrement: item.quantity } }
+                        });
+                    }
+                    // Mise à jour du niveau si c'est une formation
+                    if (item.workshop && item.workshop.level > 0) {
+                        await tx.user.update({
+                            where: { id: userId as string },
+                            data: { conceptionLevel: { set: item.workshop.level } }
+                        });
+                    }
                 }
 
-                for (const item of cartItems) {
-                    if (item.workshopId) {
-                        const workshop = await tx.workshop.findUnique({ where: { id: item.workshopId } });
-                        if (workshop && workshop.level > 0) {
-                            await tx.user.update({
-                                where: { id: userId },
-                                data: { conceptionLevel: { set: workshop.level } }
-                            });
-                        }
-                    }
+                if (order.user) {
+                    await sendOrderConfirmationEmail(order.user.email, {
+                        reference: order.reference, total: order.total, items: order.items
+                    });
                 }
             });
         } catch (error: any) {
-            console.error("Erreur Webhook lors du traitement de la commande:", error.message);
+            console.error("Erreur traitement Webhook:", error.message);
         }
     }
     res.json({ received: true });

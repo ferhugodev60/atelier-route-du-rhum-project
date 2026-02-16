@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, ProductVolume } from '../../types/shop';
 
@@ -7,18 +7,23 @@ interface ProductCardProps {
     isSelected: boolean;
     onToggleSelect: () => void;
     onAddToCart: (product: Product, volume: ProductVolume, qty: number) => void;
+    currentCart?: any[]; // 🏺 Rendu optionnel pour la sécurité
 }
 
-export default function ProductCard({ product, isSelected, onToggleSelect, onAddToCart }: ProductCardProps) {
+export default function ProductCard({
+                                        product,
+                                        isSelected,
+                                        onToggleSelect,
+                                        onAddToCart,
+                                        currentCart = [] // 🏺 Valeur par défaut pour éviter le crash "undefined"
+                                    }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const hasVolumes = product?.volumes && product.volumes.length > 0;
     const [selectedVolumeId, setSelectedVolumeId] = useState<string>("");
     const [localQuantity, setLocalQuantity] = useState(1);
 
     useEffect(() => {
-        if (hasVolumes) {
-            setSelectedVolumeId(product.volumes[0].id);
-        }
+        if (hasVolumes) setSelectedVolumeId(product.volumes[0].id);
     }, [product, hasVolumes]);
 
     if (!product || !hasVolumes) return null;
@@ -26,11 +31,25 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
     const currentVolume = product.volumes.find(v => v.id === selectedVolumeId) || product.volumes[0];
     const showDescription = isHovered || isSelected;
     const totalPrice = currentVolume.price * localQuantity;
-    const qtyOptions = Array.from({ length: Math.min(currentVolume.stock, 10) }, (_, i) => i + 1);
+
+    // 🏺 CALCUL DU STOCK DISPONIBLE RÉEL SÉCURISÉ
+    const availableStock = useMemo(() => {
+        // Sécurité supplémentaire avec le chaînage optionnel ?.
+        const itemInCart = currentCart?.find(item => item.volumeId === currentVolume.id);
+        const qtyInCart = itemInCart ? itemInCart.quantity : 0;
+        return currentVolume.stock - qtyInCart;
+    }, [currentVolume, currentCart]);
+
+    const qtyOptions = Array.from({ length: Math.min(availableStock, 10) }, (_, i) => i + 1);
+
+    useEffect(() => {
+        if (localQuantity > availableStock && availableStock > 0) {
+            setLocalQuantity(1);
+        }
+    }, [availableStock]);
 
     return (
         <motion.div layout className="group flex flex-col font-sans">
-            {/* --- VISUEL DU PRODUIT --- */}
             <div
                 className="relative aspect-square sm:aspect-[4/5] md:aspect-[3/4] bg-[#0a1a14] rounded-sm overflow-hidden mb-8 border border-white/5 shadow-2xl"
                 onMouseEnter={() => setIsHovered(true)}
@@ -43,13 +62,7 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
 
                 <AnimatePresence>
                     {showDescription && (
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={onToggleSelect}
-                            className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center cursor-pointer"
-                        >
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onToggleSelect} className="absolute inset-0 z-30 bg-[#0a1a14]/95 backdrop-blur-md p-6 flex flex-col justify-center items-center text-center cursor-pointer">
                             <p className="text-rhum-gold text-[8px] uppercase tracking-[0.4em] mb-4 font-black">Notes de dégustation</p>
                             <p className="text-rhum-cream/90 font-serif italic text-lg leading-relaxed px-2">"{product.description}"</p>
                         </motion.div>
@@ -57,28 +70,22 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
                 </AnimatePresence>
             </div>
 
-            {/* --- INFOS TITRE & PRIX --- */}
             <div className="flex justify-between items-baseline mb-6 px-1">
                 <h3 className="text-2xl font-serif text-white uppercase tracking-tight truncate mr-4">{product.name}</h3>
                 <span className="text-xl font-serif text-rhum-gold shrink-0">
-                    {totalPrice.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €
+                    {totalPrice.toLocaleString('fr-FR')} €
                 </span>
             </div>
 
-            {/* --- SÉLECTEURS TECHNIQUES --- */}
             <div className="flex flex-col md:flex-row items-center gap-3 mb-6">
                 <div className="w-full md:flex-[2] relative">
                     <select
                         value={selectedVolumeId}
-                        onChange={(e) => {
-                            setSelectedVolumeId(e.target.value);
-                            setLocalQuantity(1);
-                        }}
+                        onChange={(e) => { setSelectedVolumeId(e.target.value); setLocalQuantity(1); }}
                         className="w-full bg-white/5 border border-white/10 text-rhum-gold text-[10px] font-black uppercase tracking-widest p-4 outline-none appearance-none cursor-pointer hover:border-rhum-gold/40 transition-all rounded-sm"
                     >
                         {product.volumes.map((vol) => (
                             <option key={vol.id} value={vol.id} className="bg-[#0a1a14] text-white">
-                                {/* 🏺 Affichage brut du terme complet (ex: 70 centilitre(s)) */}
                                 {vol.size} {vol.unit}
                             </option>
                         ))}
@@ -101,16 +108,15 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
                 </div>
             </div>
 
-            {/* --- BOUTON D'ACTION --- */}
             <button
-                disabled={currentVolume.stock === 0}
+                disabled={availableStock <= 0}
                 onClick={() => onAddToCart(product, currentVolume, localQuantity)}
                 className={`w-full py-5 border text-[9px] uppercase tracking-[0.3em] font-black transition-all rounded-sm shadow-2xl
-                    ${currentVolume.stock === 0
+                    ${availableStock <= 0
                     ? 'bg-white/5 border-white/5 text-white/10 cursor-not-allowed'
                     : 'border-rhum-gold/20 text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green hover:border-rhum-gold'}`}
             >
-                {currentVolume.stock === 0 ? 'Stock Indisponible' : `Ajouter au panier`}
+                {availableStock <= 0 ? 'Stock Indisponible' : `Ajouter à ma sélection`}
             </button>
         </motion.div>
     );
