@@ -122,7 +122,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                         </div>
                                     </div>
                                     <p className="text-[10px] text-white/20 italic text-center leading-relaxed font-serif">
-                                        Le Niveau 0 identifie un membre n'ayant pas encore validé de séance de conception technique au sein de l'établissement.
+                                        Le Niveau 0 identifie un membre n'ayant pas encore validé de niveau dans l'atelier conception.
                                     </p>
                                 </div>
                             )}
