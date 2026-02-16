@@ -1,15 +1,16 @@
 import { useState, useEffect } from 'react';
 import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2 } from 'lucide-react';
 import api from '../../api/axiosInstance';
-import OrderDetailsModal from './OrderDetailsModal'; // 🏺 Import de la modale de détails
+import OrderDetailsModal from './OrderDetailsModal';
+import { useToastStore } from '../../store/toastStore'; // 🏺 Import du store
 
 export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRefresh }: any) {
     const [activeTab, setActiveTab] = useState<'cursus' | 'orders'>('cursus');
     const [fullData, setFullData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
+    const addToast = useToastStore(state => state.addToast); // 🏺 Hook de notification
 
-    // 🏺 État pour la "redirection" vers le détail de commande
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -28,10 +29,13 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
         setIsUpdating(true);
         try {
             await api.patch(`/users/${fullData.id}/level`, { newLevel });
+            // 🏺 Notification institutionnelle de succès
+            addToast(`Mis à jour : Niveau ${newLevel} validé.`);
             onRefresh();
             onClose();
         } catch (error) {
-            console.error("Erreur de validation");
+            // 🏺 Notification d'erreur technique
+            addToast("Échec de la validation du palier technique.", "error");
         } finally {
             setIsUpdating(false);
         }
@@ -40,9 +44,11 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-            <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-3xl h-[80vh] flex flex-col rounded-sm shadow-2xl relative font-sans">
-                <button onClick={onClose} className="absolute top-6 right-6 text-rhum-gold/40 hover:text-white z-10"><X size={24} /></button>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md font-sans">
+            <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-3xl h-[80vh] flex flex-col rounded-sm shadow-2xl relative">
+                <button onClick={onClose} className="absolute top-6 right-6 text-rhum-gold/40 hover:text-white z-10 transition-colors">
+                    <X size={24} />
+                </button>
 
                 {loading ? (
                     <div className="flex-1 flex items-center justify-center text-rhum-gold uppercase tracking-[0.4em] text-[10px] animate-pulse">
@@ -52,7 +58,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                     <>
                         <header className="p-10 border-b border-white/5 bg-white/[0.02]">
                             <div className="flex items-center gap-6">
-                                <div className="w-16 h-16 bg-rhum-gold/10 rounded-full flex items-center justify-center border border-rhum-gold/20">
+                                <div className="w-16 h-16 bg-rhum-gold/10 rounded-full flex items-center justify-center border border-rhum-gold/20 shadow-xl">
                                     <User size={28} className="text-rhum-gold" />
                                 </div>
                                 <div>
@@ -85,14 +91,14 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                             </nav>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar">
+                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar relative z-10">
                             {activeTab === 'cursus' && (
                                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="bg-white/[0.02] border border-white/5 p-8 rounded-sm space-y-8">
                                         <div className="flex justify-between items-center">
-                                            <p className="text-[9px] text-rhum-gold font-black uppercase tracking-widest">Statut Pédagogique Actuel</p>
+                                            <p className="text-[9px] text-rhum-gold font-black uppercase tracking-widest">Statut niveau Actuel</p>
                                             <span className="text-xs font-serif text-white">
-                                                {fullData.conceptionLevel === 0 ? "Aucune Certification" : `Palier ${fullData.conceptionLevel} / 4`}
+                                                {fullData.conceptionLevel === 0 ? "Aucune Certification" : `Niveau ${fullData.conceptionLevel} / 4`}
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
@@ -115,7 +121,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[10px] text-white/20 italic text-center leading-relaxed">
+                                    <p className="text-[10px] text-white/20 italic text-center leading-relaxed font-serif">
                                         Le Niveau 0 identifie un membre n'ayant pas encore validé de séance de conception technique au sein de l'établissement.
                                     </p>
                                 </div>
@@ -126,12 +132,11 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                     {fullData.orders?.map((order: any) => (
                                         <div
                                             key={order.id}
-                                            // 🏺 Action de redirection vers le détail
                                             onClick={() => setSelectedOrderId(order.id)}
                                             className="bg-white/[0.02] border border-white/5 p-6 flex justify-between items-center group hover:bg-white/[0.05] hover:border-rhum-gold/30 transition-all cursor-pointer"
                                         >
                                             <div className="flex items-center gap-6">
-                                                <div className="p-3 bg-white/5 rounded-full text-rhum-gold/40 group-hover:text-rhum-gold group-hover:bg-rhum-gold/10 transition-colors">
+                                                <div className="p-3 bg-white/5 rounded-full text-rhum-gold/40 group-hover:text-rhum-gold group-hover:bg-rhum-gold/10 transition-colors shadow-inner">
                                                     <ArrowUpRight size={16} />
                                                 </div>
                                                 <div>
@@ -143,13 +148,13 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-rhum-gold font-serif text-lg">{order.total.toFixed(2)}€</p>
-                                                <span className="text-[7px] text-white/20 uppercase font-black tracking-widest">Transaction Validée</span>
+                                                <span className="text-[7px] text-white/20 uppercase font-black tracking-widest">Transaction Confirmée</span>
                                             </div>
                                         </div>
                                     ))}
                                     {fullData.orders?.length === 0 && (
-                                        <div className="py-20 text-center text-white/10 font-serif italic">
-                                            Aucun flux transactionnel répertorié.
+                                        <div className="py-20 text-center text-white/10 font-serif italic text-sm">
+                                            Aucun flux transactionnel répertorié à ce jour.
                                         </div>
                                     )}
                                 </div>
@@ -159,7 +164,6 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                 )}
             </div>
 
-            {/* 🏺 Modale de détails imbriquée (z-index plus élevé) */}
             <OrderDetailsModal
                 isOpen={!!selectedOrderId}
                 orderId={selectedOrderId}

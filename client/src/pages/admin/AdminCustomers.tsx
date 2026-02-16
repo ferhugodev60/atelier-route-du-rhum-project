@@ -2,14 +2,16 @@ import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
 import { Search, Mail, Phone, User } from 'lucide-react';
 import CustomerDetailsModal from '../../components/admin/CustomerDetailsModal';
-import AdminPagination from '../../components/admin/AdminPagination'; // 🏺 Intégration pagination
+import AdminPagination from '../../components/admin/AdminPagination';
+import { useToastStore } from '../../store/toastStore'; // 🏺 Import du store
 
 export default function AdminCustomers() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 10; // 🏺 Limite de 10 membres par page
+    const itemsPerPage = 10;
+    const addToast = useToastStore(state => state.addToast);
 
     const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
     const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -19,12 +21,14 @@ export default function AdminCustomers() {
         api.get('/users').then(res => {
             setCustomers(res.data);
             setLoading(false);
-        }).catch(() => setLoading(false));
+        }).catch(() => {
+            addToast("Erreur lors de l'extraction de la base client.", "error");
+            setLoading(false);
+        });
     };
 
     useEffect(() => { fetchCustomers(); }, []);
 
-    // Réinitialisation de la page lors d'une recherche
     useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
     const filteredCustomers = useMemo(() => {
@@ -34,7 +38,6 @@ export default function AdminCustomers() {
         );
     }, [customers, searchTerm]);
 
-    // 🏺 Logique de découpage pour la pagination
     const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
     const displayedCustomers = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -54,11 +57,11 @@ export default function AdminCustomers() {
                     <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Pilotage des dossiers membres</p>
                 </div>
 
-                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-sm">
+                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-[260px]">
                     <Search size={14} className="text-rhum-gold/40" />
                     <input
                         type="text"
-                        placeholder="RECHERCHER UN CLIENT..."
+                        placeholder="RECHERCHER..."
                         className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest"
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -136,7 +139,6 @@ export default function AdminCustomers() {
                 )}
             </div>
 
-            {/* 🏺 Navigation entre les pages */}
             <AdminPagination
                 currentPage={currentPage}
                 totalPages={totalPages}
