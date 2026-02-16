@@ -1,12 +1,16 @@
 import { useState, useEffect } from 'react';
 import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2 } from 'lucide-react';
 import api from '../../api/axiosInstance';
+import OrderDetailsModal from './OrderDetailsModal'; // 🏺 Import de la modale de détails
 
 export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRefresh }: any) {
     const [activeTab, setActiveTab] = useState<'cursus' | 'orders'>('cursus');
     const [fullData, setFullData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
+
+    // 🏺 État pour la "redirection" vers le détail de commande
+    const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen && customerId) {
@@ -92,7 +96,6 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
-                                            {/* Ajout du niveau 0 pour réinitialiser le statut */}
                                             {[0, 1, 2, 3, 4].map((level) => (
                                                 <button
                                                     key={level}
@@ -121,13 +124,18 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                             {activeTab === 'orders' && (
                                 <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     {fullData.orders?.map((order: any) => (
-                                        <div key={order.id} className="bg-white/[0.02] border border-white/5 p-6 flex justify-between items-center group hover:bg-white/[0.04] transition-all">
+                                        <div
+                                            key={order.id}
+                                            // 🏺 Action de redirection vers le détail
+                                            onClick={() => setSelectedOrderId(order.id)}
+                                            className="bg-white/[0.02] border border-white/5 p-6 flex justify-between items-center group hover:bg-white/[0.05] hover:border-rhum-gold/30 transition-all cursor-pointer"
+                                        >
                                             <div className="flex items-center gap-6">
-                                                <div className="p-3 bg-white/5 rounded-full text-rhum-gold/40 group-hover:text-rhum-gold transition-colors">
+                                                <div className="p-3 bg-white/5 rounded-full text-rhum-gold/40 group-hover:text-rhum-gold group-hover:bg-rhum-gold/10 transition-colors">
                                                     <ArrowUpRight size={16} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs font-bold text-white uppercase tracking-tight">{order.reference}</p>
+                                                    <p className="text-xs font-bold text-white uppercase tracking-tight group-hover:text-rhum-gold transition-colors">{order.reference}</p>
                                                     <p className="text-[9px] text-white/20 uppercase mt-1">
                                                         {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </p>
@@ -135,9 +143,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             </div>
                                             <div className="text-right">
                                                 <p className="text-rhum-gold font-serif text-lg">{order.total.toFixed(2)}€</p>
-                                                <span className="text-[8px] border border-rhum-gold/20 text-rhum-gold px-2 py-0.5 rounded-sm uppercase font-black">
-                                                    {order.status}
-                                                </span>
+                                                <span className="text-[7px] text-white/20 uppercase font-black tracking-widest">Transaction Validée</span>
                                             </div>
                                         </div>
                                     ))}
@@ -152,6 +158,13 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                     </>
                 )}
             </div>
+
+            {/* 🏺 Modale de détails imbriquée (z-index plus élevé) */}
+            <OrderDetailsModal
+                isOpen={!!selectedOrderId}
+                orderId={selectedOrderId}
+                onClose={() => setSelectedOrderId(null)}
+            />
         </div>
     );
 }

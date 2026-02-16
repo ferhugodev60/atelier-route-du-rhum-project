@@ -25,7 +25,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 
 /**
  * RÉCUPÉRATION DES COMMANDES : GET /api/orders
- * Branchement logique : Liste Admin (tous) ou Liste Client (personnel)
+ * Correction : Inclusion réelle des items et formatage pour le frontend
  */
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
@@ -34,16 +34,42 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     if (!userId) return res.status(401).json({ error: "Session non identifiée." });
 
     try {
-        const orders = await prisma.order.findMany({
+        const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
                 user: { select: { firstName: true, lastName: true, email: true } },
-                _count: { select: { items: true } }
+                // 🏺 Correction : On remplace _count par l'inclusion réelle des items
+                items: {
+                    include: {
+                        workshop: true,
+                        volume: { include: { product: true } },
+                        participants: true
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
-        });
+        }) as OrderWithRelations[];
 
-        res.status(200).json(orders);
+        // 🏺 Formatage pour que le frontend reçoive la structure attendue par OrderHistory.tsx
+        const formattedOrders = rawOrders.map(order => ({
+            id: order.id,
+            reference: order.reference,
+            createdAt: order.createdAt,
+            total: order.total,
+            status: order.status,
+            user: order.user,
+            items: order.items.map(item => ({
+                name: item.workshop
+                    ? `Séance : ${item.workshop.title}`
+                    : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
+                quantity: item.quantity,
+                price: item.price,
+                // On transforme le tableau d'objets participants en tableau de chaînes
+                participants: item.participants.map(p => `${p.firstName} ${p.lastName}`)
+            }))
+        }));
+
+        res.status(200).json(formattedOrders);
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de la récupération du registre." });
     }
@@ -51,10 +77,9 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
 
 /**
  * DÉTAILS DE LA COMMANDE : GET /api/orders/:id
- * Correction TS2322 : Cast de l'id en string
  */
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {
-    const id = req.params.id as string; // 🏺 Transtypage explicite en string
+    const id = req.params.id as string;
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
 
@@ -86,11 +111,10 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * MISE À JOUR DU STATUT : PATCH /api/orders/:id/status (ADMIN)
- * Correction TS2322 : Cast de l'id en string
+ * MISE À JOUR DU STATUT : PATCH /api/orders/:id/status
  */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
-    const id = req.params.id as string; // 🏺 Transtypage explicite en string
+    const id = req.params.id as string;
     const { status } = req.body;
 
     try {
@@ -106,18 +130,14 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
 /**
  * GÉNÉRATION PDF : GET /api/orders/:orderId/download
- * Correction TS2322 : Cast de l'orderId en string
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
-    const orderId = req.params.orderId as string; // 🏺 Transtypage explicite en string
+    const orderId = req.params.orderId as string;
     const userId = req.user?.userId;
 
     try {
         const order = await prisma.order.findFirst({
-            where: {
-                id: orderId, // Utilisation de l'id casté
-                userId: userId
-            },
+            where: { id: orderId, userId: userId },
             include: {
                 items: {
                     include: {
