@@ -8,8 +8,8 @@ export default function Sidebar() {
 
     const navItems = [
         { name: 'Tableau de bord', path: '/admin/dashboard', icon: LayoutDashboard },
-        { name: 'Boutique', path: '/admin/boutique', icon: ShoppingBag },
-        { name: 'Catégories', path: '/admin/categories', icon: Tag },
+        { name: 'Bouteilles', path: '/admin/boutique', icon: ShoppingBag },
+        { name: 'Collections', path: '/admin/categories', icon: Tag },
         { name: 'Ateliers', path: '/admin/ateliers', icon: GraduationCap },
         {
             name: 'Commandes',

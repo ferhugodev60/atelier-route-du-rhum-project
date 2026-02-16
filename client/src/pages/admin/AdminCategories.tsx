@@ -1,131 +1,171 @@
-// client/src/pages/admin/AdminCategories.tsx
 import { useEffect, useState } from 'react';
 import api from '../../api/axiosInstance';
-import { Trash2, Edit3, X } from 'lucide-react';
+import { Trash2, Edit3, X, Plus } from 'lucide-react';
+import { useToastStore } from '../../store/toastStore';
 
 export default function AdminCategories() {
     const [categories, setCategories] = useState<any[]>([]);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<any>(null);
+    const addToast = useToastStore(state => state.addToast); // 🏺 Hook de notification
 
     const fetchCats = () => api.get('/categories').then(res => setCategories(res.data));
+
     useEffect(() => { fetchCats(); }, []);
 
+    /**
+     * CRÉATION D'UNE NOUVELLE FAMILLE
+     */
     const handleCreate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        // 🏺 On capture la référence du formulaire AVANT l'asynchrone
         const form = e.currentTarget;
         const formData = new FormData(form);
 
         try {
             await api.post('/categories', Object.fromEntries(formData));
-
-            // 🏺 On utilise la référence stockée pour réinitialiser les champs
+            addToast("Nouvelle collection ajoutée à l'architecture.");
             form.reset();
             fetchCats();
         } catch (error) {
-            console.error("Erreur lors de la création de la catégorie");
+            addToast("Erreur lors de la création de la collection.", "error");
         }
     };
 
+    /**
+     * MISE À JOUR D'UNE STRUCTURE EXISTANTE
+     */
     const handleUpdate = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const form = e.currentTarget;
-        const formData = new FormData(form);
-
         try {
+            const formData = new FormData(e.currentTarget);
             await api.put(`/categories/${selectedCategory.id}`, Object.fromEntries(formData));
+            addToast("Structure de la collection mise à jour.");
             setIsEditModalOpen(false);
             fetchCats();
         } catch (error) {
-            console.error("Erreur lors de la mise à jour");
+            addToast("Échec de la modification technique.", "error");
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (window.confirm("Supprimer cette catégorie ?")) {
+    /**
+     * SUPPRESSION DÉFINITIVE
+     */
+    const handleDelete = async (id: string, name: string) => {
+        if (window.confirm(`Confirmer la suppression de la collection "${name}" ?`)) {
             try {
                 await api.delete(`/categories/${id}`);
+                addToast(`Collection "${name}" supprimée du catalogue.`); // 🏺 Toast Succès
                 fetchCats();
             } catch {
-                alert("Erreur : Des produits y sont rattachés.");
+                addToast("Impossible de supprimer : des références y sont rattachées.", "error"); // 🏺 Toast Erreur spécifique
             }
         }
     };
 
     return (
-        <section className="space-y-10 font-sans">
-            <header>
-                <h2 className="text-2xl font-serif text-white uppercase">Architecture du Catalogue</h2>
-                <p className="text-[10px] text-rhum-gold/50 uppercase tracking-widest mt-1">Gestion des familles et descriptions</p>
+        <section className="space-y-12 font-sans">
+            <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
+                <div>
+                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture du Catalogue</h2>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Gestion des collections</p>
+                </div>
             </header>
 
-            {/* Formulaire de création */}
-            <form onSubmit={handleCreate} className="bg-white/5 p-8 border border-rhum-gold/10 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-bold ml-1">Nom de la catégorie</label>
-                        <input name="name" required placeholder="ex: Rhum arrangé" className="w-full bg-transparent border-b border-rhum-gold/20 py-2 text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
+            {/* --- FORMULAIRE DE CRÉATION INSTITUTIONNEL --- */}
+            <div className="bg-[#0a1a14] border border-rhum-gold/10 p-10 rounded-sm shadow-2xl relative overflow-hidden">
+                <form onSubmit={handleCreate} className="relative z-10 space-y-8">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
+                        <div className="space-y-3">
+                            <label className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold font-black ml-1 flex items-center gap-2">
+                                <Plus size={10} /> Nom de la nouvelle famille
+                            </label>
+                            <input
+                                name="name"
+                                required
+                                placeholder="ex: RHUMS DE PRESTIGE"
+                                className="w-full bg-white/5 border-b border-rhum-gold/20 py-3 px-2 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-sm uppercase tracking-widest placeholder:text-white/10"
+                            />
+                        </div>
+                        <div className="flex justify-end">
+                            <button type="submit" className="bg-rhum-gold text-rhum-green px-12 py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl">
+                                Valider la Collection
+                            </button>
+                        </div>
                     </div>
-                    <div className="space-y-2 text-right flex items-end justify-end">
-                        <button type="submit" className="bg-rhum-gold text-rhum-green px-10 py-3 text-[10px] font-black uppercase tracking-widest hover:bg-white transition-all">Créer la section</button>
+                    <div className="space-y-3">
+                        <label className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/40 font-black ml-1">Notes & Descriptions (Optionnel)</label>
+                        <textarea
+                            name="description"
+                            rows={2}
+                            placeholder="Définissez les caractéristiques de cette famille de produits..."
+                            className="w-full bg-white/[0.02] border border-white/5 p-4 text-rhum-cream text-xs outline-none focus:border-rhum-gold/40 transition-all italic font-serif"
+                        />
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-bold ml-1">Description (Optionnelle)</label>
-                    <textarea name="description" rows={2} placeholder="Décrivez les produits de cette famille..." className="w-full bg-transparent border border-rhum-gold/10 p-3 text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
-                </div>
-            </form>
+                </form>
+            </div>
 
-            {/* Liste des catégories */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* --- GRILLE DES FAMILLES ACTIVES --- */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {categories.map(cat => (
-                    <div key={cat.id} className="bg-white/[0.02] border border-white/5 p-6 flex flex-col justify-between group hover:bg-white/[0.04] transition-all">
-                        <div className="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 className="text-rhum-gold font-bold text-sm uppercase tracking-wider">{cat.name}</h3>
-                                <p className="text-[9px] text-rhum-cream/40 uppercase mt-1">
-                                    {cat._count?.products || 0} références actives
+                    <div key={cat.id} className="bg-white/[0.02] border border-white/5 p-8 flex flex-col justify-between group hover:bg-[#0a1a14] hover:border-rhum-gold/30 transition-all relative rounded-sm shadow-lg">
+                        <div className="flex justify-between items-start mb-6">
+                            <div className="space-y-1">
+                                <h3 className="text-white font-serif text-xl uppercase tracking-wide group-hover:text-rhum-gold transition-colors">{cat.name}</h3>
+                                <p className="text-[8px] text-rhum-gold/40 uppercase font-black tracking-[0.2em]">
+                                    {cat._count?.products || 0} Référence(s) rattachée(s)
                                 </p>
                             </div>
-                            <div className="flex gap-4">
-                                <button onClick={() => { setSelectedCategory(cat); setIsEditModalOpen(true); }} className="text-rhum-gold/30 hover:text-white transition-colors">
+                            <div className="flex gap-4 opacity-30 group-hover:opacity-100 transition-opacity">
+                                <button onClick={() => { setSelectedCategory(cat); setIsEditModalOpen(true); }} className="text-rhum-gold hover:text-white transition-colors">
                                     <Edit3 size={16} />
                                 </button>
-                                <button onClick={() => handleDelete(cat.id)} className="text-red-400/20 hover:text-red-400 transition-colors">
+                                <button onClick={() => handleDelete(cat.id, cat.name)} className="text-red-400/60 hover:text-red-400 transition-colors">
                                     <Trash2 size={16} />
                                 </button>
                             </div>
                         </div>
                         {cat.description && (
-                            <p className="text-[10px] text-rhum-cream/60 leading-relaxed line-clamp-2 italic border-t border-white/5 pt-3">
-                                {cat.description}
-                            </p>
+                            <div className="border-t border-white/5 pt-4">
+                                <p className="text-[10px] text-rhum-cream/40 leading-relaxed line-clamp-2 italic font-serif">
+                                    {cat.description}
+                                </p>
+                            </div>
                         )}
                     </div>
                 ))}
             </div>
 
-            {/* Modale de Modification */}
+            {/* --- MODALE DE MODIFICATION STRUCTURELLE --- */}
             {isEditModalOpen && (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md">
-                    <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-lg p-8 rounded-sm shadow-2xl relative">
-                        <button onClick={() => setIsEditModalOpen(false)} className="absolute top-4 right-4 text-rhum-gold/40 hover:text-white">
-                            <X size={20} />
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/95 backdrop-blur-xl">
+                    <div className="bg-[#050d0a] border border-rhum-gold/20 w-full max-w-xl p-12 rounded-sm shadow-2xl relative overflow-hidden">
+                        <button onClick={() => setIsEditModalOpen(false)} className="absolute top-8 right-8 text-rhum-gold/30 hover:text-white transition-colors">
+                            <X size={24} />
                         </button>
-                        <h2 className="text-xl font-serif text-white uppercase mb-8">Éditer la catégorie</h2>
-                        <form onSubmit={handleUpdate} className="space-y-6">
-                            <div className="space-y-2">
-                                <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-bold">Nom</label>
-                                <input name="name" defaultValue={selectedCategory.name} required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-rhum-cream outline-none focus:border-rhum-gold" />
+
+                        <h2 className="text-3xl font-serif text-white uppercase tracking-tighter mb-10 border-b border-white/5 pb-6">Éditer la Collection</h2>
+
+                        <form onSubmit={handleUpdate} className="space-y-8">
+                            <div className="space-y-3">
+                                <label className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold font-black ml-1">Dénomination</label>
+                                <input
+                                    name="name"
+                                    defaultValue={selectedCategory.name}
+                                    required
+                                    className="w-full bg-white/5 border-b border-rhum-gold/20 py-3 text-rhum-cream outline-none focus:border-rhum-gold transition-all uppercase tracking-widest text-sm"
+                                />
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-bold">Description complète</label>
-                                <textarea name="description" rows={5} defaultValue={selectedCategory.description} className="w-full bg-white/5 border border-rhum-gold/10 p-3 text-rhum-cream outline-none focus:border-rhum-gold" />
+                            <div className="space-y-3">
+                                <label className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold/40 font-black ml-1">Notes de structure</label>
+                                <textarea
+                                    name="description"
+                                    rows={4}
+                                    defaultValue={selectedCategory.description}
+                                    className="w-full bg-white/5 border border-white/10 p-4 text-rhum-cream outline-none focus:border-rhum-gold/40 transition-all italic font-serif text-sm"
+                                />
                             </div>
-                            <button type="submit" className="w-full bg-rhum-gold text-rhum-green py-4 font-black uppercase tracking-widest text-[10px] hover:bg-white transition-all">
-                                Mettre à jour la structure
+                            <button type="submit" className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl">
+                                Mettre à jour
                             </button>
                         </form>
                     </div>

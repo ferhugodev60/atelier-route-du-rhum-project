@@ -38,11 +38,12 @@ export default function AdminOrders() {
                     <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Retraits et Réservations</p>
                 </div>
 
-                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-sm">
+                {/* 🏺 Barre de recherche réduite à 260px pour plus d'élégance */}
+                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-[260px]">
                     <Search size={14} className="text-rhum-gold/40" />
                     <input
                         type="text"
-                        placeholder="RECHERCHER UNE RÉFÉRENCE..."
+                        placeholder="RECHERCHER..."
                         className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest"
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
