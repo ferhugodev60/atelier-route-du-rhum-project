@@ -60,7 +60,9 @@ export default function ProductCard({ product, isSelected, onToggleSelect, onAdd
             {/* --- INFOS TITRE & PRIX --- */}
             <div className="flex justify-between items-baseline mb-6 px-1">
                 <h3 className="text-2xl font-serif text-white uppercase tracking-tight truncate mr-4">{product.name}</h3>
-                <span className="text-xl font-serif text-rhum-gold shrink-0">{totalPrice.toFixed(2)}€</span>
+                <span className="text-xl font-serif text-rhum-gold shrink-0">
+                    {totalPrice.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} €
+                </span>
             </div>
 
             {/* --- SÉLECTEURS TECHNIQUES --- */}
