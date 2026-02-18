@@ -11,10 +11,9 @@ import ProfileInfo from "../components/dashboard/ProfileInfo.tsx";
 
 export default function CustomerDashboard() {
     const navigate = useNavigate();
-    const { user, logout } = useAuthStore(); // 🏺 On récupère tout du store
+    const { user, logout } = useAuthStore();
     const [activeView, setActiveView] = useState<'orders' | 'security' | 'profile'>('orders');
 
-    // Sécurité : Redirection automatique si le store est vidé
     useEffect(() => {
         if (!user) navigate('/');
     }, [user, navigate]);
@@ -27,7 +26,7 @@ export default function CustomerDashboard() {
     if (!user) return null;
 
     return (
-        <div className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-12 flex flex-col selection:bg-rhum-gold/30">
+        <div className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-12 flex flex-col selection:bg-rhum-gold/30 font-sans">
             <div className="max-w-7xl mx-auto w-full flex-1">
 
                 <header className="mb-10 lg:mb-16 border-l-4 border-rhum-gold pl-8">
@@ -35,9 +34,14 @@ export default function CustomerDashboard() {
                         <h1 className="text-4xl lg:text-6xl font-serif text-white uppercase tracking-tight">
                             Votre Espace
                         </h1>
-                        <p className="text-rhum-gold/40 text-xs uppercase tracking-[0.5em] font-bold mt-6">
-                            Bienvenue dans l'Atelier, <span className="text-rhum-gold">{user.firstName}</span>
-                        </p>
+                        <div className="mt-6 flex flex-col gap-2">
+                            <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.5em] font-black italic">
+                                {user.firstName} {user.lastName}
+                            </p>
+                            <p className="text-white text-xs uppercase tracking-[0.3em] font-bold flex items-center gap-3">
+                                <span className="text-rhum-gold">Membre de Niveau {user.conceptionLevel}</span>
+                            </p>
+                        </div>
                     </motion.div>
                 </header>
 

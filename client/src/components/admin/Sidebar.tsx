@@ -1,5 +1,14 @@
-import { NavLink } from 'react-router-dom';
-import {LayoutDashboard, ShoppingBag, GraduationCap, LogOut, Tag, Users, ClipboardList} from 'lucide-react';
+import {Link, NavLink} from 'react-router-dom';
+import {
+    LayoutDashboard,
+    ShoppingBag,
+    GraduationCap,
+    LogOut,
+    Tag,
+    Users,
+    ClipboardList,
+    Home,
+} from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Logo from '../../assets/logo/logo.png';
 
@@ -23,12 +32,20 @@ export default function Sidebar() {
         <aside className="w-64 h-screen bg-[#0a1a14] border-r border-rhum-gold/10 flex flex-col sticky top-0">
             {/* --- HEADER ÉPURÉ AVEC GRAND LOGO --- */}
             {/* Utilisation de flex, justify-center et items-center pour un centrage parfait */}
-            <header className="py-10 border-b border-rhum-gold/5 flex justify-center items-center">
+            <header className="py-10 border-b border-rhum-gold/5 flex flex-col items-center">
                 <img
                     src={Logo}
-                    alt="Logo de l'entreprise"
-                    className="w-44 object-contain"
+                    alt="Logo de l'établissement"
+                    className="w-44 object-contain mb-6"
                 />
+
+                <Link
+                    to="/"
+                    className="flex items-center gap-2 px-4 py-2 border border-rhum-gold/20 text-rhum-gold/40 text-[9px] uppercase tracking-[0.2em] font-black hover:text-rhum-gold hover:border-rhum-gold/40 transition-all rounded-sm"
+                >
+                    <Home size={12} />
+                    Retour à l'accueil
+                </Link>
             </header>
 
             <nav className="flex-1 p-6 space-y-2">

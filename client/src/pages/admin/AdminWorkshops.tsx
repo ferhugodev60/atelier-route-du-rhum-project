@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Edit3, GraduationCap, Compass } from 'lucide-react';
+import { Edit3, Building2, User } from 'lucide-react';
 import EditWorkshopModal from "../../components/admin/EditWorkshopModal.tsx";
 
 export default function AdminWorkshops() {
@@ -13,114 +13,93 @@ export default function AdminWorkshops() {
             const res = await api.get('/workshops');
             setWorkshops(res.data);
         } catch (error) {
-            console.error("Erreur de synchronisation du cursus");
+            console.error("Erreur de synchronisation du registre technique");
         }
     };
 
     useEffect(() => { fetchWorkshops(); }, []);
 
-    // 🏺 Classification institutionnelle des séances [cite: 2026-02-12]
-    const { discovery, conception } = useMemo(() => {
+    // 🏺 Segmentation par type et niveau
+    const sortedWorkshops = useMemo(() => {
         return {
-            discovery: workshops.find(ws => ws.level === 0 || ws.title.toLowerCase().includes('initiation')),
-            conception: workshops.filter(ws => ws.level > 0 && !ws.title.toLowerCase().includes('initiation'))
+            individual: {
+                discovery: workshops.find(ws => ws.type === 'PARTICULIER' && ws.level === 0),
+                conception: workshops.filter(ws => ws.type === 'PARTICULIER' && ws.level > 0).sort((a, b) => a.level - b.level)
+            },
+            business: {
+                discovery: workshops.find(ws => ws.type === 'ENTREPRISE' && ws.level === 0),
+                conception: workshops.filter(ws => ws.type === 'ENTREPRISE' && ws.level > 0).sort((a, b) => a.level - b.level)
+            }
         };
     }, [workshops]);
 
+    const WorkshopEntry = ({ ws }: { ws: any }) => (
+        <div className="bg-[#050d0a] border border-white/5 p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between group hover:border-rhum-gold/30 transition-all duration-500 rounded-sm">
+            <div className="flex items-center gap-10 flex-1">
+                <div className="flex flex-col items-center min-w-[80px]">
+                    <span className="text-rhum-gold font-serif text-2xl uppercase leading-none">Niveau</span>
+                    <span className="text-rhum-gold font-serif text-5xl leading-none mt-2">{ws.level}</span>
+                </div>
+                <div className="h-16 w-px bg-white/5 hidden md:block" />
+                <div className="space-y-2 flex-1 max-w-xl">
+                    <h4 className="text-2xl font-serif text-white uppercase tracking-wide group-hover:text-rhum-gold transition-colors">
+                        {ws.title}
+                    </h4>
+                    <p className="text-[10px] text-white/40 uppercase tracking-widest leading-loose">
+                        {ws.format} • {ws.price}€ / pers.
+                    </p>
+                </div>
+            </div>
+            <div className="mt-8 md:mt-0 flex items-center gap-12 border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-12">
+                <button
+                    onClick={() => { setSelectedWorkshop(ws); setIsEditOpen(true); }}
+                    className="flex items-center gap-3 px-6 py-3 bg-rhum-gold/5 text-rhum-gold text-[9px] uppercase tracking-widest font-black border border-rhum-gold/10 hover:bg-rhum-gold hover:text-rhum-green transition-all rounded-sm"
+                >
+                    <Edit3 size={14} />
+                    Modifier l'atelier
+                </button>
+            </div>
+        </div>
+    );
+
     return (
-        <section className="space-y-20 font-sans pb-20">
-            <header className="border-b border-rhum-gold/10 pb-8">
-                <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Gestion des Ateliers</h2>
-                <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Architecture du cursus technique</p>
+        <section className="space-y-24 font-sans pb-20 selection:bg-rhum-gold/30">
+            <header className="border-b border-rhum-gold/10 pb-8 flex justify-between items-end">
+                <div>
+                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture du Cursus</h2>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Registre global des séances techniques</p>
+                </div>
             </header>
 
-            {/* --- SECTION 1 : SÉANCE D'INITIATION --- */}
-            {discovery && (
-                <div className="space-y-8">
-                    <div className="flex items-center gap-4">
-                        <Compass className="text-rhum-gold/40" size={18} />
-                        <h3 className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black">L'atelier découverte</h3>
+            {/* --- SECTION : CURSUS INDIVIDUEL (PARTICULIERS) --- */}
+            <div className="space-y-12">
+                <header className="flex items-center gap-6 border-l-2 border-rhum-gold pl-6">
+                    <User className="text-rhum-gold/40" size={24} />
+                    <div>
+                        <h3 className="text-white text-xl font-serif uppercase tracking-wider">OFFRES PARTICULIERS</h3>
+                        <p className="text-[9px] text-rhum-gold/60 uppercase tracking-widest font-bold mt-1">Tarification Standard</p>
                     </div>
-
-                    <div className="relative bg-[#0a1a14] border border-rhum-gold/20 p-8 md:p-12 flex flex-col lg:flex-row gap-12 items-center overflow-hidden group">
-                        <div className="relative w-full lg:w-1/3 aspect-square overflow-hidden border border-white/5 shadow-2xl">
-                            <img src={discovery.image} className="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-transform duration-700" alt="Initiation" />
-                        </div>
-
-                        <div className="flex-1 space-y-6">
-                            <div className="flex justify-between items-start">
-                                <div className="space-y-2">
-                                    <h4 className="text-4xl font-serif text-white uppercase tracking-tighter">{discovery.title}</h4>
-                                    <p className="text-[11px] text-rhum-gold uppercase tracking-[0.3em] font-bold">{discovery.format}</p>
-                                </div>
-                                <button
-                                    onClick={() => { setSelectedWorkshop(discovery); setIsEditOpen(true); }}
-                                    className="p-4 bg-rhum-gold/5 text-rhum-gold hover:bg-rhum-gold hover:text-rhum-green transition-all rounded-full border border-rhum-gold/10"
-                                >
-                                    <Edit3 size={20} />
-                                </button>
-                            </div>
-                            <p className="text-sm text-rhum-cream/60 leading-relaxed italic max-w-2xl">"{discovery.quote}"</p>
-                            <div className="pt-8 flex gap-12 border-t border-white/5 items-center">
-                                <div className="space-y-1 text-right">
-                                    <p className="text-[8px] text-white/20 uppercase font-black">Tarification</p>
-                                    <p className="text-rhum-gold font-serif text-lg">{discovery.price}€ <span className="text-[10px] opacity-40">/ pers.</span></p>
-                                </div>
-                                <div className="space-y-1 text-right">
-                                    <p className="text-[8px] text-white/20 uppercase font-black">Disponibilités</p>
-                                    <p className="text-white/60 text-xs uppercase tracking-widest">{discovery.availability}</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* --- SECTION 2 : CURSUS DE CONCEPTION TECHNIQUE --- */}
-            <div className="space-y-10">
-                <div className="flex items-center gap-4">
-                    <GraduationCap className="text-rhum-gold/40" size={18} />
-                    <h3 className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] font-black">Les ateliers conception</h3>
-                </div>
+                </header>
 
                 <div className="grid grid-cols-1 gap-6">
-                    {conception.sort((a, b) => a.level - b.level).map((ws) => (
-                        <div
-                            key={ws.id}
-                            className="bg-[#050d0a] border border-white/5 p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between group hover:border-rhum-gold/30 transition-all duration-500"
-                        >
-                            <div className="flex items-center gap-10 flex-1">
-                                <div className="flex flex-col items-center min-w-[80px]">
-                                    <span className="text-rhum-gold font-serif text-2xl uppercase leading-none">Palier</span>
-                                    <span className="text-rhum-gold font-serif text-5xl leading-none mt-2">{ws.level}</span>
-                                </div>
+                    {sortedWorkshops.individual.discovery && <WorkshopEntry ws={sortedWorkshops.individual.discovery} />}
+                    {sortedWorkshops.individual.conception.map(ws => <WorkshopEntry key={ws.id} ws={ws} />)}
+                </div>
+            </div>
 
-                                <div className="h-16 w-px bg-white/5 hidden md:block" />
+            {/* --- SECTION : OFFRES SÉMINAIRES (ENTREPRISE) --- */}
+            <div className="space-y-12">
+                <header className="flex items-center gap-6 border-l-2 border-white/10 pl-6">
+                    <Building2 className="text-rhum-gold/40" size={24} />
+                    <div>
+                        <h3 className="text-white text-xl font-serif uppercase tracking-wider">Offres entreprise</h3>
+                        <p className="text-[9px] text-rhum-gold/60 uppercase tracking-widest font-bold mt-1">Tarification Dégressive (Min. 25 places)</p>
+                    </div>
+                </header>
 
-                                <div className="space-y-2 flex-1 max-w-xl">
-                                    <h4 className="text-2xl font-serif text-white uppercase tracking-wide group-hover:text-rhum-gold transition-colors">
-                                        {ws.title}
-                                    </h4>
-                                    <p className="text-[10px] text-white/40 uppercase tracking-widest leading-loose">
-                                        {ws.format} • {ws.description.split('.')[0]}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div className="mt-8 md:mt-0 flex items-center gap-12 border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-12">
-                                <div className="text-right">
-                                    <p className="text-white font-serif text-lg tracking-tight">Prix : {ws.price}€</p>
-                                    <p className="text-[9px] text-rhum-gold/40 uppercase tracking-[0.2em] mt-1 font-black">{ws.availability || 'Sur Calendrier'}</p>
-                                </div>
-                                <button
-                                    onClick={() => { setSelectedWorkshop(ws); setIsEditOpen(true); }}
-                                    className="p-3 text-rhum-gold/70 hover:text-rhum-gold transition-colors"
-                                >
-                                    <Edit3 size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    ))}
+                <div className="grid grid-cols-1 gap-6 opacity-90">
+                    {sortedWorkshops.business.discovery && <WorkshopEntry ws={sortedWorkshops.business.discovery} />}
+                    {sortedWorkshops.business.conception.map(ws => <WorkshopEntry key={ws.id} ws={ws} />)}
                 </div>
             </div>
 
