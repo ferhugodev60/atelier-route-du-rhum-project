@@ -50,16 +50,16 @@ export default function BusinessSelectionModal({ isOpen, onClose, workshops, onS
                                     onClick={() => discovery && handleFinalSelect(discovery, true)}
                                     className="group p-10 border border-white/5 bg-white/[0.02] hover:border-rhum-gold/50 transition-all rounded-sm text-center"
                                 >
-                                    <span className="text-xl font-serif text-white block mb-2 uppercase italic">Initiation & Dégustation</span>
-                                    <span className="text-[9px] text-rhum-gold/40 uppercase tracking-widest">Séance de découverte institutionnelle</span>
+                                    <span className="text-xl font-serif text-white block mb-2 uppercase italic">L'atelier découverte</span>
+                                    <span className="text-[9px] text-rhum-gold/40 uppercase tracking-widest">Séance de découverte</span>
                                 </button>
 
                                 <button
                                     onClick={() => setStep('conception')}
                                     className="group p-10 border border-rhum-gold/20 bg-rhum-gold/5 hover:bg-rhum-gold/10 transition-all rounded-sm text-center"
                                 >
-                                    <span className="text-xl font-serif text-white block mb-2 uppercase italic">Cursus de Conception</span>
-                                    <span className="text-[9px] text-rhum-gold uppercase tracking-widest font-black">4 Paliers Techniques disponibles</span>
+                                    <span className="text-xl font-serif text-white block mb-2 uppercase italic">Les ateliers Conception</span>
+                                    <span className="text-[9px] text-rhum-gold uppercase tracking-widest font-black">4 Niveaux disponibles</span>
                                 </button>
                             </div>
                         </motion.div>
@@ -72,7 +72,7 @@ export default function BusinessSelectionModal({ isOpen, onClose, workshops, onS
 
                             <div className="text-center mb-10">
                                 <span className="text-rhum-gold tracking-[0.4em] uppercase text-[10px] font-black mb-2 block">Étape 2 / 2</span>
-                                <h5 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tighter">Sélection du niveau Technique</h5>
+                                <h5 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tighter">Sélection du niveau</h5>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
