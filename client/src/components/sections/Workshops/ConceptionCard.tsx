@@ -16,7 +16,7 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
             <div>
                 <header className="flex flex-col items-center mb-6 md:mb-12 text-center">
                     <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight uppercase tracking-tight">
-                        Le Cursus Conception
+                        Les ateliers Conception
                     </h4>
                     <span className="text-rhum-gold font-sans text-[9px] uppercase tracking-widest font-black opacity-60 mt-2">
                         Par Étapes
