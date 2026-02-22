@@ -57,7 +57,7 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
                         onClick={handleQuickReserve}
                         className="w-full bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.3em] text-[10px] md:text-xs hover:bg-white transition-all shadow-xl rounded-sm"
                     >
-                        {user ? 'Réserver ma place' : 'Se connecter pour réserver'}
+                        {user ? 'Réserver dès maintenant' : 'Se connecter pour réserver'}
                     </button>
                 </div>
             </div>

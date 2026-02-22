@@ -1,12 +1,13 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search, ArrowUpRight, Package, GraduationCap } from 'lucide-react';
+import { Search, ArrowUpRight, Package, GraduationCap, Filter } from 'lucide-react';
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal';
 import AdminPagination from '../../components/admin/AdminPagination';
 
 export default function AdminOrders() {
     const [orders, setOrders] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [statusFilter, setStatusFilter] = useState('TOUS');
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
@@ -14,12 +15,10 @@ export default function AdminOrders() {
     const fetchOrders = () => api.get('/orders').then(res => setOrders(res.data));
     useEffect(() => { fetchOrders(); }, []);
 
-    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter]);
 
-    /**
-     * 🏺 GESTION SIMPLIFIÉE DU REGISTRE
-     * Passage binaire entre l'action requise et la clôture du dossier
-     */
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
             await api.patch(`/orders/${orderId}/status`, { status: newStatus });
@@ -30,11 +29,15 @@ export default function AdminOrders() {
     };
 
     const filteredOrders = useMemo(() => {
-        return orders.filter(o =>
-            o.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            `${o.user.firstName} ${o.user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
-        );
-    }, [orders, searchTerm]);
+        return orders.filter(o => {
+            const matchesSearch = o.reference.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                `${o.user.firstName} ${o.user.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+
+            const matchesStatus = statusFilter === 'TOUS' || o.status === statusFilter;
+
+            return matchesSearch && matchesStatus;
+        });
+    }, [orders, searchTerm, statusFilter]);
 
     const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
     const displayedOrders = useMemo(() => {
@@ -42,30 +45,51 @@ export default function AdminOrders() {
         return filteredOrders.slice(start, start + itemsPerPage);
     }, [filteredOrders, currentPage]);
 
-    // 🏺 Signalétique binaire : Alerte ou Réussite
     const getStatusStyles = (status: string) => {
-        if (status === 'FINALISÉ') {
-            return 'border-green-500/30 text-green-500 bg-green-500/5';
+        switch (status) {
+            case 'FINALISÉ':
+                return 'border-green-500/30 text-green-500 bg-green-500/5';
+            case 'ATELIER PLANIFIÉ':
+                return 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5';
+            case 'À TRAITER':
+            default:
+                return 'border-red-500/30 text-red-500 bg-red-500/5';
         }
-        return 'border-red-500/30 text-red-500 bg-red-500/5';
     };
 
     return (
         <section className="space-y-10 font-sans selection:bg-rhum-gold/30">
-            <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
+            <header className="flex flex-col lg:flex-row justify-between lg:items-end border-b border-rhum-gold/10 pb-8 gap-6">
                 <div>
                     <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Registre des Ventes</h2>
                     <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Suivi des Retraits et Formations Techniques</p>
                 </div>
 
-                <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-[260px]">
-                    <Search size={14} className="text-rhum-gold/40" />
-                    <input
-                        type="text"
-                        placeholder="RECHERCHER..."
-                        className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest font-black"
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    {/* 🏺 Filtre élargi à 240px pour éviter la troncature du texte */}
+                    <div className="bg-white/5 border border-white/5 px-4 py-3 rounded-sm flex items-center gap-3 w-full sm:min-w-[240px]">
+                        <Filter size={12} className="text-rhum-gold/40" />
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-transparent text-[10px] text-rhum-gold font-black uppercase tracking-widest outline-none cursor-pointer w-full"
+                        >
+                            <option value="TOUS" className="bg-[#0a1a14] text-white">Tous les dossiers</option>
+                            <option value="À TRAITER" className="bg-[#0a1a14] text-red-500">À Traiter</option>
+                            <option value="ATELIER PLANIFIÉ" className="bg-[#0a1a14] text-yellow-500">Atelier Planifié</option>
+                            <option value="FINALISÉ" className="bg-[#0a1a14] text-green-500">Finalisé</option>
+                        </select>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full sm:max-w-[260px]">
+                        <Search size={14} className="text-rhum-gold/40" />
+                        <input
+                            type="text"
+                            placeholder="RECHERCHER..."
+                            className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest font-black"
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                 </div>
             </header>
 
@@ -73,8 +97,8 @@ export default function AdminOrders() {
                 <table className="w-full text-left border-collapse">
                     <thead>
                     <tr className="border-b border-white/5 text-[9px] uppercase tracking-[0.2em] text-rhum-gold/40">
-                        <th className="py-6 px-8 font-black">Référence & Nature</th>
-                        <th className="py-6 px-8 font-black">Identité Client</th>
+                        <th className="py-6 px-8 font-black">Référence</th>
+                        <th className="py-6 px-8 font-black">Client</th>
                         <th className="py-6 px-8 font-black">Règlement</th>
                         <th className="py-6 px-8 font-black">État du Dossier</th>
                         <th className="py-6 px-8 font-black text-right">Détails</th>
@@ -94,13 +118,15 @@ export default function AdminOrders() {
                                         }
                                         <p className="text-white text-sm font-bold uppercase tracking-tight">{order.reference}</p>
                                     </div>
-                                    <p className="text-[8px] text-white/20 uppercase mt-1 tracking-widest font-black">
+                                    <p className="text-[11px] text-white/40 uppercase mt-2 tracking-widest font-black">
                                         {new Date(order.createdAt).toLocaleDateString()}
                                     </p>
                                 </td>
                                 <td className="py-6 px-8">
                                     <p className="text-rhum-cream text-xs font-bold uppercase">{order.user.firstName} {order.user.lastName}</p>
-                                    <p className="text-[8px] text-rhum-gold/40 uppercase font-black tracking-tighter">{order.user.email}</p>
+                                    <div className="mt-1 space-y-0.5">
+                                        <p className="text-[11px] text-rhum-gold/40 uppercase font-black tracking-tighter">{order.user.email}</p>
+                                    </div>
                                 </td>
                                 <td className="py-6 px-8">
                                     <p className="text-rhum-gold font-serif text-lg">{order.total.toFixed(2)}€</p>
@@ -113,7 +139,7 @@ export default function AdminOrders() {
                                             className={`text-[9px] border px-4 py-2 rounded-sm uppercase font-black tracking-widest bg-transparent outline-none cursor-pointer transition-all ${getStatusStyles(order.status)}`}
                                         >
                                             <option value="À TRAITER" className="bg-[#0a1a14] text-red-500 font-black">À Traiter</option>
-                                            <option value="CLIENT CONTACTé" className="bg-[#0a1a14] text-yellow-500 font-black">CLIENT CONTACTé</option>
+                                            <option value="ATELIER PLANIFIÉ" className="bg-[#0a1a14] text-yellow-500 font-black">Atelier Planifié</option>
                                             <option value="FINALISÉ" className="bg-[#0a1a14] text-green-500 font-black">Finalisé</option>
                                         </select>
                                     </div>
