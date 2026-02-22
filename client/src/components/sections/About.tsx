@@ -28,23 +28,22 @@ export default function About() {
 
                     {/* Header : Toujours centré sur mobile selon votre préférence */}
                     <header className="mb-6 md:mb-8 text-center md:text-left">
-                        <h2 className="text-rhum-gold font-sans tracking-[0.2em] uppercase text-[10px] md:text-sm mb-3 md:mb-4 font-bold">
-                            L'Antre du Druide
+                        <h2 className="text-rhum-gold tracking-[0.2em] uppercase text-[10px] md:text-sm mb-3 md:mb-4 font-black">
+                            L'Excellence Institutionnelle
                         </h2>
                         <h3 className="text-2xl md:text-5xl font-serif leading-tight text-rhum-green">
-                            Une escale sensorielle au cœur de Compiègne
+                            Rhum Agricole et Créations Artisanales
                         </h3>
                     </header>
 
                     {/* Contenu : Forcé à gauche sur mobile (text-left) */}
                     <div className="space-y-4 md:space-y-6 text-gray-700 font-sans leading-relaxed text-sm md:text-base text-left">
                         <p>
-                            Situé au 12 rue des Cordeliers, L'Atelier de la Route du Rhum est né d'une volonté simple :
-                            partager l'art des saveurs exotiques dans un cadre historique et convivial.
+                            Situé au 12 rue des Cordeliers à Compiègne, notre établissement est dédié à la valorisation de produits nobles.
+                            Nous travaillons exclusivement le rhum agricole, sélectionné pour sa puissance aromatique et sa pureté originelle.
                         </p>
                         <p>
-                            Sous la houlette de <span className="font-bold text-rhum-green">Nabil Ziani</span>,
-                            notre établissement hybride combine une cave spécialisée et un espace de création unique.
+                            Chaque préparation suit un protocole strictement artisanal. Nous refusons tout compromis industriel pour privilégier le respect du produit et la précision du geste technique.
                         </p>
 
                         <blockquote className="border-l-4 border-rhum-gold pl-4 md:pl-6 py-2 italic font-serif text-lg md:text-xl text-rhum-green/80 bg-rhum-gold/5 rounded-r-sm my-6 md:my-8">
@@ -53,7 +52,7 @@ export default function About() {
 
                         <p>
                             Que ce soit pour un atelier individuel, un comité d'entreprise ou un événement privé,
-                            nous mettons tout notre savoir-faire pour vous offrir une parenthèse inoubliable.
+                            nous mettons tout notre savoir-faire pour vous offrir une expérience inoubliable.
                         </p>
                     </div>
 
