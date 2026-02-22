@@ -9,7 +9,7 @@ interface ProfileFieldProps {
     isEditing: boolean;
     onChange: (v: string) => void;
     placeholder?: string;
-    readOnly?: boolean; // Ajout d'une propriété pour bloquer l'édition
+    readOnly?: boolean;
 }
 
 export default function ProfileInfo() {
@@ -39,21 +39,17 @@ export default function ProfileInfo() {
     const handleSave = async () => {
         setLoading(true);
         setStatus(null);
-
         try {
-            // On envoie les données au serveur (l'e-mail est ignoré par le backend par sécurité)
             const response = await api.patch('/users/me', formData);
-
             if (user && token) {
                 setAuth(response.data, token);
             }
-
-            setStatus({ type: 'success', msg: "Vos informations ont été mises à jour avec succès." });
+            setStatus({ type: 'success', msg: "Le profil de membre a été mis à jour avec succès." });
             setIsEditing(false);
         } catch (err: any) {
             setStatus({
                 type: 'error',
-                msg: err.response?.data?.error || "Une erreur est survenue lors de la mise à jour des données."
+                msg: err.response?.data?.error || "Une erreur est survenue lors de la synchronisation des données."
             });
         } finally {
             setLoading(false);
@@ -61,11 +57,11 @@ export default function ProfileInfo() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto lg:mx-0">
-            <header className="mb-12 flex justify-between items-end">
+        <div className="max-w-3xl font-sans">
+            <header className="mb-16 flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
-                    <h2 className="text-2xl lg:text-3xl font-serif text-white tracking-tight">Informations Personnelles</h2>
-                    <div className="h-1 w-12 bg-rhum-gold/30 mt-4" />
+                    <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Profil de membre</h2>
+                    <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] font-black mt-3 opacity-60">Identité certifiée au sein de l'établissement</p>
                 </div>
 
                 <button
@@ -73,17 +69,17 @@ export default function ProfileInfo() {
                         setIsEditing(!isEditing);
                         setStatus(null);
                     }}
-                    className={`text-[9px] uppercase tracking-[0.2em] px-6 py-2.5 font-black rounded-sm transition-all border ${
+                    className={`text-[10px] uppercase tracking-[0.2em] px-8 py-3 font-black rounded-sm transition-all border ${
                         isEditing
-                            ? 'border-red-500/20 text-red-400 hover:bg-red-500/5'
-                            : 'border-rhum-gold/20 text-rhum-gold hover:bg-rhum-gold/5'
+                            ? 'border-red-500 text-red-500 bg-red-500/5 hover:bg-red-500/10'
+                            : 'border-rhum-gold text-rhum-gold hover:bg-rhum-gold/10'
                     }`}
                 >
-                    {isEditing ? "Annuler" : "Modifier le profil"}
+                    {isEditing ? "Annuler" : "Modifier"}
                 </button>
             </header>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-12 gap-x-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-16 gap-x-20">
                 <ProfileField
                     label="Prénom"
                     value={formData.firstName}
@@ -97,10 +93,10 @@ export default function ProfileInfo() {
                     onChange={(v) => setFormData({...formData, lastName: v})}
                 />
                 <ProfileField
-                    label="Adresse Email"
+                    label="Email"
                     value={formData.email}
                     isEditing={isEditing}
-                    readOnly={true} // L'email ne peut jamais être modifié ici
+                    readOnly={true}
                     onChange={() => {}}
                 />
                 <ProfileField
@@ -108,21 +104,21 @@ export default function ProfileInfo() {
                     value={formData.phone}
                     isEditing={isEditing}
                     onChange={(v) => setFormData({...formData, phone: v})}
-                    placeholder="Ex: 06 12 34 56 78"
+                    placeholder="Ex: 06 00 00 00 00"
                 />
             </div>
 
             <AnimatePresence>
                 {(status || isEditing) && (
                     <motion.div
-                        initial={{ opacity: 0, y: 10 }}
+                        initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        className="mt-12 space-y-6"
+                        exit={{ opacity: 0, y: 15 }}
+                        className="mt-16 space-y-8"
                     >
                         {status && (
-                            <p className={`text-[10px] uppercase tracking-widest p-4 border text-center ${
-                                status.type === 'success' ? 'text-rhum-gold border-rhum-gold/20 bg-rhum-gold/5' : 'text-red-400 border-red-400/20 bg-red-400/5'
+                            <p className={`text-[11px] uppercase tracking-[0.2em] font-bold p-5 border text-center rounded-sm ${
+                                status.type === 'success' ? 'text-rhum-gold border-rhum-gold/30 bg-rhum-gold/10' : 'text-red-500 border-red-500/30 bg-red-500/10'
                             }`}>
                                 {status.msg}
                             </p>
@@ -132,9 +128,9 @@ export default function ProfileInfo() {
                             <button
                                 onClick={handleSave}
                                 disabled={loading}
-                                className="w-full py-5 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl disabled:opacity-50 active:scale-[0.98]"
+                                className="w-full py-6 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all shadow-2xl disabled:opacity-50 active:scale-[0.99] rounded-sm"
                             >
-                                {loading ? "Mise à jour en cours..." : "Enregistrer les modifications"}
+                                {loading ? "Synchronisation en cours..." : "Enregistrer les modifications"}
                             </button>
                         )}
                     </motion.div>
@@ -145,26 +141,25 @@ export default function ProfileInfo() {
 }
 
 function ProfileField({ label, value, isEditing, onChange, placeholder = "", readOnly = false }: ProfileFieldProps) {
-    // Si le champ est en lecture seule, on force l'affichage du texte même en mode édition
     const shouldShowInput = isEditing && !readOnly;
 
     return (
-        <div className="flex flex-col gap-2 border-b border-white/5 pb-4 group">
-            <label className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] font-black group-hover:text-rhum-gold transition-colors">
+        <div className="flex flex-col gap-3 border-b border-white/10 pb-6 group">
+            <label className="text-rhum-gold text-[9px] uppercase tracking-[0.3em] font-black group-hover:opacity-100 opacity-60 transition-opacity">
                 {label}
             </label>
-            <div className="h-8 flex items-center">
+            <div className="h-10 flex items-center">
                 {shouldShowInput ? (
                     <input
                         type="text"
                         value={value}
                         placeholder={placeholder}
                         onChange={(e) => onChange(e.target.value)}
-                        className="w-full bg-transparent text-white font-serif text-lg outline-none italic placeholder:opacity-10"
+                        className="w-full bg-white/[0.05] border border-white/10 px-4 py-3 text-white font-sans text-lg lg:text-xl outline-none focus:border-rhum-gold transition-all placeholder:text-white/10"
                     />
                 ) : (
-                    <span className={`font-serif text-lg tracking-wide ${readOnly ? 'text-white/40' : 'text-white'}`}>
-                        {value || <span className="text-white/10 font-sans text-xs uppercase tracking-widest">Non renseigné</span>}
+                    <span className={`font-serif text-xl tracking-tight leading-none ${readOnly ? 'text-white/40' : 'text-white'}`}>
+                        {value || <span className="text-white/10 font-sans text-xs uppercase tracking-[0.2em] font-black">Donnée non renseignée</span>}
                     </span>
                 )}
             </div>
