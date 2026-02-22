@@ -3,7 +3,7 @@ import api from '../../api/axiosInstance';
 import { Search, Mail, Phone, User } from 'lucide-react';
 import CustomerDetailsModal from '../../components/admin/CustomerDetailsModal';
 import AdminPagination from '../../components/admin/AdminPagination';
-import { useToastStore } from '../../store/toastStore'; // 🏺 Import du store
+import { useToastStore } from '../../store/toastStore';
 
 export default function AdminCustomers() {
     const [customers, setCustomers] = useState<any[]>([]);
@@ -50,11 +50,11 @@ export default function AdminCustomers() {
     };
 
     return (
-        <section className="space-y-10 font-sans">
+        <section className="space-y-10 font-sans selection:bg-rhum-gold/30">
             <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
                     <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Registre de la Clientèle</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Pilotage des dossiers membres</p>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Pilotage des dossiers membres</p>
                 </div>
 
                 <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 w-full max-w-[260px]">
@@ -62,16 +62,16 @@ export default function AdminCustomers() {
                     <input
                         type="text"
                         placeholder="RECHERCHER..."
-                        className="bg-transparent text-[10px] text-white outline-none w-full uppercase tracking-widest"
+                        className="bg-transparent text-[11px] text-white outline-none w-full uppercase tracking-widest font-black"
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
                 </div>
             </header>
 
-            <div className="overflow-x-auto bg-white/[0.01] border border-white/5">
+            <div className="overflow-x-auto bg-white/[0.01] border border-white/5 rounded-sm">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                    <tr className="border-b border-white/5 text-[9px] uppercase tracking-[0.2em] text-rhum-gold/40">
+                    <tr className="border-b border-white/5 text-[11px] uppercase tracking-[0.2em] text-rhum-gold/40">
                         <th className="py-6 px-8 font-black">Identité</th>
                         <th className="py-6 px-8 font-black">Coordonnées</th>
                         <th className="py-6 px-8 font-black">État du Cursus</th>
@@ -86,46 +86,49 @@ export default function AdminCustomers() {
                             className="group hover:bg-white/[0.03] transition-colors cursor-pointer"
                         >
                             <td className="py-6 px-8">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 bg-white/5 rounded-full flex items-center justify-center border border-white/5">
-                                        <User size={16} className="text-rhum-gold/40" />
+                                <div className="flex items-center gap-6">
+                                    <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center border border-white/5">
+                                        <User size={18} className="text-rhum-gold/40" />
                                     </div>
                                     <div>
-                                        <p className="text-white text-sm font-bold uppercase tracking-tight">
-                                            {customer.lastName} <span className="text-rhum-gold/80 font-medium">{customer.firstName}</span>
+                                        <p className="text-white text-base font-bold uppercase tracking-tight">
+                                            {customer.lastName} <span className="text-rhum-gold font-bold">{customer.firstName}</span>
                                         </p>
-                                        <p className="text-[8px] text-white/20 uppercase mt-1 tracking-widest">
+                                        {/* 🏺 Date d'inscription agrandie */}
+                                        <p className="text-[11px] text-white/40 uppercase mt-1 tracking-widest font-black">
                                             Membre depuis le {new Date(customer.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>
                             </td>
-                            <td className="py-6 px-8 space-y-2">
-                                <div className="flex items-center gap-2 text-[10px] text-rhum-cream/60">
-                                    <Mail size={10} className="text-rhum-gold/40" /> {customer.email}
+                            <td className="py-6 px-8 space-y-3">
+                                {/* 🏺 Coordonnées agrandies pour une meilleure lisibilité */}
+                                <div className="flex items-center gap-3 text-[11px] text-rhum-cream font-black uppercase tracking-widest">
+                                    <Mail size={12} className="text-rhum-gold/40" /> {customer.email}
                                 </div>
-                                <div className="flex items-center gap-2 text-[10px] text-rhum-cream/60">
-                                    <Phone size={10} className="text-rhum-gold/40" /> {customer.phone || 'Non renseigné'}
+                                <div className="flex items-center gap-3 text-[11px] text-rhum-cream font-black uppercase tracking-widest">
+                                    <Phone size={12} className="text-rhum-gold/40" /> {customer.phone || 'Non renseigné'}
                                 </div>
                             </td>
                             <td className="py-6 px-8">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex gap-1">
+                                <div className="flex items-center gap-4">
+                                    <div className="flex gap-1.5">
                                         {[1, 2, 3, 4].map(lvl => (
                                             <div
                                                 key={lvl}
-                                                className={`w-1.5 h-4 rounded-full transition-all ${lvl <= customer.conceptionLevel ? 'bg-rhum-gold shadow-[0_0_8px_rgba(212,175,55,0.4)]' : 'bg-white/5'}`}
+                                                className={`w-2 h-5 rounded-full transition-all ${lvl <= customer.conceptionLevel ? 'bg-rhum-gold shadow-[0_0_10px_rgba(212,175,55,0.4)]' : 'bg-white/5'}`}
                                             />
                                         ))}
                                     </div>
-                                    <span className="text-[9px] text-rhum-gold font-black uppercase tracking-widest">
-                                        {customer.conceptionLevel === 0 ? "Sans Certification" : `Niveau ${customer.conceptionLevel}`}
-                                        </span>
+                                    <span className="text-[11px] text-rhum-gold font-black uppercase tracking-widest">
+                                        {customer.conceptionLevel === 0 ? "Initié" : `Niveau ${customer.conceptionLevel}`}
+                                    </span>
                                 </div>
                             </td>
                             <td className="py-6 px-8 text-center">
-                                <span className="text-xs font-serif text-white">{customer._count?.orders || 0}</span>
-                                <p className="text-[8px] text-white/20 uppercase font-bold mt-1">Commandes</p>
+                                {/* 🏺 Volume de commandes agrandi */}
+                                <span className="text-2xl font-serif text-white font-bold">{customer._count?.orders || 0}</span>
+                                <p className="text-[10px] text-white/30 uppercase font-black mt-2 tracking-widest">Commandes</p>
                             </td>
                         </tr>
                     ))}
@@ -133,8 +136,8 @@ export default function AdminCustomers() {
                 </table>
 
                 {(displayedCustomers.length === 0 && !loading) && (
-                    <div className="py-24 text-center italic text-white/10 text-sm font-serif tracking-widest">
-                        Aucune fiche client ne correspond à votre recherche.
+                    <div className="py-24 text-center text-white/20 text-xs font-black uppercase tracking-[0.3em]">
+                        Aucun dossier membre trouvé dans le registre.
                     </div>
                 )}
             </div>
