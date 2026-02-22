@@ -38,7 +38,6 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
         fetchWorkshops();
     }, []);
 
-    // 🏺 FILTRAGE DES FLUX
     const individualWorkshops = useMemo(() =>
         workshops.filter(w => w.type === 'PARTICULIER'), [workshops]);
 
@@ -73,15 +72,14 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
         setIsBusinessModalOpen(false);
     };
 
-    // Distribution des formations individuelles
     const discoveryWorkshop = individualWorkshops.find(w => w.level === 0);
     const conceptionWorkshops = individualWorkshops
         .filter(w => w.level > 0)
         .sort((a, b) => a.level - b.level);
 
     if (loading) return (
-        <div className="py-20 text-center text-rhum-gold font-serif italic uppercase tracking-[0.3em] text-[10px]">
-            Extraction du programme technique...
+        <div className="py-20 text-center text-rhum-gold font-serif uppercase tracking-[0.3em] text-[10px] font-black">
+            Analyse du programme technique...
         </div>
     );
 
@@ -90,7 +88,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold tracking-[0.3em] uppercase text-xs mb-3 md:mb-4 font-black">Architecture Pédagogique</h2>
-                    <h3 className="text-4xl md:text-6xl font-serif text-white uppercase tracking-tighter">Le Registre des Formations</h3>
+                    <h3 className="text-4xl md:text-6xl font-serif text-white uppercase tracking-tighter">Le Registre des Ateliers</h3>
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-20 items-stretch">
@@ -110,7 +108,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
 
                 <div className="mt-20">
                     <div className="flex flex-col items-center text-center mb-10">
-                        <span className="text-rhum-gold tracking-[0.3em] uppercase text-[10px] font-black mb-2 italic">La sélection cave</span>
+                        <span className="text-rhum-gold tracking-[0.3em] uppercase text-[10px] font-black mb-2">La sélection cave</span>
                         <h4 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tight">Retrait à l'Établissement</h4>
                     </div>
                     <ShopBanner />
@@ -135,7 +133,6 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
                         <BusinessSelectionModal
                             isOpen={isBusinessModalOpen}
                             onClose={() => setIsBusinessModalOpen(false)}
-                            // On passe uniquement les offres séminaires
                             workshops={businessWorkshops}
                             onSelectionComplete={handleBusinessSelection}
                         />

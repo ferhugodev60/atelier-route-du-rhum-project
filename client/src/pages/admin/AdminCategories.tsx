@@ -66,7 +66,7 @@ export default function AdminCategories() {
         <section className="space-y-12 font-sans">
             <header className="flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
-                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture du Catalogue</h2>
+                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture de la Boutique</h2>
                     <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-bold">Gestion des collections</p>
                 </div>
             </header>
@@ -77,7 +77,7 @@ export default function AdminCategories() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-end">
                         <div className="space-y-3">
                             <label className="text-[9px] uppercase tracking-[0.3em] text-rhum-gold font-black ml-1 flex items-center gap-2">
-                                <Plus size={10} /> Nom de la nouvelle famille
+                                <Plus size={10} /> Nom de la nouvelle collection
                             </label>
                             <input
                                 name="name"
@@ -88,7 +88,7 @@ export default function AdminCategories() {
                         </div>
                         <div className="flex justify-end">
                             <button type="submit" className="bg-rhum-gold text-rhum-green px-12 py-4 text-[10px] font-black uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl">
-                                Valider la Collection
+                                Valider
                             </button>
                         </div>
                     </div>
@@ -97,7 +97,7 @@ export default function AdminCategories() {
                         <textarea
                             name="description"
                             rows={2}
-                            placeholder="Définissez les caractéristiques de cette famille de produits..."
+                            placeholder="Définissez les caractéristiques de cette collection de bouteilles..."
                             className="w-full bg-white/[0.02] border border-white/5 p-4 text-rhum-cream text-xs outline-none focus:border-rhum-gold/40 transition-all italic font-serif"
                         />
                     </div>

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { heroVariants, bounceAnimation } from '../../utils/animations.ts';
-import logoImg from '../../assets/logo/logo.png';
+import logoImg from '../../assets/logo/logo.webp';
 import { Link } from "react-router-dom";
 
 interface HeroProps {
