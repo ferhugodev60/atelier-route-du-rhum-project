@@ -102,34 +102,44 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * 🏺 Mise à jour logistique et Promotion du Membre
- * Le niveau est incrémenté : $Palier_{n} = Palier_{n-1} + 1$ lors de la finalisation.
+ * 🏺 Mise à jour logistique et Promotion Collective
+ * Le palier technique est incrémenté pour TOUS les participants certifiés.
  */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
 
     try {
-        // 1. Mise à jour de l'état du dossier dans le registre
         const order = await prisma.order.update({
             where: { id },
             data: { status },
             include: {
-                items: { include: { workshop: true } },
-                user: true
+                items: {
+                    include: {
+                        workshop: true,
+                        participants: true
+                    }
+                }
             }
         });
 
-        // 2. Promotion automatique si le dossier est FINALISÉ et contient une formation
+        // 🏺 Promotion automatique collective si FINALISÉ
         if (status === 'FINALISÉ') {
-            const hasWorkshop = order.items.some(item => item.workshop !== null);
+            const codesToPromote = order.items
+                .filter(item => item.workshop !== null)
+                .flatMap(item => item.participants.map(p => p.memberCode))
+                .filter((code): code is string => !!code);
 
-            if (hasWorkshop && order.user) {
-                await prisma.user.update({
-                    where: { id: order.userId },
-                    data: { conceptionLevel: { increment: 1 } }
-                });
-                console.log(`🏛️ Promotion certifiée : Le membre ${order.user.firstName} passe au palier technique supérieur.`);
+            const uniqueCodes = [...new Set(codesToPromote)];
+
+            if (uniqueCodes.length > 0) {
+                await Promise.all(uniqueCodes.map(code =>
+                    prisma.user.update({
+                        where: { memberCode: code },
+                        data: { conceptionLevel: { increment: 1 } }
+                    })
+                ));
+                console.log(`🏛️ Promotion collective certifiée pour ${uniqueCodes.length} membre(s).`);
             }
         }
 
