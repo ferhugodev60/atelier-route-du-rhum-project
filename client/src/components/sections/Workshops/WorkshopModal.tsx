@@ -111,7 +111,12 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                         {!isLocked && (
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-black">Investissement</span>
-                                <span className="text-2xl md:text-3xl font-serif text-rhum-gold">{detail.price}€</span>
+                                <div className="flex flex-col items-end">
+                                    <span className="text-2xl md:text-3xl font-serif text-rhum-gold leading-none">{detail.price}€</span>
+                                    <span className="text-[9px] md:text-[10px] text-rhum-gold/60 uppercase tracking-[0.2em] font-black mt-1">
+                                        / pers.
+                                    </span>
+                                </div>
                             </div>
                         )}
                         {renderFooterButton()}
