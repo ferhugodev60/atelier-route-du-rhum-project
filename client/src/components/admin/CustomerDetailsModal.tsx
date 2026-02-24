@@ -161,7 +161,6 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-black text-white uppercase tracking-widest group-hover:text-rhum-gold transition-colors">{order.reference}</p>
-                                                    {/* 🏺 Date agrandie */}
                                                     <p className="text-[11px] text-white/40 uppercase mt-2 font-black tracking-widest">
                                                         {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </p>
@@ -169,7 +168,6 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             </div>
                                             <div className="text-right space-y-2">
                                                 <p className="text-rhum-gold font-serif text-xl font-bold">{order.total.toFixed(2)}€</p>
-                                                {/* 🏺 Badge de statut tricolore */}
                                                 <span className={`inline-block text-[8px] px-3 py-1 border font-black uppercase tracking-widest rounded-sm ${getStatusStyles(order.status)}`}>
                                                     {order.status}
                                                 </span>
