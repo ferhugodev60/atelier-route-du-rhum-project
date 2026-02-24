@@ -44,12 +44,12 @@ export default function ProfileInfo() {
             if (user && token) {
                 setAuth(response.data, token);
             }
-            setStatus({ type: 'success', msg: "Le profil de membre a été mis à jour avec succès." });
+            setStatus({ type: 'success', msg: "Le dossier de membre a été mis à jour avec succès dans le registre." });
             setIsEditing(false);
         } catch (err: any) {
             setStatus({
                 type: 'error',
-                msg: err.response?.data?.error || "Une erreur est survenue lors de la synchronisation des données."
+                msg: err.response?.data?.error || "Une erreur est survenue lors de la synchronisation avec le registre central."
             });
         } finally {
             setLoading(false);
@@ -60,7 +60,7 @@ export default function ProfileInfo() {
         <div className="max-w-3xl font-sans">
             <header className="mb-16 flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
-                    <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Profil de membre</h2>
+                    <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Dossier de membre</h2>
                     <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] font-black mt-3 opacity-60">Identité certifiée au sein de l'établissement</p>
                 </div>
 
@@ -80,6 +80,21 @@ export default function ProfileInfo() {
             </header>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-16 gap-x-20">
+                {/* 🏺 Identifiant immuable du Cursus */}
+                <ProfileField
+                    label="Code Passeport"
+                    value={user?.memberCode || "Non assigné"}
+                    isEditing={false}
+                    readOnly={true}
+                    onChange={() => {}}
+                />
+                <ProfileField
+                    label="Email de référence"
+                    value={formData.email}
+                    isEditing={isEditing}
+                    readOnly={true}
+                    onChange={() => {}}
+                />
                 <ProfileField
                     label="Prénom"
                     value={formData.firstName}
@@ -93,19 +108,20 @@ export default function ProfileInfo() {
                     onChange={(v) => setFormData({...formData, lastName: v})}
                 />
                 <ProfileField
-                    label="Email"
-                    value={formData.email}
-                    isEditing={isEditing}
-                    readOnly={true}
-                    onChange={() => {}}
-                />
-                <ProfileField
                     label="Téléphone"
                     value={formData.phone}
                     isEditing={isEditing}
                     onChange={(v) => setFormData({...formData, phone: v})}
                     placeholder="Ex: 06 00 00 00 00"
                 />
+                <div className="flex flex-col gap-3 border-b border-white/10 pb-6 opacity-40">
+                    <label className="text-rhum-gold text-[9px] uppercase tracking-[0.3em] font-black">Palier technique</label>
+                    <div className="h-10 flex items-center">
+                        <span className="font-serif text-xl tracking-tight leading-none text-white">
+                            Niveau {user?.conceptionLevel || 0} validé
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <AnimatePresence>
@@ -130,7 +146,7 @@ export default function ProfileInfo() {
                                 disabled={loading}
                                 className="w-full py-6 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all shadow-2xl disabled:opacity-50 active:scale-[0.99] rounded-sm"
                             >
-                                {loading ? "Synchronisation en cours..." : "Enregistrer les modifications"}
+                                {loading ? "Mise à jour du registre..." : "Enregistrer les modifications"}
                             </button>
                         )}
                     </motion.div>

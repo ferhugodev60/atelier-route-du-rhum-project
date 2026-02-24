@@ -12,6 +12,7 @@ datasource db {
 model User {
   id              String   @id @default(cuid())
   email           String   @unique
+  memberCode      String?  @unique
   password        String
   firstName       String
   lastName        String
@@ -97,10 +98,16 @@ model OrderItem {
 }
 
 model Participant {
-  id          String    @id @default(cuid())
-  firstName   String
-  lastName    String
-  phone       String
+  id         String  @id @default(cuid())
+  // 🏺 Pour Découverte : Champs texte classiques
+  firstName  String?
+  lastName   String?
+  phone      String?
+  email      String?
+  // 🏺 Pour Conception : Lien direct vers le membre
+  memberCode String?
+  userId     String?
+
   orderItemId String
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 }

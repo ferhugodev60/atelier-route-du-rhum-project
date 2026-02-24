@@ -7,12 +7,9 @@ interface AuthRequest extends Request {
     user?: { userId: string; role: string; };
 }
 
-/**
- * Type complexe pour inclure les relations nécessaires (Produits, Séances, Participants)
- */
 type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true } },
+        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, memberCode: true } },
         items: {
             include: {
                 workshop: true;
@@ -23,10 +20,6 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
     };
 }>;
 
-/**
- * RÉCUPÉRATION DES COMMANDES : GET /api/orders
- * Correction : Inclusion réelle des items et formatage pour le frontend
- */
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
@@ -37,8 +30,7 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
         const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
-                user: { select: { firstName: true, lastName: true, email: true } },
-                // 🏺 Correction : On remplace _count par l'inclusion réelle des items
+                user: { select: { firstName: true, lastName: true, email: true, memberCode: true } },
                 items: {
                     include: {
                         workshop: true,
@@ -50,7 +42,6 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             orderBy: { createdAt: 'desc' }
         }) as OrderWithRelations[];
 
-        // 🏺 Formatage pour que le frontend reçoive la structure attendue par OrderHistory.tsx
         const formattedOrders = rawOrders.map(order => ({
             id: order.id,
             reference: order.reference,
@@ -64,8 +55,12 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
                     : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
-                // On transforme le tableau d'objets participants en tableau de chaînes
-                participants: item.participants.map(p => `${p.firstName} ${p.lastName}`)
+                // 🏺 Affichage conditionnel du Code Membre pour les séances de Conception
+                participants: item.participants.map(p =>
+                    p.memberCode
+                        ? `${p.firstName} ${p.lastName} (${p.memberCode})`
+                        : `${p.firstName} ${p.lastName}`
+                )
             }))
         }));
 
@@ -75,9 +70,6 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     }
 };
 
-/**
- * DÉTAILS DE LA COMMANDE : GET /api/orders/:id
- */
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const userId = req.user?.userId;
@@ -110,9 +102,6 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     }
 };
 
-/**
- * MISE À JOUR DU STATUT : PATCH /api/orders/:id/status
- */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
@@ -128,9 +117,6 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     }
 };
 
-/**
- * GÉNÉRATION PDF : GET /api/orders/:orderId/download
- */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
     const userId = req.user?.userId;
@@ -142,7 +128,8 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 items: {
                     include: {
                         workshop: true,
-                        volume: { include: { product: true } }
+                        volume: { include: { product: true } },
+                        participants: true
                     }
                 }
             }
@@ -169,10 +156,20 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 ? item.workshop.title
                 : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`;
 
-            doc.fontSize(10).font('Helvetica').text(`${name}`, { continued: true });
+            doc.fontSize(10).font('Helvetica-Bold').text(`${name}`, { continued: true });
             doc.text(` (x${item.quantity})`, { continued: true });
             doc.text(`${(item.price * item.quantity).toFixed(2)}€`, { align: 'right' });
-            doc.moveDown(0.5);
+
+            // 🏺 Détail des participants dans le PDF
+            if (item.participants.length > 0) {
+                doc.fontSize(8).font('Helvetica').text("Participants : ", { continued: true });
+                const participantList = item.participants.map(p =>
+                    p.memberCode ? `${p.firstName} ${p.lastName} [${p.memberCode}]` : `${p.firstName} ${p.lastName}`
+                ).join(', ');
+                doc.text(participantList);
+            }
+
+            doc.moveDown(1);
         });
 
         doc.moveDown();
@@ -181,7 +178,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         doc.fontSize(14).font('Helvetica-Bold').text(`TOTAL RÉGLÉ : ${order.total.toFixed(2)}€`, { align: 'right' });
 
         doc.moveDown(10);
-        doc.fontSize(9).font('Helvetica-Oblique').text(
+        doc.fontSize(9).text(
             "Ce document certifie votre achat. Veuillez le présenter lors de votre retrait ou au début de votre séance de formation.",
             { align: 'center' }
         );

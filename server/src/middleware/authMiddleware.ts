@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
-// 🏺 Extension de l'interface Request pour TypeScript
+/**
+ * Structure de l'identité numérique au sein du Registre
+ */
 interface UserPayload {
     userId: string;
-    role: string; // On ajoute le rôle ici
+    role: string;
 }
 
-// On étend le type Request d'Express pour inclure notre utilisateur
+/**
+ * Extension des propriétés de la requête Express
+ * Permet de transporter l'identité du membre à travers les différentes strates logicielles.
+ */
 declare global {
     namespace Express {
         interface Request {
@@ -17,34 +22,40 @@ declare global {
 }
 
 /**
- * Middleware de vérification du Token
+ * Authentification par jeton sécurisé (JWT)
+ * Vérifie la validité du Passeport numérique présenté dans les en-têtes de la requête.
  */
 export const authenticateToken = (req: Request, res: Response, next: NextFunction) => {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
 
     if (!token) {
-        return res.status(401).json({ error: "Accès refusé. Token manquant." });
+        return res.status(401).json({ error: "Authentification requise. Accès au Registre refusé." });
     }
 
     try {
-        // On décode le token et on l'assigne à req.user
-        req.user = jwt.verify(token, process.env.JWT_SECRET!) as UserPayload;
+        const decoded = jwt.verify(token, process.env.JWT_SECRET!) as UserPayload;
+
+        // Sécurité supplémentaire : On s'assure que le jeton contient bien les informations vitales
+        if (!decoded.userId) {
+            throw new Error("Identifiant manquant dans le jeton.");
+        }
+
+        req.user = decoded;
         next();
     } catch (error) {
-        res.status(403).json({ error: "Token invalide ou expiré." });
+        return res.status(403).json({ error: "Session expirée ou certificat invalide." });
     }
 };
 
 /**
- * Middleware de vérification du Rôle Admin
- * À utiliser APRÈS authenticateToken dans vos routes
+ * Validation des privilèges de direction
+ * Doit être impérativement invoqué après authenticateToken.
  */
 export const isAdmin = (req: Request, res: Response, next: NextFunction) => {
-    // On vérifie si l'utilisateur injecté par le premier middleware est un ADMIN
     if (req.user && req.user.role === 'ADMIN') {
         next();
     } else {
-        res.status(403).json({ error: "Accès interdit. Droits administrateur requis." });
+        res.status(403).json({ error: "Privilèges insuffisants. Accès réservé à la direction." });
     }
 };

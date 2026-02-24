@@ -1,10 +1,19 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto'; // 🏺 Import pour la génération des codes
 
 const prisma = new PrismaClient();
 
+// 🏺 Fonction de génération du Code Passeport Membre
+const generateMemberCode = () => {
+    const year = "26"; // Année 2026
+    const random = crypto.randomBytes(2).toString('hex').toUpperCase();
+    return `RR-${year}-${random}`;
+};
+
 async function main() {
     console.log('--- 🧹 Nettoyage complet ---');
+    await prisma.participant.deleteMany(); // 🏺 Ajouté pour garantir un nettoyage total
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
     await prisma.productVolume.deleteMany();
@@ -86,7 +95,6 @@ async function main() {
 
     console.log('--- 🎓 Ateliers (Découverte + Conception) ---');
 
-    // --- OFFRES PARTICULIERS (EXISTANTES) ---
     await prisma.workshop.create({
         data: {
             level: 0,
@@ -160,8 +168,6 @@ async function main() {
         }
     });
 
-    // --- 🏺 OFFRES ENTREPRISE (AJOUTS) ---
-    // Les tarifs sont ajustés : 50€ pour le niveau 0 et -20€ pour les niveaux 1-4
     console.log('--- 🏢 Offres Entreprise ---');
 
     await prisma.workshop.create({
@@ -242,6 +248,7 @@ async function main() {
     await prisma.user.create({
         data: {
             email: "hugo@atelier.com",
+            memberCode: generateMemberCode(), // 🏺 Attribution automatique du code
             password: hashedPassword,
             firstName: "Hugo",
             lastName: "Frr",
@@ -254,6 +261,7 @@ async function main() {
     await prisma.user.create({
         data: {
             email: "test@exemple.com",
+            memberCode: generateMemberCode(), // 🏺 Attribution automatique du code
             password: hashedUserPassword,
             firstName: "Jean",
             lastName: "Dupont",

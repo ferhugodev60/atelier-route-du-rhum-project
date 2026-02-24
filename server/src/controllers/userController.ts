@@ -15,6 +15,7 @@ export const getMe = async (req: Request, res: Response) => {
             where: { id: userId },
             select: {
                 id: true,
+                memberCode: true, // 🏺 Inclus pour l'affichage du Passeport
                 email: true,
                 firstName: true,
                 lastName: true,
@@ -42,6 +43,7 @@ export const updateMe = async (req: Request, res: Response) => {
             data: { firstName, lastName, email, phone },
             select: {
                 id: true,
+                memberCode: true,
                 firstName: true,
                 lastName: true,
                 email: true,
@@ -65,6 +67,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
             where: { role: 'USER' },
             select: {
                 id: true,
+                memberCode: true, // 🏺 Inclus pour le Registre de la Clientèle
                 email: true,
                 firstName: true,
                 lastName: true,
@@ -81,7 +84,6 @@ export const getAllUsers = async (req: Request, res: Response) => {
     }
 };
 
-// 🏺 Nouveau : Dossier détaillé avec historique des commandes
 export const getUserDetails = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
@@ -133,5 +135,32 @@ export const validateUserLevel = async (req: Request, res: Response) => {
         res.json({ message: "Progression validée", userLevel: updatedUser.conceptionLevel });
     } catch (error) {
         res.status(404).json({ error: "Validation impossible." });
+    }
+};
+
+/**
+ * 🏺 Vérification du Code Membre
+ * Correction du typage TS pour garantir une chaîne unique
+ */
+export const verifyMemberCode = async (req: Request, res: Response) => {
+    const code = req.params.code as string; // 🏺 Cast explicite pour Prisma
+
+    if (!code) {
+        return res.status(400).json({ error: "Code manquant." });
+    }
+
+    try {
+        const user = await prisma.user.findUnique({
+            where: { memberCode: code },
+            select: {
+                firstName: true,
+                lastName: true,
+                conceptionLevel: true
+            }
+        });
+        if (!user) return res.status(404).json({ error: "Code membre invalide." });
+        return res.json(user);
+    } catch (error) {
+        return res.status(500).json({ error: "Erreur de vérification technique." });
     }
 };

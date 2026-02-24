@@ -4,14 +4,14 @@ import { authenticateToken } from '../middleware/authMiddleware';
 
 const router = Router();
 
-if (!register || !login || !changePassword) {
-    console.error("❌ ERREUR CRITIQUE : Une fonction du contrôleur auth est undefined !");
-}
-
+// --- 👤 ACCÈS ET INSCRIPTION ---
 router.post('/register', register);
 router.post('/login', login);
 
-// Route pour changer le mot de passe (Protégée)
+/**
+ * 🏺 Modification du mot de passe
+ * Nécessite une authentification valide pour accéder au registre
+ */
 router.patch('/change-password', authenticateToken, changePassword);
 
 export default router;

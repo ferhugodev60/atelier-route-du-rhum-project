@@ -34,14 +34,28 @@ export default function CustomerDashboard() {
                         <h1 className="text-5xl lg:text-7xl font-serif text-white uppercase tracking-tighter leading-none">
                             Votre Passeport
                         </h1>
-                        <div className="mt-8 flex flex-col gap-3">
+
+                        <div className="mt-8 flex flex-col gap-6">
                             <p className="text-rhum-gold text-xs uppercase tracking-[0.4em] font-black">
                                 {user.firstName} {user.lastName}
                             </p>
-                            <div className="flex items-center gap-4">
-                                <span className="bg-rhum-gold text-rhum-green px-3 py-1 text-[10px] font-black uppercase tracking-widest rounded-sm">
-                                    Membre de Niveau {user.conceptionLevel} des ateliers conception
-                                </span>
+
+                            <div className="flex flex-wrap items-center gap-8">
+                                {/* 🏺 AFFICHAGE DU CODE UNIQUE */}
+                                <div className="flex flex-col gap-2">
+                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Identifiant Membre</span>
+                                    <span className="bg-rhum-gold text-rhum-green px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-sm shadow-xl">
+                                        {user.memberCode || "GÉNÉRATION EN COURS"}
+                                    </span>
+                                </div>
+
+                                {/* 🏺 VALIDATION DU CURSUS */}
+                                <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
+                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Palier technique</span>
+                                    <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                        Niveau {user.conceptionLevel} certifié
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </motion.div>

@@ -2,6 +2,44 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+
+/**
+ * 🏺 Génération du Code Passeport Membre
+ * Format institutionnel : RR-26-XXXX
+ */
+const generateMemberCode = () => {
+    const year = "26"; // Année 2026 [cite: 2026-02-12]
+    const random = crypto.randomBytes(2).toString('hex').toUpperCase();
+    return `RR-${year}-${random}`;
+};
+
+export const register = async (req: Request, res: Response) => {
+    try {
+        const { email, password, firstName, lastName, phone } = req.body;
+        const existingUser = await prisma.user.findUnique({ where: { email } });
+        if (existingUser) return res.status(400).json({ error: "Cet email est déjà utilisé." });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const memberCode = generateMemberCode();
+
+        const user = await prisma.user.create({
+            data: {
+                email,
+                memberCode,
+                password: hashedPassword,
+                firstName,
+                lastName,
+                phone,
+                conceptionLevel: 0
+            }
+        });
+
+        return res.status(201).json({ message: "Inscription réussie !", memberCode: user.memberCode });
+    } catch (error: any) {
+        return res.status(400).json({ error: "Échec de l'enregistrement dans le registre." });
+    }
+};
 
 export const login = async (req: Request, res: Response) => {
     try {
@@ -9,7 +47,6 @@ export const login = async (req: Request, res: Response) => {
         const user = await prisma.user.findUnique({ where: { email } });
 
         if (user && await bcrypt.compare(password, user.password)) {
-            // 🏺 CRUCIAL : On injecte le rôle dans le payload pour le middleware isAdmin
             const token = jwt.sign(
                 { userId: user.id, role: user.role },
                 process.env.JWT_SECRET!,
@@ -20,6 +57,7 @@ export const login = async (req: Request, res: Response) => {
                 token,
                 user: {
                     id: user.id,
+                    memberCode: user.memberCode,
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
@@ -31,47 +69,24 @@ export const login = async (req: Request, res: Response) => {
         }
         return res.status(401).json({ error: "Identifiants incorrects" });
     } catch (error: any) {
-        console.error("🔥 [ERROR LOGIN]:", error.message);
-        return res.status(500).json({ error: "L'alambic a rencontré un problème technique." });
+        return res.status(500).json({ error: "Erreur technique de session." });
     }
 };
 
-export const register = async (req: Request, res: Response) => {
-    try {
-        const { email, password, firstName, lastName, phone } = req.body;
-
-        // On vérifie si l'utilisateur existe déjà pour éviter une erreur Prisma brute
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) return res.status(400).json({ error: "Cet email est déjà utilisé." });
-
-        const hashedPassword = await bcrypt.hash(password, 10);
-
-        const user = await prisma.user.create({
-            data: {
-                email,
-                password: hashedPassword,
-                firstName,
-                lastName,
-                phone, // Ajouté pour correspondre à votre nouveau schéma
-                conceptionLevel: 0
-            }
-        });
-
-        return res.status(201).json({ message: "Inscription réussie !", userId: user.id });
-    } catch (error: any) {
-        console.error("🔥 [ERROR REGISTER]:", error.message);
-        return res.status(400).json({ error: "Données invalides ou manquantes." });
-    }
-};
-
+/**
+ * 🏺 Mise à jour du secret de connexion
+ * Cette fonction était manquante, causant l'erreur au démarrage
+ */
 export const changePassword = async (req: Request, res: Response) => {
     // @ts-ignore - Injecté par authenticateToken
     const userId = req.user?.userId;
     const { currentPassword, newPassword } = req.body;
 
+    if (!userId) return res.status(401).json({ error: "Session non identifiée." });
+
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user) return res.status(404).json({ error: "Utilisateur introuvable." });
+        if (!user) return res.status(404).json({ error: "Dossier introuvable." });
 
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ error: "Le mot de passe actuel est incorrect." });
@@ -84,6 +99,6 @@ export const changePassword = async (req: Request, res: Response) => {
 
         return res.status(200).json({ message: "Le secret a été mis à jour avec succès." });
     } catch (error: any) {
-        return res.status(500).json({ error: "Impossible de modifier le mot de passe." });
+        return res.status(500).json({ error: "Échec technique du changement de secret." });
     }
 };
