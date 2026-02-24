@@ -43,7 +43,7 @@ export default function CustomerDashboard() {
                             <div className="flex flex-wrap items-center gap-8">
                                 {/* 🏺 AFFICHAGE DU CODE UNIQUE */}
                                 <div className="flex flex-col gap-2">
-                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Identifiant Membre</span>
+                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Code client</span>
                                     <span className="bg-rhum-gold text-rhum-green px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-sm shadow-xl">
                                         {user.memberCode || "GÉNÉRATION EN COURS"}
                                     </span>
@@ -51,9 +51,9 @@ export default function CustomerDashboard() {
 
                                 {/* 🏺 VALIDATION DU CURSUS */}
                                 <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
-                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Palier technique</span>
+                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Ateliers Conception</span>
                                     <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
-                                        Niveau {user.conceptionLevel} certifié
+                                        Niveau {user.conceptionLevel}
                                     </span>
                                 </div>
                             </div>

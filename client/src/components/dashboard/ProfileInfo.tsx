@@ -82,14 +82,14 @@ export default function ProfileInfo() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-16 gap-x-20">
                 {/* 🏺 Identifiant immuable du Cursus */}
                 <ProfileField
-                    label="Code Passeport"
+                    label="Code Client"
                     value={user?.memberCode || "Non assigné"}
                     isEditing={false}
                     readOnly={true}
                     onChange={() => {}}
                 />
                 <ProfileField
-                    label="Email de référence"
+                    label="Email"
                     value={formData.email}
                     isEditing={isEditing}
                     readOnly={true}
@@ -114,14 +114,6 @@ export default function ProfileInfo() {
                     onChange={(v) => setFormData({...formData, phone: v})}
                     placeholder="Ex: 06 00 00 00 00"
                 />
-                <div className="flex flex-col gap-3 border-b border-white/10 pb-6 opacity-40">
-                    <label className="text-rhum-gold text-[9px] uppercase tracking-[0.3em] font-black">Palier technique</label>
-                    <div className="h-10 flex items-center">
-                        <span className="font-serif text-xl tracking-tight leading-none text-white">
-                            Niveau {user?.conceptionLevel || 0} validé
-                        </span>
-                    </div>
-                </div>
             </div>
 
             <AnimatePresence>
