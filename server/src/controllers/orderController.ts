@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import PDFDocument from 'pdfkit';
+import path from 'path';
+import fs from 'fs';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string; };
@@ -11,11 +13,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
         user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, memberCode: true } },
         items: {
-            include: {
-                workshop: true;
-                volume: { include: { product: true } };
-                participants: true;
-            };
+            include: { workshop: true, volume: { include: { product: true } }, participants: true };
         };
     };
 }>;
@@ -23,25 +21,16 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
-
     if (!userId) return res.status(401).json({ error: "Session non identifiée." });
-
     try {
         const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
                 user: { select: { firstName: true, lastName: true, email: true, memberCode: true } },
-                items: {
-                    include: {
-                        workshop: true,
-                        volume: { include: { product: true } },
-                        participants: true
-                    }
-                }
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } }
             },
             orderBy: { createdAt: 'desc' }
         }) as OrderWithRelations[];
-
         const formattedOrders = rawOrders.map(order => ({
             id: order.id,
             reference: order.reference,
@@ -50,105 +39,55 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             status: order.status,
             user: order.user,
             items: order.items.map(item => ({
-                name: item.workshop
-                    ? `Séance : ${item.workshop.title}`
-                    : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
+                name: item.workshop ? `Séance : ${item.workshop.title}` : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
-                participants: item.participants.map(p =>
-                    p.memberCode
-                        ? `${p.firstName} ${p.lastName} (${p.memberCode})`
-                        : `${p.firstName} ${p.lastName}`
-                )
+                participants: item.participants.map(p => p.memberCode ? `${p.firstName} ${p.lastName} (${p.memberCode})` : `${p.firstName} ${p.lastName}`)
             }))
         }));
-
         res.status(200).json(formattedOrders);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la récupération du registre." });
-    }
+    } catch (error) { res.status(500).json({ error: "Erreur de registre." }); }
 };
 
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
-
     try {
         const order = await prisma.order.findUnique({
             where: { id },
-            include: {
-                user: true,
-                items: {
-                    include: {
-                        workshop: true,
-                        volume: { include: { product: true } },
-                        participants: true
-                    }
-                }
-            }
+            include: { user: true, items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } } }
         }) as OrderWithRelations | null;
-
         if (!order) return res.status(404).json({ error: "Document introuvable." });
-
-        if (!isAdmin && order.userId !== userId) {
-            return res.status(403).json({ error: "Accès non autorisé." });
-        }
-
+        if (!isAdmin && order.userId !== userId) return res.status(403).json({ error: "Accès non autorisé." });
         res.json(order);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur lors de l'extraction des détails." });
-    }
+    } catch (error) { res.status(500).json({ error: "Erreur d'extraction." }); }
 };
 
-/**
- * 🏺 Mise à jour logistique et Promotion Collective
- * Le palier technique est incrémenté pour TOUS les participants certifiés.
- */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
-
     try {
         const order = await prisma.order.update({
             where: { id },
             data: { status },
-            include: {
-                items: {
-                    include: {
-                        workshop: true,
-                        participants: true
-                    }
-                }
-            }
+            include: { items: { include: { workshop: true, participants: true } } }
         });
-
-        // 🏺 Promotion automatique collective si FINALISÉ
         if (status === 'FINALISÉ') {
-            const codesToPromote = order.items
-                .filter(item => item.workshop !== null)
-                .flatMap(item => item.participants.map(p => p.memberCode))
-                .filter((code): code is string => !!code);
-
-            const uniqueCodes = [...new Set(codesToPromote)];
-
+            const codes = order.items.filter(item => item.workshop !== null).flatMap(item => item.participants.map(p => p.memberCode)).filter((code): code is string => !!code);
+            const uniqueCodes = [...new Set(codes)];
             if (uniqueCodes.length > 0) {
-                await Promise.all(uniqueCodes.map(code =>
-                    prisma.user.update({
-                        where: { memberCode: code },
-                        data: { conceptionLevel: { increment: 1 } }
-                    })
-                ));
-                console.log(`🏛️ Promotion collective certifiée pour ${uniqueCodes.length} membre(s).`);
+                await Promise.all(uniqueCodes.map(code => prisma.user.update({ where: { memberCode: code }, data: { conceptionLevel: { increment: 1 } } })));
             }
         }
-
         res.json(order);
-    } catch (error) {
-        res.status(400).json({ error: "Échec de la mise à jour logistique du dossier." });
-    }
+    } catch (error) { res.status(400).json({ error: "Échec logistique." }); }
 };
 
+/**
+ * 🏺 Génération du Certificat / Carte Cadeau
+ * Centralisation de l'identité de l'acheteur pour les dotations physiques.
+ */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
     const userId = req.user?.userId;
@@ -157,66 +96,154 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         const order = await prisma.order.findFirst({
             where: { id: orderId, userId: userId },
             include: {
-                items: {
-                    include: {
-                        workshop: true,
-                        volume: { include: { product: true } },
-                        participants: true
-                    }
-                }
+                user: true, // 🏺 Accès aux données de l'acheteur certifié
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } }
             }
         }) as OrderWithRelations | null;
 
-        if (!order) return res.status(404).json({ error: "Document introuvable." });
+        if (!order) return res.status(404).json({ error: "Dossier introuvable." });
 
-        const doc = new PDFDocument({ size: 'A4', margin: 50 });
+        const doc = new PDFDocument({ size: 'A4', margin: 0 });
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Commande_${order.reference}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename=Certificat_${order.reference}.pdf`);
         doc.pipe(res);
 
-        doc.fontSize(20).text('RÉCAPITULATIF DE COMMANDE', { align: 'center' });
-        doc.moveDown(2);
+        const pageWidth = doc.page.width;
+        const margin = 50;
+        const contentWidth = pageWidth - (margin * 2);
 
-        doc.fontSize(10).font('Helvetica-Bold').text(`Référence : ${order.reference}`);
-        doc.font('Helvetica').text(`Date : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`);
-        doc.moveDown();
-        doc.moveTo(50, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
+        const logoPath = path.join(process.cwd(), 'public', 'assets', 'logo.jpg');
+        const fileExists = fs.existsSync(logoPath);
 
-        order.items.forEach((item) => {
-            const name = item.workshop
-                ? item.workshop.title
-                : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`;
+        const drawHeaderInfo = (title?: string) => {
+            const topY = 40;
+            doc.fontSize(8).font('Helvetica').fillColor('#999999');
+            doc.text(`Émis le : ${new Date().toLocaleDateString('fr-FR')}`, margin, topY);
+            if (title) {
+                doc.text(`${title.toUpperCase()}`, margin, topY, { width: contentWidth, align: 'right' });
+            }
+        };
 
-            doc.fontSize(10).font('Helvetica-Bold').text(`${name}`, { continued: true });
-            doc.text(` (x${item.quantity})`, { continued: true });
-            doc.text(`${(item.price * item.quantity).toFixed(2)}€`, { align: 'right' });
+        const drawFooter = () => {
+            doc.fontSize(10).font('Helvetica-Bold').fillColor('#FF0000')
+                .text("POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE LA CARTE CADEAU SERA CADUC.", margin, 780, { width: contentWidth, align: 'center' });
+        };
 
-            if (item.participants.length > 0) {
-                doc.fontSize(8).font('Helvetica').text("Participants : ", { continued: true });
-                const participantList = item.participants.map(p =>
-                    p.memberCode ? `${p.firstName} ${p.lastName} [${p.memberCode}]` : `${p.firstName} ${p.lastName}`
-                ).join(', ');
-                doc.text(participantList);
+        const workshopItems = order.items.filter(i => i.workshop);
+        const bottleItems = order.items.filter(i => i.volume);
+
+        workshopItems.forEach((item, index) => {
+            if (index > 0) doc.addPage();
+
+            drawHeaderInfo(item.workshop?.title);
+
+            if (fileExists) {
+                const logoWidth = 140;
+                doc.image(logoPath, (pageWidth - logoWidth) / 2, 85, { width: logoWidth });
             }
 
+            doc.y = 190;
+
+            const isConception = (item.workshop?.level ?? 0) > 0;
+            const validityLabel = isConception ? "6 mois" : "30 jours";
+            const validityDays = isConception ? 180 : 30;
+            const expiryDate = new Date(order.createdAt);
+            expiryDate.setDate(expiryDate.getDate() + validityDays);
+
+            doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
+            doc.moveDown(2.5);
+            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UN ATELIER", margin, doc.y, { width: contentWidth, align: 'center', characterSpacing: 1 });
+
+            doc.moveDown(1.5);
+            doc.fontSize(11).font('Helvetica').fillColor('#000000').text(`Ce certificat certifie un accès privilégié à la séance pour une durée de ${validityLabel}.`, margin, doc.y, { width: contentWidth, align: 'center' });
             doc.moveDown(1);
+            doc.fontSize(15).font('Helvetica-Bold').text(`VALABLE JUSQU'AU : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
+            doc.moveDown(1.5);
+            doc.fontSize(10).font('Helvetica-Oblique').fillColor('#999999').text(`Réservation & Informations : 06 41 42 00 28`, margin, doc.y, { width: contentWidth, align: 'center' });
+
+            doc.moveDown(2);
+            doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').stroke();
+
+            doc.moveDown(4);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("PARTICIPANTS :", margin, doc.y, { underline: true });
+            doc.moveDown(1);
+            doc.fillColor('#000000');
+
+            item.participants.forEach((p, idx) => {
+                const name = [p.firstName, p.lastName].filter(Boolean).join(' ');
+                const code = p.memberCode ? ` [Code client : ${p.memberCode}]` : "";
+
+                doc.fontSize(10).font('Helvetica-Bold').text(`${idx + 1}. ${name}${code}`, margin + 15);
+
+                const contactParts = [];
+                if (p.phone) contactParts.push(`Tél : ${p.phone}`);
+                if (p.email) contactParts.push(`E-mail : ${p.email}`);
+
+                if (contactParts.length > 0) {
+                    doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666')
+                        .text(contactParts.join('  |  '), margin + 30);
+                    doc.fillColor('#000000');
+                }
+                doc.moveDown(0.8);
+            });
+
+            drawFooter();
         });
 
-        doc.moveDown();
-        doc.moveTo(350, doc.y).lineTo(550, doc.y).stroke();
-        doc.moveDown();
-        doc.fontSize(14).font('Helvetica-Bold').text(`TOTAL RÉGLÉ : ${order.total.toFixed(2)}€`, { align: 'right' });
+        if (bottleItems.length > 0) {
+            doc.addPage();
+            drawHeaderInfo("Dotations & Bouteilles");
 
-        doc.moveDown(10);
-        doc.fontSize(9).text(
-            "Ce document certifie votre achat. Veuillez le présenter lors de votre retrait ou au début de votre séance de formation.",
-            { align: 'center' }
-        );
+            if (fileExists) {
+                const logoWidth = 140;
+                doc.image(logoPath, (pageWidth - logoWidth) / 2, 85, { width: logoWidth });
+            }
+
+            doc.y = 190;
+
+            doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
+            doc.moveDown(2.5);
+            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON DE RETRAIT DES BOUTEILLES", margin, doc.y, { width: contentWidth, align: 'center', characterSpacing: 1 });
+
+            doc.moveDown(1.5);
+            doc.fontSize(11).font('Helvetica').fillColor('#000000').text("Ce certificat permet le retrait immédiat de vos bouteilles au sein de l'Établissement.", margin, doc.y, { width: contentWidth, align: 'center' });
+
+            doc.moveDown(2);
+            doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').stroke();
+
+            doc.moveDown(4);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("ACHETEUR :", margin, doc.y, { underline: true });
+            doc.moveDown(0.5);
+            doc.fillColor('#000000');
+
+            const buyerName = `${order.user.firstName} ${order.user.lastName}`;
+            doc.fontSize(10).font('Helvetica-Bold').text(buyerName, margin + 15);
+
+            const buyerContacts = [];
+            if (order.user.phone) buyerContacts.push(`Tél : ${order.user.phone}`);
+            if (order.user.email) buyerContacts.push(`E-mail : ${order.user.email}`);
+
+            if (buyerContacts.length > 0) {
+                doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666')
+                    .text(buyerContacts.join('  |  '), margin + 15);
+                doc.fillColor('#000000');
+            }
+
+            doc.moveDown(3);
+            doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("BOUTEILLES RÉSERVÉES :", margin, doc.y, { underline: true });
+            doc.moveDown(0.5);
+            doc.fillColor('#000000');
+            bottleItems.forEach(p => {
+                doc.fontSize(10).font('Helvetica').text(`• ${p.volume?.product.name} (${p.volume?.size}${p.volume?.unit}) — Quantité : ${p.quantity}`, margin + 15);
+            });
+
+            drawFooter();
+        }
 
         doc.end();
     } catch (error) {
-        res.status(500).json({ error: "Erreur de génération du PDF." });
+        console.error("Erreur génération PDF:", error);
+        res.status(500).json({ error: "Échec de synchronisation du certificat." });
     }
 };
 

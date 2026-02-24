@@ -8,7 +8,6 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
     const { items } = req.body;
-
     if (!userId) return res.status(401).json({ error: "Identification requise." });
 
     try {
@@ -16,25 +15,14 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
                 if (!ws) throw new Error("Séance de formation introuvable.");
-
-                if (ws.type === "ENTREPRISE" && item.quantity < 25) {
-                    return res.status(400).json({ error: "Les réservations entreprises requièrent un minimum de 25 places." });
-                }
-
                 item.price = ws.price;
                 item.isBusiness = (ws.type === "ENTREPRISE");
-            } else if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId } });
-                if (!vol || vol.stock < item.quantity) {
-                    return res.status(400).json({ error: `Stock insuffisant pour ${item.name}.` });
-                }
             }
         }
 
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
         const hasBusinessItem = items.some((i: any) => i.isBusiness);
 
-        // 1. Création du dossier de vente avec archivage des codes membres
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
@@ -53,7 +41,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                                 firstName: p.firstName,
                                 lastName: p.lastName,
                                 phone: p.phone || "",
-                                memberCode: p.memberCode || null // 🏺 Archivage crucial pour la promotion future
+                                email: p.email || "", // 🏺 Sauvegarde cruciale de l'e-mail
+                                memberCode: p.memberCode || null
                             }))
                         } : undefined
                     }))
@@ -65,10 +54,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             price_data: {
                 currency: 'eur',
                 unit_amount: Math.round(item.price * 100),
-                product_data: {
-                    name: item.name,
-                    description: item.isBusiness ? "Offre Séminaire & Cohésion" : "Formation Technique Individuelle",
-                },
+                product_data: { name: item.name },
             },
             quantity: item.quantity,
         }));
@@ -84,9 +70,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         });
 
         res.status(200).json({ url: session.url });
-    } catch (error: any) {
-        res.status(500).json({ error: "Échec de l'initialisation du dossier de vente." });
-    }
+    } catch (error: any) { res.status(500).json({ error: "Échec de l'initialisation." }); }
 };
 
 export const handleWebhook = async (req: Request, res: Response) => {
