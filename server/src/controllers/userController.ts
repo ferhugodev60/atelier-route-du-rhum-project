@@ -15,7 +15,7 @@ export const getMe = async (req: Request, res: Response) => {
             where: { id: userId },
             select: {
                 id: true,
-                memberCode: true, // 🏺 Inclus pour l'affichage du Passeport
+                memberCode: true,
                 email: true,
                 firstName: true,
                 lastName: true,
@@ -67,7 +67,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
             where: { role: 'USER' },
             select: {
                 id: true,
-                memberCode: true, // 🏺 Inclus pour le Registre de la Clientèle
+                memberCode: true,
                 email: true,
                 firstName: true,
                 lastName: true,
@@ -114,12 +114,14 @@ export const updateUserProfile = async (req: Request, res: Response) => {
                 lastName,
                 email,
                 phone,
-                conceptionLevel: conceptionLevel ? parseInt(conceptionLevel) : undefined
+                conceptionLevel: (conceptionLevel !== undefined && conceptionLevel !== null)
+                    ? parseInt(String(conceptionLevel))
+                    : undefined
             }
         });
         res.json(updatedUser);
     } catch (error) {
-        res.status(404).json({ error: "Erreur de données." });
+        res.status(404).json({ error: "Erreur de mise à jour du dossier." });
     }
 };
 
@@ -128,22 +130,29 @@ export const validateUserLevel = async (req: Request, res: Response) => {
     const { newLevel } = req.body;
 
     try {
+        // 🏺 Correction : On force la conversion et on valide que c'est un nombre
+        const level = parseInt(String(newLevel));
+
+        if (isNaN(level)) {
+            return res.status(400).json({ error: "Le palier technique doit être une valeur numérique." });
+        }
+
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: { conceptionLevel: parseInt(newLevel) }
+            data: { conceptionLevel: level }
         });
-        res.json({ message: "Progression validée", userLevel: updatedUser.conceptionLevel });
+
+        res.json({
+            message: "Palier technique certifié avec succès.",
+            userLevel: updatedUser.conceptionLevel
+        });
     } catch (error) {
-        res.status(404).json({ error: "Validation impossible." });
+        res.status(404).json({ error: "Impossible de valider le palier technique." });
     }
 };
 
-/**
- * 🏺 Vérification du Code Membre
- * Correction du typage TS pour garantir une chaîne unique
- */
 export const verifyMemberCode = async (req: Request, res: Response) => {
-    const code = req.params.code as string; // 🏺 Cast explicite pour Prisma
+    const code = req.params.code as string;
 
     if (!code) {
         return res.status(400).json({ error: "Code manquant." });

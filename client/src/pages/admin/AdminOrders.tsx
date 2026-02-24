@@ -24,7 +24,7 @@ export default function AdminOrders() {
             await api.patch(`/orders/${orderId}/status`, { status: newStatus });
             fetchOrders();
         } catch (error) {
-            console.error("Erreur de synchronisation du dossier");
+            console.error("Erreur de synchronisation du dossier dans le registre.");
         }
     };
 
@@ -49,7 +49,7 @@ export default function AdminOrders() {
         switch (status) {
             case 'FINALISÉ':
                 return 'border-green-500/30 text-green-500 bg-green-500/5';
-            case 'ATELIER PLANIFIÉ':
+            case 'SÉANCE PLANIFIÉE':
                 return 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5';
             case 'À TRAITER':
             default:
@@ -66,7 +66,6 @@ export default function AdminOrders() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
-                    {/* 🏺 Filtre élargi à 240px pour éviter la troncature du texte */}
                     <div className="bg-white/5 border border-white/5 px-4 py-3 rounded-sm flex items-center gap-3 w-full sm:min-w-[240px]">
                         <Filter size={12} className="text-rhum-gold/40" />
                         <select
@@ -76,7 +75,7 @@ export default function AdminOrders() {
                         >
                             <option value="TOUS" className="bg-[#0a1a14] text-white">Tous les dossiers</option>
                             <option value="À TRAITER" className="bg-[#0a1a14] text-red-500">À Traiter</option>
-                            <option value="ATELIER PLANIFIÉ" className="bg-[#0a1a14] text-yellow-500">Atelier Planifié</option>
+                            <option value="SÉANCE PLANIFIÉE" className="bg-[#0a1a14] text-yellow-500">Séance Planifiée</option>
                             <option value="FINALISÉ" className="bg-[#0a1a14] text-green-500">Finalisé</option>
                         </select>
                     </div>
@@ -139,7 +138,7 @@ export default function AdminOrders() {
                                             className={`text-[9px] border px-4 py-2 rounded-sm uppercase font-black tracking-widest bg-transparent outline-none cursor-pointer transition-all ${getStatusStyles(order.status)}`}
                                         >
                                             <option value="À TRAITER" className="bg-[#0a1a14] text-red-500 font-black">À Traiter</option>
-                                            <option value="ATELIER PLANIFIÉ" className="bg-[#0a1a14] text-yellow-500 font-black">Atelier Planifié</option>
+                                            <option value="SÉANCE PLANIFIÉE" className="bg-[#0a1a14] text-yellow-500 font-black">Séance Planifiée</option>
                                             <option value="FINALISÉ" className="bg-[#0a1a14] text-green-500 font-black">Finalisé</option>
                                         </select>
                                     </div>

@@ -55,7 +55,6 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
                     : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
-                // 🏺 Affichage conditionnel du Code Membre pour les séances de Conception
                 participants: item.participants.map(p =>
                     p.memberCode
                         ? `${p.firstName} ${p.lastName} (${p.memberCode})`
@@ -102,18 +101,41 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     }
 };
 
+/**
+ * 🏺 Mise à jour logistique et Promotion du Membre
+ * Le niveau est incrémenté : $Palier_{n} = Palier_{n-1} + 1$ lors de la finalisation.
+ */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
 
     try {
+        // 1. Mise à jour de l'état du dossier dans le registre
         const order = await prisma.order.update({
             where: { id },
-            data: { status }
+            data: { status },
+            include: {
+                items: { include: { workshop: true } },
+                user: true
+            }
         });
+
+        // 2. Promotion automatique si le dossier est FINALISÉ et contient une formation
+        if (status === 'FINALISÉ') {
+            const hasWorkshop = order.items.some(item => item.workshop !== null);
+
+            if (hasWorkshop && order.user) {
+                await prisma.user.update({
+                    where: { id: order.userId },
+                    data: { conceptionLevel: { increment: 1 } }
+                });
+                console.log(`🏛️ Promotion certifiée : Le membre ${order.user.firstName} passe au palier technique supérieur.`);
+            }
+        }
+
         res.json(order);
     } catch (error) {
-        res.status(400).json({ error: "Échec de la mise à jour logistique." });
+        res.status(400).json({ error: "Échec de la mise à jour logistique du dossier." });
     }
 };
 
@@ -160,7 +182,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             doc.text(` (x${item.quantity})`, { continued: true });
             doc.text(`${(item.price * item.quantity).toFixed(2)}€`, { align: 'right' });
 
-            // 🏺 Détail des participants dans le PDF
             if (item.participants.length > 0) {
                 doc.fontSize(8).font('Helvetica').text("Participants : ", { continued: true });
                 const participantList = item.participants.map(p =>
