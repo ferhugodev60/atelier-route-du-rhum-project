@@ -1,19 +1,20 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto'; // 🏺 Import pour la génération des codes
+import crypto from 'crypto';
 
 const prisma = new PrismaClient();
 
-// 🏺 Fonction de génération du Code Passeport Membre
+// 🏺 Fonction de génération du Code Passeport Membre [cite: 2026-02-12]
 const generateMemberCode = () => {
-    const year = "26"; // Année 2026
+    const year = "26";
     const random = crypto.randomBytes(2).toString('hex').toUpperCase();
     return `RR-${year}-${random}`;
 };
 
 async function main() {
-    console.log('--- 🧹 Nettoyage complet ---');
-    await prisma.participant.deleteMany(); // 🏺 Ajouté pour garantir un nettoyage total
+    console.log('--- 🧹 Nettoyage du Registre ---');
+    await prisma.participant.deleteMany();
+    await prisma.companyGroup.deleteMany(); // 🏺 Nettoyage des cohortes
     await prisma.orderItem.deleteMany();
     await prisma.order.deleteMany();
     await prisma.productVolume.deleteMany();
@@ -44,13 +45,12 @@ async function main() {
         }
     });
 
-    console.log('--- 📦 Création du Produit Unique avec Multi-Volumes ---');
-
+    console.log('--- 📦 Catalogue Produits ---');
     await prisma.product.create({
         data: {
             name: "Ananas & Vanille",
             description: "Une macération solaire rempotable à l'infini. Gardez les fruits et complétez avec votre rhum blanc.",
-            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
@@ -66,7 +66,7 @@ async function main() {
         data: {
             name: "Mangue & Passion",
             description: "Format Vrac : une infusion intense sans fruits, prête pour une dégustation immédiate.",
-            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catVrac.id,
             volumes: {
                 create: [
@@ -78,32 +78,16 @@ async function main() {
         }
     });
 
-    await prisma.product.create({
-        data: {
-            name: "Dame Jeanne (Location)",
-            description: "Location d'une dame-jeanne traditionnelle en verre avec son panier d'osier.",
-            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweppt8FTogBzk4ZTkzZ3gUjWh-KGX9UYu4xPyRlVDryXTmSDv7s-dFgEMAhDLxb4B6O_gA70zBiVBCAm81rmGl5AQIfT7mO1GrHXIlFf2FQrqQ1zr8STBn2u68-5KmXTql39CEUq3kdMvP8V=s680-w680-h510-rw",
-            categoryId: catDame.id,
-            volumes: {
-                create: [
-                    { size: 3, unit: " Litres", price: 150.0, stock: 10 },
-                    { size: 6, unit: " Litres", price: 300.0, stock: 10 }
-                ]
-            }
-        }
-    });
-
-    console.log('--- 🎓 Ateliers (Découverte + Conception) ---');
-
+    console.log('--- 🎓 Ateliers (Particuliers) ---');
+    // ... (Découverte et Conception aux tarifs publics)
     await prisma.workshop.create({
         data: {
             level: 0,
             type: "PARTICULIER",
             title: "L'Atelier Découverte",
-            description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
-            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBimgI_mFmhWc_9qoKqs0nfK6ftBG24VbNzNQwc6zGMty6NlSEdoNK4J5E6P-eXoOfzp4B6AxYi-RaQIJhwBbOwFVuE0HHw72rc3AZ9dIKyltqYJVWgnaQHA-DmyIVut7ja4Xt2RIMc2U=s680-w680-h510-rw",
-            format: "1h30 de dégustation guidée et de partage historique.",
-            quote: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
+            description: "Explorez notre label lors d’un échange privilégié avec le Druide.",
+            quote: "Forum question / réponse et dégustation généreuse d'une demi-palette.",
+            format: "1h30 de dégustation guidée.",
             price: 60.0
         }
     });
@@ -113,12 +97,10 @@ async function main() {
             level: 1,
             type: "PARTICULIER",
             title: "L'Atelier Fruits",
+            color: "#2f7700",
             description: "Maitrise des acides de fruits",
-            color: "#1b6319",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "2h30 avec l'expérience qui inclut une bouteille d'1 litre de rhum arrangé.",
-            availability: "Du Mardi au Samedi",
-            quote: "Apprenez à travailler les fruits frais de saison pour créer une macération harmonieuse.",
+            format: "2h30 avec une bouteille d'1 litre incluse.",
+            quote: "Apprenez à travailler les fruits frais de saison.",
             price: 140.0
         }
     });
@@ -128,12 +110,10 @@ async function main() {
             level: 2,
             type: "PARTICULIER",
             title: "L'Atelier Épices",
-            description: "Le caractère et la structure de votre nectar",
             color: "#be5aff",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "3h avec l'expérience qui inclut l'épisothèque : une boîte de 10 flacons (gustatif, informatif et olfactif).",
-            availability: "Du Mardi au Samedi",
-            quote: "Plongez dans l'univers des épices rares pour donner une structure unique et boisée à votre rhum.",
+            description: "Le caractère et la structure de votre nectar",
+            format: "3h avec l'épisothèque incluse.",
+            quote: "Plongez dans l'univers des épices rares.",
             price: 170.0
         }
     });
@@ -143,12 +123,10 @@ async function main() {
             level: 3,
             type: "PARTICULIER",
             title: "L'Atelier Plantes",
+            color: "#009bf3",
             description: "L'exploration botanique et florale",
-            color: "#0074D9",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "4h avec l'expérience qui inclut la pharmatech : une boîte de 10 flacons (gustatif, informatif et olfactif).",
-            availability: "Du Mardi au Samedi",
-            quote: "Utilisez des herbes aromatiques et des plantes pour apporter des notes florales complexes à votre signature d'alchimiste.",
+            format: "4h avec la pharmatech incluse.",
+            quote: "Utilisez herbes et plantes pour vos notes florales.",
             price: 210.0
         }
     });
@@ -158,28 +136,26 @@ async function main() {
             level: 4,
             type: "PARTICULIER",
             title: "L'Atelier Mixologie",
+            color: "#80070D",
             description: "L'art ultime du service et du cocktail.",
-            color: "#500101",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "8h avec l'expérience qui inclut la conception de 6 recettes de 25 centilitres.",
-            availability: "Du Mardi au Jeudi de 10h à 20h (Repas de 2h inclus)",
-            quote: "Une immersion complète de 8 heures pour maîtriser les techniques de bar professionnelles et créer vos propres cocktails signatures.",
+            format: "8h d'immersion totale, repas de 2h inclus.",
+            quote: "Maîtrisez les techniques de bar professionnelles.",
             price: 420.0
         }
     });
 
-    console.log('--- 🏢 Offres Entreprise ---');
+    console.log('--- 🏢 Offres Entreprise (Comité d’Entreprise) ---');
+    // 🏺 Tarifs PRO : -10€ sur niveau 0, -20€ sur les paliers de conception
 
     await prisma.workshop.create({
         data: {
             level: 0,
             type: "ENTREPRISE",
-            title: "L'Atelier Découverte (Entreprise)",
-            description: "Explorez notre label lors d’un échange privilégié avec le Druide. Au menu : forum question / réponse et dégustation généreuse d'une demi-palette de notre rhum.",
-            image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweqBimgI_mFmhWc_9qoKqs0nfK6ftBG24VbNzNQwc6zGMty6NlSEdoNK4J5E6P-eXoOfzp4B6AxYi-RaQIJhwBbOwFVuE0HHw72rc3AZ9dIKyltqYJVWgnaQHA-DmyIVut7ja4Xt2RIMc2U=s680-w680-h510-rw",
-            format: "Séance privatisée : 1h30 de dégustation guidée et de partage historique.",
-            quote: "La même immersion technique adaptée au format séminaire pour vos équipes.",
-            price: 50.0
+            title: "L'Atelier Découverte (PRO)",
+            description: "Format Séminaire : Explorez notre label avec vos équipes.",
+            format: "Privatisation : 1h30 de dégustation et partage historique.",
+            quote: "La cohésion d'équipe à travers l'histoire du rhum.",
+            price: 50.0 // 🏺 -10€
         }
     });
 
@@ -187,14 +163,12 @@ async function main() {
         data: {
             level: 1,
             type: "ENTREPRISE",
-            title: "L'Atelier Fruits (Entreprise)",
-            description: "Maitrise des acides de fruits",
-            color: "#1b6319",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "Expérience Entreprise : 2h30 avec une bouteille d'1 litre incluse.",
-            availability: "Sur réservation (Lundi au Samedi)",
-            quote: "Une session de cohésion autour de l'art de la macération fruitière.",
-            price: 120.0
+            title: "L'Atelier Fruits (PRO)",
+            color: "#2f7700",
+            description: "Maitrise des acides de fruits - Session de cohésion.",
+            format: "Privatisation : 2h30 avec une bouteille d'1 litre par participant.",
+            quote: "Travail d'équipe sur l'harmonie des fruits de saison.",
+            price: 120.0 // 🏺 -20€
         }
     });
 
@@ -202,14 +176,12 @@ async function main() {
         data: {
             level: 2,
             type: "ENTREPRISE",
-            title: "L'Atelier Épices (Entreprise)",
-            description: "Le caractère et la structure de votre nectar",
+            title: "L'Atelier Épices (PRO)",
             color: "#be5aff",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "Expérience Entreprise : 3h avec l'épisothèque incluse pour chaque participant.",
-            availability: "Sur réservation (Lundi au Samedi)",
-            quote: "Développez la créativité de vos collaborateurs via l'alchimie des épices.",
-            price: 150.0
+            description: "Caractère et structure - Session Alchimie.",
+            format: "Privatisation : 3h avec l'épisothèque incluse.",
+            quote: "Développez la créativité collective via les épices rares.",
+            price: 150.0 // 🏺 -20€
         }
     });
 
@@ -217,14 +189,12 @@ async function main() {
         data: {
             level: 3,
             type: "ENTREPRISE",
-            title: "L'Atelier Plantes (Entreprise)",
-            description: "L'exploration botanique et florale",
-            color: "#0074D9",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "Expérience Entreprise : 4h avec la pharmatech incluse pour chaque participant.",
-            availability: "Sur réservation (Lundi au Samedi)",
-            quote: "Un voyage sensoriel et botanique pour renforcer les liens de vos équipes.",
-            price: 190.0
+            title: "L'Atelier Plantes (PRO)",
+            color: "#009bf3",
+            description: "Exploration botanique en brigade.",
+            format: "Privatisation : 4h avec la pharmatech incluse.",
+            quote: "Un voyage sensoriel pour renforcer les liens botaniques.",
+            price: 190.0 // 🏺 -20€
         }
     });
 
@@ -232,48 +202,58 @@ async function main() {
         data: {
             level: 4,
             type: "ENTREPRISE",
-            title: "L'Atelier Mixologie (Entreprise)",
-            description: "L'art ultime du service et du cocktail.",
-            color: "#500101",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
-            format: "Journée Séminaire : 8h d'immersion totale, repas inclus, création de 6 recettes.",
-            availability: "Sur réservation (Lundi au Jeudi)",
-            quote: "L'excellence du service et de la mixologie pour vos événements de prestige.",
-            price: 400.0
+            title: "L'Atelier Mixologie (PRO)",
+            color: "#80070D",
+            description: "L'excellence du service pour vos événements de prestige.",
+            format: "Journée Séminaire : 8h, repas inclus, création de 6 recettes.",
+            quote: "Maîtrise de l'art du cocktail pour vos cadres et collaborateurs.",
+            price: 400.0 // 🏺 -20€
         }
     });
 
-    console.log('--- 👤 Admin ---');
-    const hashedPassword = await bcrypt.hash('rhum2026', 10);
+    console.log('--- 👤 Membres Certifiés ---');
+    const hashedAdmin = await bcrypt.hash('rhum2026', 10);
     await prisma.user.create({
         data: {
             email: "hugo@atelier.com",
-            memberCode: generateMemberCode(), // 🏺 Attribution automatique du code
-            password: hashedPassword,
+            memberCode: generateMemberCode(),
+            password: hashedAdmin,
             firstName: "Hugo",
             lastName: "Frr",
-            role: "ADMIN",
-            conceptionLevel: 0
+            role: "ADMIN"
         }
     });
 
-    const hashedUserPassword = await bcrypt.hash('rhum2026', 10);
+    const hashedUser = await bcrypt.hash('rhum2026', 10);
     await prisma.user.create({
         data: {
-            email: "test@exemple.com",
-            memberCode: generateMemberCode(), // 🏺 Attribution automatique du code
-            password: hashedUserPassword,
+            email: "jean.dupont@exemple.com",
+            memberCode: generateMemberCode(),
+            password: hashedUser,
             firstName: "Jean",
             lastName: "Dupont",
-            phone: "0708091011",
-            role: "USER",
-            conceptionLevel: 1
+            role: "USER"
         }
     });
 
-    console.log("✅ Alambic synchronisé : Particuliers et Entreprises intégrés avec succès !");
+    // 🏺 Création d'un compte Professionnel Test
+    const hashedPro = await bcrypt.hash('ce2026', 10);
+    await prisma.user.create({
+        data: {
+            email: "ce@airbus.com",
+            memberCode: generateMemberCode(),
+            password: hashedPro,
+            firstName: "Responsable",
+            lastName: "CE Airbus",
+            role: "PRO",
+            companyName: "Airbus SAS",
+            siret: "12345678901234"
+        }
+    });
+
+    console.log("✅ Registre synchronisé : Catalogue Particulier & Professionnel opérationnel !");
 }
 
 main()
-    .catch((e) => { console.error('❌ Erreur lors du remplissage :', e); process.exit(1); })
+    .catch((e) => { console.error('❌ Erreur de remplissage :', e); process.exit(1); })
     .finally(async () => { await prisma.$disconnect(); });

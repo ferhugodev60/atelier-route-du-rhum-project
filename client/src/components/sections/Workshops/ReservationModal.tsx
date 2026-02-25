@@ -21,28 +21,23 @@ interface ReservationModalProps {
 
 export default function ReservationModal({ workshop, onClose, onConfirm }: ReservationModalProps) {
     const { user } = useAuthStore();
-    const isBusiness = workshop?.type === "ENTREPRISE" || workshop?.isBusiness;
     const isConceptionCursus = workshop.level > 0;
 
     const [step, setStep] = useState(1);
     const [verifyingIndex, setVerifyingIndex] = useState<number | null>(null);
-    const [numPeople, setNumPeople] = useState(isBusiness ? 25 : 1);
+    const [numPeople, setNumPeople] = useState(1);
     const [hasValidatedStep1, setHasValidatedStep1] = useState(false);
 
     const [participants, setParticipants] = useState<Participant[]>(() => {
-        const length = isBusiness ? 25 : 1;
-        const initialArr: Participant[] = Array.from({ length }, () => ({
-            firstName: '', lastName: '', phone: '', email: '', isValidated: false
-        }));
-
-        if (user && !isBusiness) {
+        const initialArr: Participant[] = [{ firstName: '', lastName: '', phone: '', email: '', isValidated: false }];
+        if (user) {
             initialArr[0] = {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 phone: user.phone || '',
-                email: user.email || '', // 🏺 Capture de l'e-mail initial
+                email: user.email || '',
                 memberCode: user.memberCode,
-                isValidated: true
+                isValidated: isConceptionCursus
             };
         }
         return initialArr;
@@ -54,7 +49,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     }, []);
 
     const handlePeopleChange = (val: number) => {
-        const newCount = isBusiness ? Math.max(25, val) : Math.max(1, Math.min(10, val));
+        const newCount = Math.max(1, Math.min(10, val));
         setNumPeople(newCount);
         setParticipants(prev => {
             if (newCount > prev.length) {
@@ -70,27 +65,16 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     const handleCodeValidation = async (index: number, code: string) => {
         if (code.length < 10) return;
         setVerifyingIndex(index);
-
         try {
             const { data } = await api.get(`/users/verify/${code.toUpperCase()}`);
-
             if (data.conceptionLevel < workshop.level - 1) {
                 alert(`Le membre ${data.firstName} n'a pas encore validé le palier technique requis.`);
                 return;
             }
-
             const newParticipants = [...participants];
-            newParticipants[index] = {
-                ...newParticipants[index],
-                firstName: data.firstName,
-                lastName: data.lastName,
-                phone: data.phone || '', // 🏺 Récupération du téléphone membre
-                email: data.email || '', // 🏺 Récupération de l'e-mail membre
-                memberCode: code.toUpperCase(),
-                isValidated: true
-            };
+            newParticipants[index] = { ...newParticipants[index], ...data, memberCode: code.toUpperCase(), isValidated: true };
             setParticipants(newParticipants);
-        } catch (err) {
+        } catch {
             console.error("Identifiant non reconnu.");
         } finally {
             setVerifyingIndex(null);
@@ -105,7 +89,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
 
     const isStep2Valid = isConceptionCursus
         ? participants.every(p => p.isValidated)
-        : participants.every(p => p.firstName.trim() && p.lastName.trim());
+        : participants.every(p => p.firstName.trim() && p.lastName.trim() && p.email?.trim());
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden font-sans">
@@ -119,7 +103,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                     <AnimatePresence mode="wait">
                         {step === 1 ? (
                             <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full flex flex-col justify-center text-center">
-                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">{isBusiness ? 'Taille du groupe (Min. 25)' : 'Nombre de places'}</p>
+                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">Nombre de places</p>
                                 <h5 className="text-3xl md:text-4xl font-serif text-white mb-12 uppercase tracking-tighter">{workshop.title}</h5>
                                 <div className="flex items-center justify-center gap-12 mb-16">
                                     <button onClick={() => handlePeopleChange(numPeople - 1)} className="text-rhum-gold text-5xl font-light">−</button>
@@ -151,7 +135,6 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                         <input placeholder="Prénom" value={p.firstName} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold" />
                                                         <input placeholder="Nom" value={p.lastName} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold" />
                                                     </div>
-                                                    <input placeholder="Téléphone" value={p.phone} onChange={e => updateParticipant(i, 'phone', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold" />
                                                     <input placeholder="Email" value={p.email} onChange={e => updateParticipant(i, 'email', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold" />
                                                 </>
                                             )}
@@ -160,7 +143,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                 </div>
                                 <div className="flex gap-4 sticky bottom-0 bg-[#0a1a14] pt-4 border-t border-white/5">
                                     <button onClick={() => setStep(1)} className="flex-1 py-5 border border-white/10 text-white/40 uppercase text-[9px] tracking-widest font-bold">Retour</button>
-                                    <button disabled={!isStep2Valid} onClick={() => onConfirm({ ...workshop, participants, quantity: numPeople })} className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}>Confirmer le groupe</button>
+                                    <button disabled={!isStep2Valid} onClick={() => onConfirm({ ...workshop, participants, quantity: numPeople })} className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}>Confirmer la réservation</button>
                                 </div>
                             </motion.div>
                         )}

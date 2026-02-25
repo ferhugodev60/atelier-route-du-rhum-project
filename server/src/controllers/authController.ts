@@ -6,22 +6,36 @@ import crypto from 'crypto';
 
 /**
  * 🏺 Génération du Code Passeport Membre
- * Format institutionnel : RR-26-XXXX
+ * Format institutionnel : RR-26-XXXX [cite: 2026-02-12]
  */
 const generateMemberCode = () => {
-    const year = "26"; // Année 2026 [cite: 2026-02-12]
+    const year = "26";
     const random = crypto.randomBytes(2).toString('hex').toUpperCase();
     return `RR-${year}-${random}`;
 };
 
+/**
+ * 🏺 Enregistrement au Registre
+ * Gestion hybride : Particulier ou Professionnel (CE)
+ */
 export const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, firstName, lastName, phone } = req.body;
+        const { email, password, firstName, lastName, phone, companyName, siret } = req.body;
+
         const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) return res.status(400).json({ error: "Cet email est déjà utilisé." });
+        if (existingUser) return res.status(400).json({ error: "Cet email est déjà répertorié." });
+
+        // 🏺 Validation du SIRET si profil Entreprise
+        if (siret) {
+            const existingSiret = await prisma.user.findUnique({ where: { siret } });
+            if (existingSiret) return res.status(400).json({ error: "Ce numéro SIRET est déjà associé à un compte." });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const memberCode = generateMemberCode();
+
+        // 🏺 Détermination du statut institutionnel
+        const role = (companyName && siret) ? "PRO" : "USER";
 
         const user = await prisma.user.create({
             data: {
@@ -31,16 +45,26 @@ export const register = async (req: Request, res: Response) => {
                 firstName,
                 lastName,
                 phone,
+                role,
+                companyName: companyName || null,
+                siret: siret || null,
                 conceptionLevel: 0
             }
         });
 
-        return res.status(201).json({ message: "Inscription réussie !", memberCode: user.memberCode });
+        return res.status(201).json({
+            message: "Inscription réussie !",
+            memberCode: user.memberCode,
+            role: user.role
+        });
     } catch (error: any) {
         return res.status(400).json({ error: "Échec de l'enregistrement dans le registre." });
     }
 };
 
+/**
+ * 🏺 Authentification & Ouverture de Session
+ */
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
@@ -63,11 +87,13 @@ export const login = async (req: Request, res: Response) => {
                     email: user.email,
                     phone: user.phone,
                     role: user.role,
+                    companyName: user.companyName,
+                    siret: user.siret,
                     conceptionLevel: user.conceptionLevel
                 }
             });
         }
-        return res.status(401).json({ error: "Identifiants incorrects" });
+        return res.status(401).json({ error: "Identifiants non reconnus." });
     } catch (error: any) {
         return res.status(500).json({ error: "Erreur technique de session." });
     }
@@ -75,10 +101,9 @@ export const login = async (req: Request, res: Response) => {
 
 /**
  * 🏺 Mise à jour du secret de connexion
- * Cette fonction était manquante, causant l'erreur au démarrage
  */
 export const changePassword = async (req: Request, res: Response) => {
-    // @ts-ignore - Injecté par authenticateToken
+    // @ts-ignore - Injecté par le middleware d'authentification
     const userId = req.user?.userId;
     const { currentPassword, newPassword } = req.body;
 
@@ -89,7 +114,7 @@ export const changePassword = async (req: Request, res: Response) => {
         if (!user) return res.status(404).json({ error: "Dossier introuvable." });
 
         const isMatch = await bcrypt.compare(currentPassword, user.password);
-        if (!isMatch) return res.status(400).json({ error: "Le mot de passe actuel est incorrect." });
+        if (!isMatch) return res.status(400).json({ error: "Le secret actuel est erroné." });
 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await prisma.user.update({

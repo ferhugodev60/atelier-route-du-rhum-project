@@ -10,17 +10,26 @@ datasource db {
 }
 
 model User {
-  id              String   @id @default(cuid())
-  email           String   @unique
-  memberCode      String?  @unique
-  password        String
-  firstName       String
-  lastName        String
-  phone           String?
-  role            String   @default("USER")
+  id        String  @id @default(cuid())
+  email     String  @unique
+  password  String
+  firstName String
+  lastName  String
+  phone     String?
+
+  // 🏺 Statut Institutionnel
+  role       String  @default("USER") // "USER", "PRO", "ADMIN"
+  memberCode String? @unique
+
+  // 🏺 Attributs Professionnels (CE)
+  companyName String?
+  siret       String? @unique
+
   conceptionLevel Int      @default(0)
   createdAt       DateTime @default(now())
-  orders          Order[]
+
+  orders      Order[]
+  ownedGroups CompanyGroup[] // Groupes gérés par ce compte pro
 }
 
 model Category {
@@ -56,7 +65,7 @@ model ProductVolume {
 model Workshop {
   id           String      @id @default(uuid())
   level        Int
-  type         String      @default("PARTICULIER") // 🏺 "PARTICULIER" ou "ENTREPRISE"
+  type         String      @default("PARTICULIER") // "PARTICULIER" ou "ENTREPRISE"
   title        String
   description  String
   image        String?
@@ -68,6 +77,20 @@ model Workshop {
   orderItems   OrderItem[]
 
   @@unique([level, type])
+}
+
+// 🏺 Unité de progression certifiée (25 personnes)
+model CompanyGroup {
+  id           String @id @default(cuid())
+  name         String // Ex: "Direction Commerciale" ou "Logistique"
+  currentLevel Int    @default(0)
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  participants Participant[] // Les membres rattachés à cette cohorte
+  orderItems   OrderItem[]
+  createdAt    DateTime      @default(now())
 }
 
 model Order {
@@ -91,6 +114,13 @@ model OrderItem {
 
   participants Participant[]
 
+  // 🏺 Stockage des noms de cohortes avant création officielle
+  // Contiendra un tableau JSON : ["Groupe A", "Groupe B", ...]
+  groupNames String?
+
+  companyGroupId String?
+  companyGroup   CompanyGroup? @relation(fields: [companyGroupId], references: [id])
+
   workshopId String?
   workshop   Workshop?      @relation(fields: [workshopId], references: [id])
   volumeId   String?
@@ -98,15 +128,18 @@ model OrderItem {
 }
 
 model Participant {
-  id         String  @id @default(cuid())
-  // 🏺 Pour Découverte : Champs texte classiques
-  firstName  String?
-  lastName   String?
-  phone      String?
-  email      String?
-  // 🏺 Pour Conception : Lien direct vers le membre
+  id        String  @id @default(cuid())
+  firstName String?
+  lastName  String?
+  phone     String?
+  email     String?
+
   memberCode String?
   userId     String?
+
+  // 🏺 Rattachement à une cohorte fixe
+  companyGroupId String?
+  companyGroup   CompanyGroup? @relation(fields: [companyGroupId], references: [id])
 
   orderItemId String
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)

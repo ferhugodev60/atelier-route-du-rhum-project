@@ -64,7 +64,9 @@ export const updateMe = async (req: Request, res: Response) => {
 export const getAllUsers = async (req: Request, res: Response) => {
     try {
         const users = await prisma.user.findMany({
-            where: { role: 'USER' },
+            where: {
+                role: { in: ['USER', 'PRO'] }
+            },
             select: {
                 id: true,
                 memberCode: true,
@@ -72,6 +74,9 @@ export const getAllUsers = async (req: Request, res: Response) => {
                 firstName: true,
                 lastName: true,
                 phone: true,
+                role: true,
+                companyName: true,
+                siret: true,
                 conceptionLevel: true,
                 createdAt: true,
                 _count: { select: { orders: true } }
@@ -80,6 +85,7 @@ export const getAllUsers = async (req: Request, res: Response) => {
         });
         res.json(users);
     } catch (error) {
+        console.error("Erreur Registre Users:", error);
         res.status(500).json({ error: "Erreur lors de l'accès au registre." });
     }
 };
@@ -104,7 +110,7 @@ export const getUserDetails = async (req: Request, res: Response) => {
 
 export const updateUserProfile = async (req: Request, res: Response) => {
     const id = req.params.id as string;
-    const { firstName, lastName, phone, conceptionLevel, email } = req.body;
+    const { firstName, lastName, phone, conceptionLevel, email, role, companyName, siret } = req.body;
 
     try {
         const updatedUser = await prisma.user.update({
@@ -114,6 +120,9 @@ export const updateUserProfile = async (req: Request, res: Response) => {
                 lastName,
                 email,
                 phone,
+                role,
+                companyName,
+                siret,
                 conceptionLevel: (conceptionLevel !== undefined && conceptionLevel !== null)
                     ? parseInt(String(conceptionLevel))
                     : undefined

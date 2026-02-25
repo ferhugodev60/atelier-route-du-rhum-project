@@ -11,9 +11,14 @@ interface AuthRequest extends Request {
 
 type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, memberCode: true } },
+        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, memberCode: true, companyName: true, siret: true } },
         items: {
-            include: { workshop: true, volume: { include: { product: true } }, participants: true };
+            include: {
+                workshop: true,
+                volume: { include: { product: true } },
+                participants: true,
+                companyGroup: true // 🏺 Suivi de la cohorte pro
+            };
         };
     };
 }>;
@@ -26,8 +31,8 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
         const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
-                user: { select: { firstName: true, lastName: true, email: true, memberCode: true } },
-                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } }
+                user: { select: { firstName: true, lastName: true, email: true, memberCode: true, companyName: true } },
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
             },
             orderBy: { createdAt: 'desc' }
         }) as OrderWithRelations[];
@@ -38,10 +43,12 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             total: order.total,
             status: order.status,
             user: order.user,
+            isBusiness: order.isBusiness,
             items: order.items.map(item => ({
                 name: item.workshop ? `Séance : ${item.workshop.title}` : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
+                groupName: item.companyGroup?.name || null,
                 participants: item.participants.map(p => p.memberCode ? `${p.firstName} ${p.lastName} (${p.memberCode})` : `${p.firstName} ${p.lastName}`)
             }))
         }));
@@ -56,7 +63,10 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     try {
         const order = await prisma.order.findUnique({
             where: { id },
-            include: { user: true, items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } } }
+            include: {
+                user: true,
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
+            }
         }) as OrderWithRelations | null;
         if (!order) return res.status(404).json({ error: "Document introuvable." });
         if (!isAdmin && order.userId !== userId) return res.status(403).json({ error: "Accès non autorisé." });
@@ -73,11 +83,30 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             data: { status },
             include: { items: { include: { workshop: true, participants: true } } }
         });
+
         if (status === 'FINALISÉ') {
-            const codes = order.items.filter(item => item.workshop !== null).flatMap(item => item.participants.map(p => p.memberCode)).filter((code): code is string => !!code);
-            const uniqueCodes = [...new Set(codes)];
-            if (uniqueCodes.length > 0) {
-                await Promise.all(uniqueCodes.map(code => prisma.user.update({ where: { memberCode: code }, data: { conceptionLevel: { increment: 1 } } })));
+            // 🏺 1. Promotion individuelle (Particuliers)
+            const individualCodes = order.items
+                .filter(item => item.workshop !== null && !order.isBusiness)
+                .flatMap(item => item.participants.map(p => p.memberCode))
+                .filter((code): code is string => !!code);
+
+            if (individualCodes.length > 0) {
+                const uniqueCodes = [...new Set(individualCodes)];
+                await Promise.all(uniqueCodes.map(code =>
+                    prisma.user.update({ where: { memberCode: code }, data: { conceptionLevel: { increment: 1 } } })
+                ));
+            }
+
+            // 🏺 2. Promotion de Cohorte (Entreprises)
+            const businessItems = order.items.filter(item => item.workshop !== null && order.isBusiness && item.companyGroupId);
+            if (businessItems.length > 0) {
+                await Promise.all(businessItems.map(item =>
+                    prisma.companyGroup.update({
+                        where: { id: item.companyGroupId! },
+                        data: { currentLevel: { increment: 1 } }
+                    })
+                ));
             }
         }
         res.json(order);
@@ -86,7 +115,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
 /**
  * 🏺 Génération du Certificat / Carte Cadeau
- * Correction de l'interpolation des chaînes pour l'affichage du téléphone et de l'e-mail[cite: 31, 41].
+ * Adaptation du rendu pour les Cohortes Professionnelles de 25 membres.
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
@@ -97,7 +126,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             where: { id: orderId, userId: userId },
             include: {
                 user: true,
-                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } }
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
             }
         }) as OrderWithRelations | null;
 
@@ -111,7 +140,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         const pageWidth = doc.page.width;
         const margin = 50;
         const contentWidth = pageWidth - (margin * 2);
-
         const logoPath = path.join(process.cwd(), 'public', 'assets', 'logo.jpg');
         const fileExists = fs.existsSync(logoPath);
 
@@ -119,9 +147,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             const topY = 40;
             doc.fontSize(8).font('Helvetica').fillColor('#999999');
             doc.text(`Émis le : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`, margin, topY);
-            if (title) {
-                doc.text(`${title.toUpperCase()}`, margin, topY, { width: contentWidth, align: 'right' });
-            }
+            if (title) doc.text(`${title.toUpperCase()}`, margin, topY, { width: contentWidth, align: 'right' });
         };
 
         const drawFooter = () => {
@@ -144,8 +170,12 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             expiryDate.setDate(expiryDate.getDate() + (isConception ? 180 : 30));
 
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
-            doc.moveDown(2.5);
-            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UNE SÉANCE DE FORMATION", margin, doc.y, { width: contentWidth, align: 'center' });
+            doc.moveDown(2);
+
+            // 🏺 Titre adapté au type de client
+            const mainTitle = "BON POUR UN ATELIER";
+            doc.fontSize(20).font('Helvetica-Bold').fillColor('#D4AF37').text(mainTitle, margin, doc.y, { width: contentWidth, align: 'center' });
+
             doc.moveDown(1.5);
             doc.fontSize(11).font('Helvetica').fillColor('#000000').text(`Ce certificat certifie un accès privilégié à la séance pour une durée de ${validityLabel}.`, margin, doc.y, { width: contentWidth, align: 'center' });
             doc.moveDown(1);
@@ -154,24 +184,28 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').stroke();
 
             doc.moveDown(4);
-            doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("PARTICIPANTS :", margin, doc.y, { underline: true });
-            doc.moveDown(1);
-            doc.fillColor('#000000');
 
+            // 🏺 Affichage de la Cohorte si Pro
+            if (order.isBusiness && item.companyGroup) {
+                doc.fontSize(12).font('Helvetica-Bold').fillColor('#D4AF37').text(`COHORTE CERTIFIÉE : ${item.companyGroup.name.toUpperCase()}`, margin, doc.y);
+                doc.moveDown(1);
+            } else {
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("PARTICIPANTS :", margin, doc.y, { underline: true });
+                doc.moveDown(1);
+            }
+
+            doc.fillColor('#000000');
             item.participants.forEach((p, idx) => {
                 const name = [p.firstName, p.lastName].filter(Boolean).join(' ');
                 const code = p.memberCode ? ` [Code client : ${p.memberCode}]` : "";
-                doc.fontSize(10).font('Helvetica-Bold').text(`${idx + 1}. ${name}${code}`, margin + 15);
+                doc.fontSize(9).font('Helvetica-Bold').text(`${idx + 1}. ${name}${code}`, margin + 15);
 
-                const contactParts = [];
-                if (p.phone) contactParts.push(`Tél : ${p.phone}`);
-                if (p.email) contactParts.push(`E-mail : ${p.email}`);
-
-                if (contactParts.length > 0) {
-                    doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666').text(contactParts.join('  |  '), margin + 30);
+                if (p.phone || p.email) {
+                    const contacts = [p.phone, p.email].filter(Boolean).join('  |  ');
+                    doc.fontSize(8).font('Helvetica-Oblique').fillColor('#666666').text(contacts, margin + 30);
                     doc.fillColor('#000000');
                 }
-                doc.moveDown(0.8);
+                doc.moveDown(0.5);
             });
             drawFooter();
         });
@@ -191,7 +225,10 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("ACHETEUR :", margin, doc.y, { underline: true });
             doc.moveDown(0.5);
             doc.fillColor('#000000');
-            doc.fontSize(10).font('Helvetica-Bold').text(`${order.user.firstName} ${order.user.lastName}`, margin + 15);
+
+            // 🏺 Affichage de l'entité pro si applicable
+            const buyerIdentity = order.isBusiness ? `${order.user.companyName} (Réf: ${order.user.lastName})` : `${order.user.firstName} ${order.user.lastName}`;
+            doc.fontSize(10).font('Helvetica-Bold').text(buyerIdentity, margin + 15);
 
             const buyerContacts = [];
             if (order.user.phone) buyerContacts.push(`Tél : ${order.user.phone}`);
@@ -213,4 +250,4 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     } catch (error) { res.status(500).json({ error: "Échec technique." }); }
 };
 
-export const createOrder = async (req: AuthRequest, res: Response) => { /* Webhook */ };
+export const createOrder = async (req: AuthRequest, res: Response) => { /* Géré par Webhook */ };
