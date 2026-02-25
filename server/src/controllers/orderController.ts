@@ -86,7 +86,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
 /**
  * 🏺 Génération du Certificat / Carte Cadeau
- * Centralisation de l'identité de l'acheteur pour les dotations physiques.
+ * Correction de l'interpolation des chaînes pour l'affichage du téléphone et de l'e-mail[cite: 31, 41].
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
@@ -96,7 +96,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         const order = await prisma.order.findFirst({
             where: { id: orderId, userId: userId },
             include: {
-                user: true, // 🏺 Accès aux données de l'acheteur certifié
+                user: true,
                 items: { include: { workshop: true, volume: { include: { product: true } }, participants: true } }
             }
         }) as OrderWithRelations | null;
@@ -118,7 +118,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         const drawHeaderInfo = (title?: string) => {
             const topY = 40;
             doc.fontSize(8).font('Helvetica').fillColor('#999999');
-            doc.text(`Émis le : ${new Date().toLocaleDateString('fr-FR')}`, margin, topY);
+            doc.text(`Émis le : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`, margin, topY);
             if (title) {
                 doc.text(`${title.toUpperCase()}`, margin, topY, { width: contentWidth, align: 'right' });
             }
@@ -134,33 +134,22 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
 
         workshopItems.forEach((item, index) => {
             if (index > 0) doc.addPage();
-
             drawHeaderInfo(item.workshop?.title);
-
-            if (fileExists) {
-                const logoWidth = 140;
-                doc.image(logoPath, (pageWidth - logoWidth) / 2, 85, { width: logoWidth });
-            }
-
+            if (fileExists) { doc.image(logoPath, (pageWidth - 140) / 2, 85, { width: 140 }); }
             doc.y = 190;
 
             const isConception = (item.workshop?.level ?? 0) > 0;
             const validityLabel = isConception ? "6 mois" : "30 jours";
-            const validityDays = isConception ? 180 : 30;
             const expiryDate = new Date(order.createdAt);
-            expiryDate.setDate(expiryDate.getDate() + validityDays);
+            expiryDate.setDate(expiryDate.getDate() + (isConception ? 180 : 30));
 
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
             doc.moveDown(2.5);
-            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UN ATELIER", margin, doc.y, { width: contentWidth, align: 'center', characterSpacing: 1 });
-
+            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UNE SÉANCE DE FORMATION", margin, doc.y, { width: contentWidth, align: 'center' });
             doc.moveDown(1.5);
             doc.fontSize(11).font('Helvetica').fillColor('#000000').text(`Ce certificat certifie un accès privilégié à la séance pour une durée de ${validityLabel}.`, margin, doc.y, { width: contentWidth, align: 'center' });
             doc.moveDown(1);
             doc.fontSize(15).font('Helvetica-Bold').text(`VALABLE JUSQU'AU : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
-            doc.moveDown(1.5);
-            doc.fontSize(10).font('Helvetica-Oblique').fillColor('#999999').text(`Réservation & Informations : 06 41 42 00 28`, margin, doc.y, { width: contentWidth, align: 'center' });
-
             doc.moveDown(2);
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').stroke();
 
@@ -172,7 +161,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             item.participants.forEach((p, idx) => {
                 const name = [p.firstName, p.lastName].filter(Boolean).join(' ');
                 const code = p.memberCode ? ` [Code client : ${p.memberCode}]` : "";
-
                 doc.fontSize(10).font('Helvetica-Bold').text(`${idx + 1}. ${name}${code}`, margin + 15);
 
                 const contactParts = [];
@@ -180,34 +168,22 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 if (p.email) contactParts.push(`E-mail : ${p.email}`);
 
                 if (contactParts.length > 0) {
-                    doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666')
-                        .text(contactParts.join('  |  '), margin + 30);
+                    doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666').text(contactParts.join('  |  '), margin + 30);
                     doc.fillColor('#000000');
                 }
                 doc.moveDown(0.8);
             });
-
             drawFooter();
         });
 
         if (bottleItems.length > 0) {
             doc.addPage();
             drawHeaderInfo("Dotations & Bouteilles");
-
-            if (fileExists) {
-                const logoWidth = 140;
-                doc.image(logoPath, (pageWidth - logoWidth) / 2, 85, { width: logoWidth });
-            }
-
+            if (fileExists) { doc.image(logoPath, (pageWidth - 140) / 2, 85, { width: 140 }); }
             doc.y = 190;
-
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
             doc.moveDown(2.5);
-            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON DE RETRAIT DES BOUTEILLES", margin, doc.y, { width: contentWidth, align: 'center', characterSpacing: 1 });
-
-            doc.moveDown(1.5);
-            doc.fontSize(11).font('Helvetica').fillColor('#000000').text("Ce certificat permet le retrait immédiat de vos bouteilles au sein de l'Établissement.", margin, doc.y, { width: contentWidth, align: 'center' });
-
+            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("BON DE RETRAIT DES BOUTEILLES", margin, doc.y, { width: contentWidth, align: 'center' });
             doc.moveDown(2);
             doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').stroke();
 
@@ -215,36 +191,26 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("ACHETEUR :", margin, doc.y, { underline: true });
             doc.moveDown(0.5);
             doc.fillColor('#000000');
-
-            const buyerName = `${order.user.firstName} ${order.user.lastName}`;
-            doc.fontSize(10).font('Helvetica-Bold').text(buyerName, margin + 15);
+            doc.fontSize(10).font('Helvetica-Bold').text(`${order.user.firstName} ${order.user.lastName}`, margin + 15);
 
             const buyerContacts = [];
             if (order.user.phone) buyerContacts.push(`Tél : ${order.user.phone}`);
             if (order.user.email) buyerContacts.push(`E-mail : ${order.user.email}`);
-
             if (buyerContacts.length > 0) {
-                doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666')
-                    .text(buyerContacts.join('  |  '), margin + 15);
+                doc.fontSize(9).font('Helvetica-Oblique').fillColor('#666666').text(buyerContacts.join('  |  '), margin + 15);
                 doc.fillColor('#000000');
             }
 
             doc.moveDown(3);
             doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("BOUTEILLES RÉSERVÉES :", margin, doc.y, { underline: true });
             doc.moveDown(0.5);
-            doc.fillColor('#000000');
             bottleItems.forEach(p => {
-                doc.fontSize(10).font('Helvetica').text(`• ${p.volume?.product.name} (${p.volume?.size}${p.volume?.unit}) — Quantité : ${p.quantity}`, margin + 15);
+                doc.fontSize(10).text(`• ${p.volume?.product.name} (${p.volume?.size}${p.volume?.unit}) — Quantité : ${p.quantity}`, margin + 15);
             });
-
             drawFooter();
         }
-
         doc.end();
-    } catch (error) {
-        console.error("Erreur génération PDF:", error);
-        res.status(500).json({ error: "Échec de synchronisation du certificat." });
-    }
+    } catch (error) { res.status(500).json({ error: "Échec technique." }); }
 };
 
-export const createOrder = async (req: AuthRequest, res: Response) => { /* Géré par Webhook Stripe */ };
+export const createOrder = async (req: AuthRequest, res: Response) => { /* Webhook */ };

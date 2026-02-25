@@ -14,7 +14,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         for (const item of items) {
             if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
-                if (!ws) throw new Error("Séance de formation introuvable.");
+                if (!ws) throw new Error("Séance introuvable.");
                 item.price = ws.price;
                 item.isBusiness = (ws.type === "ENTREPRISE");
             }
@@ -41,7 +41,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                                 firstName: p.firstName,
                                 lastName: p.lastName,
                                 phone: p.phone || "",
-                                email: p.email || "", // 🏺 Sauvegarde cruciale de l'e-mail
+                                email: p.email || "", // 🏺 Sauvegarde de l'e-mail [cite: 41]
                                 memberCode: p.memberCode || null
                             }))
                         } : undefined
@@ -50,18 +50,16 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         });
 
-        const line_items = items.map((item: any) => ({
-            price_data: {
-                currency: 'eur',
-                unit_amount: Math.round(item.price * 100),
-                product_data: { name: item.name },
-            },
-            quantity: item.quantity,
-        }));
-
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items,
+            line_items: items.map((item: any) => ({
+                price_data: {
+                    currency: 'eur',
+                    unit_amount: Math.round(item.price * 100),
+                    product_data: { name: item.name },
+                },
+                quantity: item.quantity,
+            })),
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true&orderId=${pendingOrder.id}`,
             cancel_url: `${process.env.FRONTEND_URL}/boutique?payment_cancelled=true`,
@@ -76,18 +74,16 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
-
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET as string);
-    } catch (err: any) {
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+    } catch (err: any) { return res.status(400).send(`Webhook Error: ${err.message}`); }
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const orderId = session.metadata?.orderId;
 
         try {
+            // 🏺 Utilisation d'une transaction pour lier le paiement à la baisse de stock
             await prisma.$transaction(async (tx) => {
                 const order = await tx.order.update({
                     where: { id: orderId },
@@ -110,9 +106,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     });
                 }
             });
-        } catch (error: any) {
-            console.error("Erreur Webhook traitement:", error.message);
-        }
+        } catch (error: any) { console.error("Erreur transaction stock:", error.message); }
     }
     res.json({ received: true });
 };
