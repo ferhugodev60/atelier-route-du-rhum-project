@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search, Mail, Phone, User } from 'lucide-react';
+import { Search, Mail, Phone, User, Fingerprint } from 'lucide-react'; // 🏺 Identifiant unique
 import CustomerDetailsModal from '../../components/admin/CustomerDetailsModal';
 import AdminPagination from '../../components/admin/AdminPagination';
 import { useToastStore } from '../../store/toastStore';
@@ -31,10 +31,16 @@ export default function AdminCustomers() {
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
+    /**
+     * 🏺 Logique de filtrage augmentée
+     * Permet désormais la recherche par Nom, Prénom, Email ou Code Client.
+     */
     const filteredCustomers = useMemo(() => {
+        const lowerSearch = searchTerm.toLowerCase();
         return customers.filter(c =>
-            `${c.firstName} ${c.lastName}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            c.email.toLowerCase().includes(searchTerm.toLowerCase())
+            `${c.firstName} ${c.lastName}`.toLowerCase().includes(lowerSearch) ||
+            c.email.toLowerCase().includes(lowerSearch) ||
+            (c.memberCode && c.memberCode.toLowerCase().includes(lowerSearch))
         );
     }, [customers, searchTerm]);
 
@@ -61,7 +67,7 @@ export default function AdminCustomers() {
                     <Search size={14} className="text-rhum-gold/40" />
                     <input
                         type="text"
-                        placeholder="RECHERCHER..."
+                        placeholder="NOM, EMAIL OU CODE..."
                         className="bg-transparent text-[11px] text-white outline-none w-full uppercase tracking-widest font-black"
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -72,7 +78,7 @@ export default function AdminCustomers() {
                 <table className="w-full text-left border-collapse">
                     <thead>
                     <tr className="border-b border-white/5 text-[11px] uppercase tracking-[0.2em] text-rhum-gold/40">
-                        <th className="py-6 px-8 font-black">Identité</th>
+                        <th className="py-6 px-8 font-black">Identité & Code</th>
                         <th className="py-6 px-8 font-black">Coordonnées</th>
                         <th className="py-6 px-8 font-black">État du Cursus</th>
                         <th className="py-6 px-8 font-black text-center">Activité</th>
@@ -94,15 +100,22 @@ export default function AdminCustomers() {
                                         <p className="text-white text-base font-bold uppercase tracking-tight">
                                             {customer.lastName} <span className="text-rhum-gold font-bold">{customer.firstName}</span>
                                         </p>
-                                        {/* 🏺 Date d'inscription agrandie */}
-                                        <p className="text-[11px] text-white/40 uppercase mt-1 tracking-widest font-black">
+
+                                        {/* 🏺 Mise en valeur du Code Client (Identifiant unique) */}
+                                        <div className="flex items-center gap-2 mt-1">
+                                            <Fingerprint size={10} className="text-rhum-gold/60" />
+                                            <span className="text-[11px] text-rhum-gold font-black uppercase tracking-[0.2em]">
+                                                {customer.memberCode || "NON CERTIFIÉ"}
+                                            </span>
+                                        </div>
+
+                                        <p className="text-[10px] text-white/20 uppercase mt-1 tracking-widest font-black">
                                             Membre depuis le {new Date(customer.createdAt).toLocaleDateString()}
                                         </p>
                                     </div>
                                 </div>
                             </td>
                             <td className="py-6 px-8 space-y-3">
-                                {/* 🏺 Coordonnées agrandies pour une meilleure lisibilité */}
                                 <div className="flex items-center gap-3 text-[11px] text-rhum-cream font-black uppercase tracking-widest">
                                     <Mail size={12} className="text-rhum-gold/40" /> {customer.email}
                                 </div>
@@ -126,7 +139,6 @@ export default function AdminCustomers() {
                                 </div>
                             </td>
                             <td className="py-6 px-8 text-center">
-                                {/* 🏺 Volume de commandes agrandi */}
                                 <span className="text-2xl font-serif text-white font-bold">{customer._count?.orders || 0}</span>
                                 <p className="text-[10px] text-white/30 uppercase font-black mt-2 tracking-widest">Commandes</p>
                             </td>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone } from 'lucide-react';
+import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone, Fingerprint } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import OrderDetailsModal from './OrderDetailsModal';
 import { useToastStore } from '../../store/toastStore';
@@ -29,26 +29,28 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
         setIsUpdating(true);
         try {
             await api.patch(`/users/${fullData.id}/level`, { newLevel });
-            addToast(`Mis à jour : Niveau ${newLevel} validé.`);
+            addToast(`Certification mise à jour : Palier technique ${newLevel} validé.`);
             onRefresh();
             onClose();
         } catch (error) {
-            addToast("Échec de la validation du niveau technique.", "error");
+            addToast("Échec de la validation du palier technique.", "error");
         } finally {
             setIsUpdating(false);
         }
     };
 
     /**
-     * 🏺 Signalétique Institutionnelle Tricolore
+     * 🏺 Signalétique Institutionnelle Certifiée
      */
     const getStatusStyles = (status: string) => {
         switch (status) {
+            case 'PAYÉ':
             case 'FINALISÉ':
                 return 'border-green-500/30 text-green-500 bg-green-500/5';
             case 'ATELIER PLANIFIÉ':
                 return 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5';
             case 'À TRAITER':
+            case 'EN ATTENTE':
             default:
                 return 'border-red-500/30 text-red-500 bg-red-500/5';
         }
@@ -78,12 +80,20 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                     <h2 className="text-3xl font-serif text-white uppercase tracking-tight">
                                         {fullData.lastName} <span className="text-rhum-gold font-bold">{fullData.firstName}</span>
                                     </h2>
-                                    {/* 🏺 Coordonnées agrandies et complétées */}
-                                    <div className="mt-2 space-y-1">
-                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.3em] font-black flex items-center gap-2">
+
+                                    {/* 🏺 Identification unique : Code Client */}
+                                    <div className="flex items-center gap-2 mt-2 bg-rhum-gold/5 border border-rhum-gold/10 px-3 py-1.5 w-fit rounded-sm">
+                                        <Fingerprint size={12} className="text-rhum-gold/60" />
+                                        <span className="text-[11px] text-rhum-gold font-black uppercase tracking-[0.2em]">
+                                            {fullData.memberCode || "Non Certifié"}
+                                        </span>
+                                    </div>
+
+                                    <div className="mt-4 space-y-1">
+                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-black flex items-center gap-2">
                                             <Mail size={12} className="text-rhum-gold/40" /> {fullData.email}
                                         </p>
-                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.3em] font-black flex items-center gap-2">
+                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-black flex items-center gap-2">
                                             <Phone size={12} className="text-rhum-gold/40" /> {fullData.phone || 'Non renseigné'}
                                         </p>
                                     </div>
@@ -92,7 +102,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
 
                             <nav className="flex gap-10 mt-10">
                                 {[
-                                    { id: 'cursus', label: 'Validation Cursus', icon: GraduationCap },
+                                    { id: 'cursus', label: 'Maîtrise Cursus', icon: GraduationCap },
                                     { id: 'orders', label: 'Historique Ventes', icon: ShoppingBag }
                                 ].map(tab => (
                                     <button
@@ -115,9 +125,9 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                 <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
                                     <div className="bg-white/[0.02] border border-white/5 p-8 rounded-sm space-y-8 shadow-inner">
                                         <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                                            <p className="text-[10px] text-rhum-gold font-black uppercase tracking-widest">Maîtrise technique actuelle</p>
+                                            <p className="text-[10px] text-rhum-gold font-black uppercase tracking-widest">État de maîtrise technique</p>
                                             <span className="text-sm font-serif text-white font-bold uppercase tracking-widest">
-                                                {fullData.conceptionLevel === 0 ? "Initié" : `Niveau ${fullData.conceptionLevel} / 4`}
+                                                {fullData.conceptionLevel === 0 ? "Initié" : `Palier ${fullData.conceptionLevel} / 4`}
                                             </span>
                                         </div>
                                         <div className="flex gap-2">
@@ -133,16 +143,15 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                                     }`}
                                                 >
                                                     <span className="text-[9px] uppercase font-black tracking-tighter">
-                                                        {level === 0 ? "Départ" : "Niveau"}
+                                                        {level === 0 ? "Départ" : "Palier"}
                                                     </span>
                                                     <span className="text-3xl font-serif">{level}</span>
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
-                                    {/* 🏺 Nomenclature épurée et suppression de l'italique */}
                                     <p className="text-[11px] text-white/20 text-center leading-relaxed font-sans font-black uppercase tracking-widest px-10">
-                                        Le Niveau 0 identifie un membre n'ayant pas encore validé de palier technique dans le cursus de conception.
+                                        L'ajustement manuel du palier technique permet de réguler l'accès aux formations de niveau supérieur pour ce membre.
                                     </p>
                                 </div>
                             )}
@@ -176,7 +185,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                     ))}
                                     {fullData.orders?.length === 0 && (
                                         <div className="py-24 text-center text-white/10 uppercase tracking-[0.3em] text-xs font-black">
-                                            Aucun flux transactionnel répertorié au sein de l'établissement.
+                                            Aucun flux transactionnel répertorié au sein du registre.
                                         </div>
                                     )}
                                 </div>
