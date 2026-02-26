@@ -9,8 +9,8 @@ interface SidebarProps {
 export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarProps) {
     const menuItems = [
         { id: 'orders', label: 'Registre des commandes' },
-        { id: 'security', label: 'Sécurité du compte' },
-        { id: 'profile', label: 'Profil de membre' },
+        { id: 'security', label: 'Mot de passe oublié ?' },
+        { id: 'profile', label: 'Profil' },
     ];
 
     return (

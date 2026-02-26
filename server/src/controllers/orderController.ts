@@ -174,34 +174,50 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                     }
 
                     doc.y = 190;
-                    doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
                     doc.moveDown(2);
                     doc.fontSize(20).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UN ATELIER", margin, doc.y, { width: contentWidth, align: 'center' });
+
                     doc.moveDown(0.5);
                     doc.fontSize(14).font('Helvetica-Bold').fillColor('#000000').text(wsTitle, margin, doc.y, { width: contentWidth, align: 'center' });
 
+                    doc.moveDown(1);
+                    doc.fontSize(14).font('Helvetica-Bold').fillColor('#D4AF37').text(`VALABLE JUSQU'AU : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
+
                     doc.moveDown(2.5);
                     doc.fontSize(10).font('Helvetica-Bold').fillColor('#D4AF37').text("BÉNÉFICIAIRE (À COMPLÉTER) :", margin + 30);
-                    doc.moveDown(1.5);
 
-                    ["NOM :", "PRÉNOM :", "TÉLÉPHONE :", "EMAIL :"].forEach(f => {
+                    doc.moveDown(1.5);
+                    ["NOM :", "PRÉNOM :", "EMAIL :", "TÉLÉPHONE :"].forEach(f => {
                         doc.fontSize(9).font('Helvetica').fillColor('#666666').text(f, margin + 50);
                         doc.moveTo(margin + 120, doc.y - 2).lineTo(pageWidth - margin - 50, doc.y - 2).strokeColor('#CCCCCC').lineWidth(0.5).stroke();
                         doc.moveDown(1.5);
                     });
 
-                    // 🏺 Zone Signature & Cachet
+                    // 🏺 Zone Signature & Cachet (Plus d'espace disponible en dessous)
                     doc.moveDown(2);
                     doc.fontSize(9).font('Helvetica-Bold').fillColor('#D4AF37').text("SIGNATURE DU BÉNÉFICIAIRE / CACHET CE :", margin + 30);
                     doc.rect(margin + 30, doc.y + 10, contentWidth - 60, 60).strokeColor('#EEEEEE').lineWidth(0.5).stroke();
 
-                    doc.y = 590;
-                    doc.rect(margin + 20, doc.y, contentWidth - 40, 90).strokeColor('#D4AF37').stroke();
-                    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text("IMPORTANT : RÉSERVATION OBLIGATOIRE", margin, doc.y + 15, { width: contentWidth, align: 'center' });
-                    doc.fontSize(8).font('Helvetica').text(`Contactez impérativement l'Établissement pour planifier vos dates. Capacité limitée à 15 places maximum par session.`, margin + 40, doc.y + 35, { width: contentWidth - 80, align: 'center' });
+                    // 🏺 Encart RÉSERVATION - BAISSÉ À 635
+                    const boxTop = 635;
+                    doc.rect(margin + 20, boxTop, contentWidth - 40, 120).strokeColor('#D4AF37').lineWidth(1).stroke();
 
-                    doc.y = 750;
-                    doc.fontSize(14).font('Helvetica-Bold').fillColor('#D4AF37').text(`VALABLE JUSQU'AU : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
+                    doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000')
+                        .text("IMPORTANT : RÉSERVATION OBLIGATOIRE", margin, boxTop + 15, { width: contentWidth, align: 'center' });
+
+                    doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37')
+                        .text("06 41 42 00 28", margin, boxTop + 40, { width: contentWidth, align: 'center' });
+
+                    doc.fontSize(8).font('Helvetica').fillColor('#000000')
+                        .text(`Contactez impérativement l'Établissement pour planifier vos dates. Capacité limitée à 15 places maximum par session.`, margin + 40, boxTop + 85, {
+                            width: contentWidth - 80,
+                            align: 'center',
+                            lineGap: 2
+                        });
+
+                    // 🏺 Mention de caducité calée en bas de page
+                    doc.fontSize(9).font('Helvetica-Bold').fillColor('#FF0000')
+                        .text("POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE LA CARTE CADEAU SERA CADUC.", margin, 785, { width: contentWidth, align: 'center' });
                 }
             } else {
                 // 👤 SCÉNARIO PARTICULIER
@@ -213,7 +229,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 }
 
                 doc.y = 190;
-                doc.moveTo(margin + 50, doc.y).lineTo(pageWidth - margin - 50, doc.y).strokeColor('#D4AF37').lineWidth(1.5).stroke();
                 doc.moveDown(2);
                 doc.fontSize(20).font('Helvetica-Bold').fillColor('#D4AF37').text("BON POUR UN ATELIER", margin, doc.y, { width: contentWidth, align: 'center' });
 
@@ -221,10 +236,10 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 const validityLabel = isConception ? "6 mois" : "30 jours";
                 doc.fontSize(11).font('Helvetica').fillColor('#000000').text(`Certificat d'accès à l'atelier valable ${validityLabel}.`, margin, doc.y, { width: contentWidth, align: 'center' });
                 doc.moveDown(1);
-                doc.fontSize(15).font('Helvetica-Bold').text(`ÉCHÉANCE : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
+                doc.fontSize(15).font('Helvetica-Bold').text(`DATE D'ÉCHÉANCE : ${expiryDate.toLocaleDateString('fr-FR')}`, margin, doc.y, { width: contentWidth, align: 'center' });
 
                 doc.moveDown(4);
-                doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("PARTICIPANTS :", margin, doc.y, { underline: true });
+                doc.fontSize(11).font('Helvetica-Bold').fillColor('#D4AF37').text("PARTICIPANT(S) :", margin, doc.y, { underline: true });
                 doc.moveDown(1);
                 (item.participants || []).forEach((p, idx) => {
                     const name = [p.firstName, p.lastName].filter(Boolean).join(' ');
@@ -234,6 +249,44 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                     }
                     doc.moveDown(0.5);
                 });
+
+                const boxTop = 580;
+                const boxHeight = 120;
+
+                doc.rect(margin + 20, boxTop, contentWidth - 40, boxHeight)
+                    .strokeColor('#D4AF37')
+                    .lineWidth(1)
+                    .stroke();
+
+                doc.fontSize(10)
+                    .font('Helvetica-Bold')
+                    .fillColor('#000000')
+                    .text("PLANIFICATION DE L'ATELIER SUR RENDEZ-VOUS", margin, boxTop + 15, {
+                        width: contentWidth,
+                        align: 'center'
+                    });
+
+                doc.fontSize(22)
+                    .font('Helvetica-Bold')
+                    .fillColor('#D4AF37')
+                    .text("06 41 42 00 28", margin, boxTop + 40, {
+                        width: contentWidth,
+                        align: 'center'
+                    });
+
+                doc.fontSize(8)
+                    .font('Helvetica')
+                    .fillColor('#000000')
+                    .text(
+                        "Veuillez contacter l'Établissement pour convenir d'un créneau pour votre atelier. Munissez-vous de ce document et d'une pièce d'identité.",
+                        margin + 40,
+                        boxTop + 85,
+                        {
+                            width: contentWidth - 80,
+                            align: 'center',
+                            lineGap: 2
+                        }
+                    );
 
                 doc.fontSize(9).font('Helvetica-Bold').fillColor('#FF0000').text("POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE, LA CARTE CADEAU SERA CADUC.", margin, 780, { width: contentWidth, align: 'center' });
             }
