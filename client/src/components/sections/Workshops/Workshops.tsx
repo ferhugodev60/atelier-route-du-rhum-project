@@ -50,7 +50,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             name: data.title || data.name,
             level: data.level,
             quantity: data.quantity,
-            isBusiness: isPro // Un compte PRO achète toujours en volume Business
+            isBusiness: isPro
         }, data.quantity);
         setReservationData(null);
     };
