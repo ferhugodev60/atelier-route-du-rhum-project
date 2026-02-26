@@ -14,12 +14,15 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
     const { user, setLoginOpen } = useAuthStore();
     const currentLevel = user?.conceptionLevel ?? 0;
 
+    // 🏺 Identification du privilège et application du tarif net DB
+    const hasAdvantage = user?.isEmployee || user?.role === 'PRO';
+    const displayPrice = hasAdvantage ? detail.priceInstitutional : detail.price;
+
     useEffect(() => {
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = 'unset'; };
     }, []);
 
-    // 🏺 Nouvelle logique : La maîtrise n'interdit pas le perfectionnement
     const isMastered = detail.level > 0 && currentLevel >= detail.level;
     const isLocked = detail.level > 0 && detail.level > currentLevel + 1;
 
@@ -34,7 +37,8 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
             cartId: `${detail.id}-${Date.now()}`,
             name: detail.title,
             level: detail.level,
-            quantity: 1
+            quantity: 1,
+            price: displayPrice // Transmission du tarif certifié
         });
         onClose();
     };
@@ -112,7 +116,9 @@ export default function WorkshopModal({ detail, onClose, onReserve }: WorkshopMo
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-[10px] uppercase tracking-[0.3em] text-white/30 font-black">Investissement</span>
                                 <div className="flex flex-col items-end">
-                                    <span className="text-2xl md:text-3xl font-serif text-rhum-gold leading-none">{detail.price}€</span>
+                                    <span className="text-2xl md:text-3xl font-serif text-rhum-gold leading-none">
+                                        {displayPrice.toFixed(0)}€
+                                    </span>
                                     <span className="text-[9px] md:text-[10px] text-rhum-gold/60 uppercase tracking-[0.2em] font-black mt-1">
                                         / pers.
                                     </span>

@@ -9,6 +9,12 @@ interface WorkshopCardProps {
 export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps) {
     const { user, setLoginOpen } = useAuthStore();
 
+    // 🏺 Identification du privilège institutionnel
+    const hasAdvantage = user?.isEmployee || user?.role === 'PRO';
+
+    // 🏺 Sélection du tarif certifié par le Registre (Prix Public ou Pro)
+    const displayPrice = hasAdvantage ? workshop.priceInstitutional : workshop.price;
+
     const handleQuickReserve = () => {
         if (!user) {
             setLoginOpen(true);
@@ -19,9 +25,10 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
             ...workshop,
             cartId: `discovery-${Date.now()}`,
             name: workshop.title,
-            level: 0,
+            level: workshop.level,
             quantity: 1,
-            isBusiness: false
+            price: displayPrice, // Transmission du tarif net certifié au panier
+            isBusiness: user.role === 'PRO'
         });
     };
 
@@ -43,7 +50,7 @@ export default function WorkshopCard({ workshop, onReserve }: WorkshopCardProps)
                     </h4>
                     <div className="flex flex-col items-end text-right">
                         <span className="text-2xl md:text-4xl font-serif text-rhum-gold leading-none">
-                            {workshop.price} €
+                            {displayPrice.toFixed(0)} €
                         </span>
                         <span className="text-[10px] md:text-xs text-rhum-gold/60 uppercase tracking-[0.2em] font-black mt-1">
                             / pers.

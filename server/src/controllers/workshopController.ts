@@ -18,10 +18,11 @@ export const getWorkshops = async (req: Request, res: Response) => {
     }
 };
 
-// --- ➕ CRÉATION ---
+// --- ➕ CRÉATION (Corrigé) ---
 export const createWorkshop = async (req: RequestWithFile, res: Response) => {
     try {
-        const { level, title, description, color, format, availability, quote, price } = req.body;
+        // 🏺 Ajout de priceInstitutional dans la déstructuration
+        const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
         const imageUrl = req.file ? req.file.path : null;
 
         const workshop = await prisma.workshop.create({
@@ -34,6 +35,8 @@ export const createWorkshop = async (req: RequestWithFile, res: Response) => {
                 availability,
                 quote,
                 price: parseFloat(price),
+                // 🏺 Sauvegarde explicite du tarif institutionnel
+                priceInstitutional: priceInstitutional ? parseFloat(priceInstitutional) : 0,
                 image: imageUrl
             }
         });
@@ -43,11 +46,12 @@ export const createWorkshop = async (req: RequestWithFile, res: Response) => {
     }
 };
 
-// --- 🔧 MODIFICATION ---
+// --- 🔧 MODIFICATION (Corrigé) ---
 export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
     const id = req.params.id as string;
     try {
-        const { level, title, description, color, format, availability, quote, price } = req.body;
+        // 🏺 Ajout de priceInstitutional ici aussi
+        const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
 
         const updateData: any = {
             title,
@@ -57,7 +61,9 @@ export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
             availability,
             quote,
             level: level ? parseInt(level) : undefined,
-            price: price ? parseFloat(price) : undefined
+            price: price ? parseFloat(price) : undefined,
+            // 🏺 Mise à jour du tarif institutionnel
+            priceInstitutional: priceInstitutional ? parseFloat(priceInstitutional) : undefined
         };
 
         if (req.file) {
@@ -71,7 +77,7 @@ export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
 
         res.json(workshop);
     } catch (error) {
-        res.status(404).json({ error: "Formation introuvable ou conflit de niveau." });
+        res.status(404).json({ error: "Formation introuvable." });
     }
 };
 

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, ShieldCheck } from 'lucide-react';
 import api from '../../api/axiosInstance';
-import { useToastStore } from '../../store/toastStore'; // 🏺 Système de notification
+import { useToastStore } from '../../store/toastStore';
 
 export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop }: any) {
     const [isUpdating, setIsUpdating] = useState(false);
@@ -16,11 +16,11 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
             await api.put(`/workshops/${workshop.id}`, formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            addToast(`Mise à jour de l'atelier : Niveau ${workshop.level} enregistré.`);
+            addToast(`Registre mis à jour : Les deux paliers tarifaires du Niveau ${workshop.level} sont scellés.`);
             onRefresh();
             onClose();
         } catch (error) {
-            addToast("Échec de la synchronisation de l'atelier.", "error");
+            addToast("Échec de la synchronisation avec le serveur.", "error");
         } finally {
             setIsUpdating(false);
         }
@@ -34,18 +34,32 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
                 <button onClick={onClose} className="absolute top-6 right-6 text-rhum-gold/40 hover:text-white transition-colors"><X size={24} /></button>
 
                 <header className="mb-10 text-center border-b border-white/5 pb-6">
-                    <h2 className="text-2xl font-serif text-white uppercase tracking-widest">Révision du Niveau {workshop.level}</h2>
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        <ShieldCheck size={14} className="text-rhum-gold opacity-50" />
+                        <span className="text-[9px] text-rhum-gold uppercase tracking-[0.4em] font-black">Fiche Maître de Séance</span>
+                    </div>
+                    <h2 className="text-2xl font-serif text-white uppercase tracking-widest">
+                        Révision Technique • Niveau {workshop.level}
+                    </h2>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Intitulé de l'atelier</label>
+                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Intitulé de la séance</label>
                             <input name="title" defaultValue={workshop.title} required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
                         </div>
-                        <div className="space-y-2 text-right">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black mr-1">Prix (€)</label>
-                            <input name="price" type="number" defaultValue={workshop.price} required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-rhum-gold font-bold outline-none text-right" />
+
+                        {/* 🏺 DUALITÉ TARIFAIRE CONSOLIDÉE */}
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Prix Public (€)</label>
+                                <input name="price" type="number" step="0.01" defaultValue={workshop.price} required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-white font-bold outline-none focus:border-white" />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-[9px] uppercase tracking-widest text-rhum-gold font-black ml-1">Prix Pro / CE (€)</label>
+                                <input name="priceInstitutional" type="number" step="0.01" defaultValue={workshop.priceInstitutional} required className="w-full bg-white/5 border-b border-rhum-gold py-2 text-rhum-gold font-bold outline-none focus:border-white" />
+                            </div>
                         </div>
                     </div>
 
@@ -59,7 +73,7 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
                             <input name="availability" defaultValue={workshop.availability} placeholder="ex: Samedi 15h" className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-xs text-rhum-cream outline-none focus:border-rhum-gold" />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Couleur</label>
+                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Code Couleur</label>
                             <input name="color" defaultValue={workshop.color} placeholder="#D4AF37" className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-xs text-rhum-cream outline-none focus:border-rhum-gold" />
                         </div>
                     </div>
@@ -70,12 +84,12 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Programme</label>
+                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Programme détaillé</label>
                         <textarea name="description" rows={4} defaultValue={workshop.description} className="w-full bg-white/5 border border-rhum-gold/10 p-4 text-xs leading-relaxed text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Visuel de référence</label>
+                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Visuel certifié</label>
                         <div className="flex items-center gap-6 bg-white/[0.02] p-4 border border-white/5 rounded-sm">
                             <img src={workshop.image} className="w-20 h-20 object-cover border border-rhum-gold/20 shadow-xl" alt="Aperçu" />
                             <input type="file" name="image" accept="image/*" className="text-[10px] text-rhum-cream/40 file:bg-rhum-gold/10 file:text-rhum-gold file:border-none file:px-4 file:py-2 file:cursor-pointer font-black uppercase tracking-tighter" />
@@ -83,7 +97,7 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
                     </div>
 
                     <button type="submit" disabled={isUpdating} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-2xl rounded-sm">
-                        {isUpdating ? 'Synchronisation du programme...' : 'Valider les modifications'}
+                        {isUpdating ? 'Synchronisation du registre...' : 'Valider les modifications'}
                     </button>
                 </form>
             </div>

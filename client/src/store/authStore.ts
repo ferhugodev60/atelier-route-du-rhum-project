@@ -23,7 +23,7 @@ interface AuthState {
 
 /**
  * 🏛️ Magasin d'Authentification Centralisé
- * Gère l'identité des membres, qu'ils soient Particuliers ou Professionnels.
+ * Gère l'identité des membres, qu'ils soient Particuliers, Bénéficiaires CE ou Professionnels.
  */
 export const useAuthStore = create<AuthState>()(
     persist(
@@ -61,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
              * 🏛️ Synchronisation avec le Registre
              * Met à jour les informations du membre en temps réel, incluant :
              * - Son rôle (USER, PRO, ADMIN)
+             * - Son statut de bénéficiaire CE (isEmployee)
              * - Son palier technique (conceptionLevel)
              * - Ses attributs pro (SIRET, Raison Sociale)
              */
@@ -70,8 +71,15 @@ export const useAuthStore = create<AuthState>()(
                     if (response.data) {
                         set({ user: response.data });
 
-                        // Nomenclature conforme aux directives de l'Établissement [cite: 2026-02-12]
-                        const profileType = response.data.role === 'PRO' ? 'Professionnel' : 'Particulier';
+                        // Identification du type de profil selon les directives [cite: 2026-02-12]
+                        let profileType = 'Particulier';
+
+                        if (response.data.role === 'PRO') {
+                            profileType = 'Professionnel';
+                        } else if (response.data.isEmployee) {
+                            profileType = 'Bénéficiaire CE';
+                        }
+
                         console.log(`🏛️ Profil ${profileType} synchronisé avec succès.`);
                     }
                 } catch (error) {
@@ -83,7 +91,7 @@ export const useAuthStore = create<AuthState>()(
         }),
         {
             name: 'rhum-atlier-auth',
-            version: 2 // Mise à jour de version pour inclure les nouveaux attributs PRO
+            version: 3 // 🏺 Version 3 : Intégration du statut bénéficiaire CE (isEmployee)
         }
     )
 );

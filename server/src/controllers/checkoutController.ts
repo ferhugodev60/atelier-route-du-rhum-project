@@ -6,8 +6,8 @@ import { sendOrderConfirmationEmail } from '../services/emailService';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 /**
- * 🏺 Initialisation de la Session de Paiement
- * Gère les quotas Particuliers (1-10) et Pros (25+) [cite: 2026-02-12]
+ * 🏛️ Initialisation de la Session de Paiement
+ * Gère la tarification duale sur une fiche unique de séance.
  */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
@@ -19,55 +19,55 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
+        const hasInstitutionalAdvantage = user.role === 'PRO' || user.isEmployee;
+
         for (const item of items) {
             if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
                 if (!ws) throw new Error("Séance de formation introuvable.");
 
-                // 🏺 LOGIQUE DE SEGMENTATION DU REGISTRE
-                if (ws.type === "ENTREPRISE") {
-                    // 🏢 RÈGLE PRO : Réservée aux comptes "PRO" (Gestionnaires CE)
+                // 1️⃣ LOGIQUE DE QUOTAS
+                if (item.quantity >= 25) {
                     if (user.role !== "PRO") {
-                        return res.status(403).json({ error: "L'offre entreprise est réservée aux comptes gestionnaires de CE." });
-                    }
-
-                    // Validation du seuil minimal (25 places)
-                    if (item.quantity < 25) {
-                        return res.status(400).json({ error: "L'offre entreprise requiert un minimum de 25 places." });
-                    }
-                    // Validation des paliers de 10 (25, 35, 45, etc.)
-                    if ((item.quantity - 25) % 10 !== 0) {
-                        return res.status(400).json({ error: "Le volume de places professionnelles doit progresser par paliers de 10." });
+                        return res.status(403).json({ error: "L'achat de packs est réservé aux comptes PRO." });
                     }
                     item.isBusiness = true;
                 } else {
-                    // 👤 RÈGLE PARTICULIER (Indépendant ou Salarié CE) [cite: 2026-02-12]
-                    // Limite stricte de 1 à 10 personnes maximum
-                    if (item.quantity < 1 || item.quantity > 10) {
-                        return res.status(400).json({
-                            error: "Pour les particuliers (y compris salariés), les réservations sont limitées de 1 à 10 personnes."
-                        });
-                    }
                     item.isBusiness = false;
                 }
 
-                item.price = ws.price;
+                // 2️⃣ RÉCUPÉRATION DES DONNÉES POUR STRIPE
+                item.price = hasInstitutionalAdvantage ? ws.priceInstitutional : ws.price;
+                item.name = ws.title;
+                // 🏺 Capture de la description et de l'image de l'atelier
+                item.description = ws.description;
+                item.image = ws.image;
+
             } else if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId } });
+                const vol = await prisma.productVolume.findUnique({
+                    where: { id: item.volumeId },
+                    include: { product: true }
+                });
                 if (!vol || vol.stock < item.quantity) {
-                    return res.status(400).json({ error: `Stock insuffisant pour le produit sélectionné.` });
+                    return res.status(400).json({ error: `Stock insuffisant.` });
                 }
+
+                // 🏺 Capture des données du produit (Bouteille)
+                item.price = vol.price;
+                item.name = `${vol.product.name} (${vol.size}${vol.unit})`;
+                item.description = vol.product.description;
+                item.image = vol.product.image;
+                item.isBusiness = false;
             }
         }
 
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
         const hasBusinessItem = items.some((i: any) => i.isBusiness);
 
-        // 🏺 CRÉATION DU DOSSIER DE VENTE
+        // 3️⃣ CRÉATION DU DOSSIER DE VENTE
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
-                // CORP pour les gros contrats, ORD pour les particuliers/salariés
                 reference: hasBusinessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
                 total: totalAmount,
                 status: 'EN_ATTENTE_PAIEMENT',
@@ -78,7 +78,6 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        // Les participants sont nominatifs uniquement pour les particuliers/salariés
                         participants: (item.workshopId && !item.isBusiness) ? {
                             create: item.participants?.map((p: any) => ({
                                 firstName: p.firstName,
@@ -92,6 +91,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         });
 
+        // 4️⃣ GÉNÉRATION DE LA SESSION STRIPE AVEC CONTENU DYNAMIQUE
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: items.map((item: any) => ({
@@ -100,9 +100,12 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                     unit_amount: Math.round(item.price * 100),
                     product_data: {
                         name: item.name,
+                        // 🏺 On utilise la description réelle de la DB + mention d'avantage si besoin
                         description: item.isBusiness
-                            ? `Pack de ${item.quantity} bons de formation vierges (PDF). Capacité max 15 pers/session. Contacter l'Atelier pour réserver.`
-                            : "Séance Particulier / Salarié - Inscription nominative"
+                            ? `Pack institutionnel - ${item.description}`
+                            : `${item.description}${hasInstitutionalAdvantage ? ' (Tarif privilégié appliqué)' : ''}`,
+                        // 🏺 On injecte l'image réelle pour Stripe Checkout
+                        images: item.image ? [item.image] : [],
                     },
                 },
                 quantity: item.quantity,
@@ -113,20 +116,18 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             customer_email: user.email,
             metadata: {
                 orderId: pendingOrder.id,
-                userId: userId,
-                isBusiness: hasBusinessItem ? "true" : "false"
+                userId: userId
             }
         });
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        console.error("❌ Erreur Session Checkout:", error);
-        res.status(500).json({ error: "Échec de l'initialisation du dossier de vente." });
+        res.status(500).json({ error: "Échec de l'initialisation du paiement." });
     }
 };
 
 /**
- * 🏺 Confirmation Technique et Archivage : Webhook
+ * 🏛️ Confirmation Technique et Archivage (Webhook Stripe)
  */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
@@ -159,7 +160,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
                 });
 
                 for (const item of order.items) {
-                    // Mise à jour des stocks pour les bouteilles
                     if (item.volumeId) {
                         await tx.productVolume.update({
                             where: { id: item.volumeId },
@@ -167,7 +167,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
-                    // Création du groupe de cohorte pour les comptes PRO
+                    // Création de la cohorte pour les achats Business (PRO)
                     if (item.workshop && order.isBusiness) {
                         await tx.companyGroup.create({
                             data: {

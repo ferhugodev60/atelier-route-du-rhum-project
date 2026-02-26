@@ -6,6 +6,7 @@ export interface Workshop {
     description: string;
     image: string;
     price: number;
+    priceInstitutional: number;
     format: string;
     availability?: string;
     quote?: string;

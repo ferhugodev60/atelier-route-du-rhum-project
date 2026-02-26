@@ -16,10 +16,10 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
             <div>
                 <header className="flex flex-col items-center mb-6 md:mb-12 text-center">
                     <h4 className="text-xl md:text-3xl font-serif text-rhum-cream leading-tight uppercase tracking-tight">
-                        Les ateliers Conception
+                        Le cursus Conception
                     </h4>
                     <span className="text-rhum-gold font-sans text-[9px] uppercase tracking-widest font-black opacity-60 mt-2">
-                        Par Étapes
+                        En 4 paliers techniques
                     </span>
                 </header>
 
@@ -44,7 +44,6 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
                                                 <span className="text-rhum-gold font-black text-base md:text-xl">{item.level}</span>
                                             )}
                                         </div>
-                                        {/* 🏺 Texte désormais parfaitement lisible même si verrouillé */}
                                         <span className={`text-rhum-cream text-base md:text-lg truncate font-medium transition-colors ${!isLocked ? 'group-hover:text-white' : 'opacity-80'}`}>
                                             {item.title.replace("(Séminaire)", "").trim()}
                                         </span>
@@ -70,7 +69,7 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
 
             <div className="mt-12 bg-rhum-gold/10 p-5 border border-rhum-gold/30 rounded-sm">
                 <p className="text-[9px] text-rhum-gold font-black uppercase tracking-[0.2em] leading-relaxed text-center">
-                    Progression obligatoire : le niveau précédent doit être validé
+                    Validation obligatoire du niveau précédent pour progresser
                 </p>
             </div>
         </article>

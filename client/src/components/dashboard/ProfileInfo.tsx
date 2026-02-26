@@ -18,11 +18,14 @@ export default function ProfileInfo() {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
+    // 🏺 Initialisation des données incluant le volet institutionnel
     const [formData, setFormData] = useState({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
         email: user?.email || "",
-        phone: user?.phone || ""
+        phone: user?.phone || "",
+        companyName: user?.companyName || "",
+        siret: user?.siret || ""
     });
 
     useEffect(() => {
@@ -31,7 +34,9 @@ export default function ProfileInfo() {
                 firstName: user.firstName,
                 lastName: user.lastName,
                 email: user.email,
-                phone: user.phone || ""
+                phone: user.phone || "",
+                companyName: user.companyName || "",
+                siret: user.siret || ""
             });
         }
     }, [user]);
@@ -40,6 +45,7 @@ export default function ProfileInfo() {
         setLoading(true);
         setStatus(null);
         try {
+            // Mise à jour du registre central
             const response = await api.patch('/users/me', formData);
             if (user && token) {
                 setAuth(response.data, token);
@@ -56,12 +62,17 @@ export default function ProfileInfo() {
         }
     };
 
+    // 🏺 Identification du type de compte pour l'affichage conditionnel
+    const hasInstitutionalProfile = user?.role === 'PRO' || user?.isEmployee;
+
     return (
         <div className="max-w-3xl font-sans">
             <header className="mb-16 flex justify-between items-end border-b border-rhum-gold/10 pb-8">
                 <div>
                     <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Dossier de membre</h2>
-                    <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] font-black mt-3 opacity-60">Identité certifiée au sein de l'établissement</p>
+                    <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] font-black mt-3 opacity-60">
+                        {user?.isEmployee ? "Bénéficiaire de Comité d'Entreprise" : "Identité certifiée au sein de l'établissement"}
+                    </p>
                 </div>
 
                 <button
@@ -80,7 +91,6 @@ export default function ProfileInfo() {
             </header>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-16 gap-x-20">
-                {/* 🏺 Identifiant immuable du Cursus */}
                 <ProfileField
                     label="Code Client"
                     value={user?.memberCode || "Non assigné"}
@@ -114,6 +124,26 @@ export default function ProfileInfo() {
                     onChange={(v) => setFormData({...formData, phone: v})}
                     placeholder="Ex: 06 00 00 00 00"
                 />
+
+                {/* 🏺 Volet Institutionnel : Affiché si PRO ou Salarié CE */}
+                {hasInstitutionalProfile && (
+                    <>
+                        <ProfileField
+                            label="Entreprise / CE"
+                            value={formData.companyName}
+                            isEditing={isEditing}
+                            onChange={(v) => setFormData({...formData, companyName: v})}
+                            placeholder="Nom de la structure"
+                        />
+                        <ProfileField
+                            label="Numéro SIRET"
+                            value={formData.siret}
+                            isEditing={isEditing}
+                            onChange={(v) => setFormData({...formData, siret: v})}
+                            placeholder="14 chiffres"
+                        />
+                    </>
+                )}
             </div>
 
             <AnimatePresence>

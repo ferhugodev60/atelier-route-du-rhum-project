@@ -41,7 +41,7 @@ export default function CustomerDashboard() {
                             </p>
 
                             <div className="flex flex-wrap items-center gap-8">
-                                {/* 🏺 AFFICHAGE DU CODE UNIQUE */}
+                                {/* 🏺 1. AFFICHAGE DU CODE UNIQUE */}
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Code client</span>
                                     <span className="bg-rhum-gold text-rhum-green px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-sm shadow-xl">
@@ -49,13 +49,27 @@ export default function CustomerDashboard() {
                                     </span>
                                 </div>
 
-                                {/* 🏺 VALIDATION DU CURSUS */}
+                                {/* 🏺 2. VALIDATION DU CURSUS */}
                                 <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
-                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Ateliers Conception</span>
+                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Atelier Conception</span>
                                     <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
                                         Niveau {user.conceptionLevel}
                                     </span>
                                 </div>
+
+                                {/* 🏺 3. RATTACHEMENT INSTITUTIONNEL (Nouveau) */}
+                                {(user.companyName || user.siret) && (
+                                    <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
+                                        <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">
+                                            {user.role === 'PRO' ? 'Gestionnaire CE' : 'Bénéficiaire Entreprise'}
+                                        </span>
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                                {user.companyName || "Établissement Partenaire"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </motion.div>
