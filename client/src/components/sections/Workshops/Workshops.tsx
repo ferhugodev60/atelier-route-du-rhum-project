@@ -70,16 +70,11 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold tracking-[0.4em] uppercase text-xs mb-3 md:mb-4 font-black">
-                        {isPro ? "Architecture Institutionnelle" : "Nos Séances & Boutique"}
+                        Nos Ateliers & Boutique
                     </h2>
                     <h3 className="text-4xl md:text-6xl font-serif text-[#0a1a14] uppercase">
                         Le Registre des Ateliers
                     </h3>
-                    {isPro && (
-                        <p className="text-[#0a1a14]/60 mt-4 italic font-serif">
-                            Ravi de vous revoir, {user?.companyName}. Vos tarifs privilèges sont appliqués.
-                        </p>
-                    )}
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-20 items-stretch">
