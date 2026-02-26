@@ -145,50 +145,64 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const { status } = req.body;
 
     try {
-        const order = await prisma.order.update({
+        // 1. On récupère la commande avec les ateliers et l'acheteur
+        const order = await prisma.order.findUnique({
             where: { id },
-            data: { status },
             include: {
                 items: {
                     include: {
                         workshop: true,
-                        participants: true
                     }
-                }
+                },
+                user: true // Vital pour identifier l'élève
             }
         });
 
+        if (!order) return res.status(404).json({ error: "Commande introuvable." });
+
+        // 2. Mise à jour de l'état dans le registre
+        const updatedOrder = await prisma.order.update({
+            where: { id },
+            data: { status },
+            include: { items: { include: { workshop: true } } }
+        });
+
+        // 3. Logique de déblocage technique lors de la FINALISATION
         if (status === 'FINALISÉ') {
-            const individualCodes = order.items
-                .filter(item => item.workshop !== null && !order.isBusiness)
-                .flatMap(item => item.participants.map(p => p.memberCode))
-                .filter((code): code is string => !!code);
+            for (const item of order.items) {
+                if (item.workshop) {
+                    const workshopLevel = item.workshop.level;
 
-            if (individualCodes.length > 0) {
-                await Promise.all([...new Set(individualCodes)].map(code =>
-                    prisma.user.update({
-                        where: { memberCode: code },
-                        data: { conceptionLevel: { increment: 1 } }
-                    })
-                ));
-            }
-
-            const businessItems = order.items.filter(item =>
-                item.workshop !== null && order.isBusiness && item.companyGroupId
-            );
-
-            if (businessItems.length > 0) {
-                await Promise.all(businessItems.map(item =>
-                    prisma.companyGroup.update({
-                        where: { id: item.companyGroupId! },
-                        data: { currentLevel: { increment: 1 } }
-                    })
-                ));
+                    if (order.isBusiness && item.companyGroupId) {
+                        // 🏢 CAS PRO : On met à jour le niveau du groupe
+                        await prisma.companyGroup.update({
+                            where: { id: item.companyGroupId },
+                            data: {
+                                currentLevel: {
+                                    set: workshopLevel // On scelle le niveau atteint
+                                }
+                            }
+                        });
+                    } else {
+                        // 👤 CAS PARTICULIER : On met à jour le passeport de l'acheteur
+                        // On ne débloque le niveau suivant que si l'élève vient de réussir
+                        // son niveau actuel ou un niveau supérieur
+                        if (workshopLevel >= order.user.conceptionLevel) {
+                            await prisma.user.update({
+                                where: { id: order.userId },
+                                data: {
+                                    conceptionLevel: workshopLevel // Le niveau de l'atelier devient le nouveau palier acquis
+                                }
+                            });
+                        }
+                    }
+                }
             }
         }
 
-        res.json(order);
+        res.json(updatedOrder);
     } catch (error) {
+        console.error("❌ Erreur Registre :", error);
         res.status(400).json({ error: "Échec de mise à jour logistique." });
     }
 };
