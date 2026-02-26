@@ -69,7 +69,7 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
 
     return (
         /* 🏺 Fond passé en blanc pour une clarté maximale */
-        <section id="workshops" className="py-16 md:py-32 bg-white px-4 md:px-6 overflow-hidden font-sans">
+        <section id="workshops" className="py-16 md:py-32 bg-rhum-cream px-4 md:px-6 overflow-hidden font-sans">
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold tracking-[0.4em] uppercase text-xs mb-3 md:mb-4 font-black">
