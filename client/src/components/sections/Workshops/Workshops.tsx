@@ -21,14 +21,13 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     const [loading, setLoading] = useState(true);
 
     const { user } = useAuthStore();
-
-    // 🏺 Détermination du profil institutionnel
     const isPro = user?.role === 'PRO';
 
     useEffect(() => {
         const fetchWorkshops = async () => {
             try {
-                const { data } = await api.get('/shop/workshops');
+                // 🏺 Extraction du catalogue consolidé
+                const { data } = await api.get('/workshops');
                 setWorkshops(data);
             } catch (err) {
                 console.error("Erreur lors de l'extraction du programme :", err);
@@ -39,10 +38,10 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
         fetchWorkshops();
     }, []);
 
-    const displayedWorkshops = useMemo(() => {
-        const targetType = isPro ? 'ENTREPRISE' : 'PARTICULIER';
-        return workshops.filter(w => w.type === targetType);
-    }, [workshops, isPro]);
+    // 🏺 CORRECTION : On ne filtre plus par type, on trie par palier technique
+    const sortedWorkshops = useMemo(() => {
+        return [...workshops].sort((a, b) => a.level - b.level);
+    }, [workshops]);
 
     const handleConfirmReservation = (data: any) => {
         onAddToCart({
@@ -51,15 +50,14 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             name: data.title || data.name,
             level: data.level,
             quantity: data.quantity,
-            isBusiness: data.isBusiness || isPro
+            isBusiness: isPro // Un compte PRO achète toujours en volume Business
         }, data.quantity);
         setReservationData(null);
     };
 
-    const discoveryWorkshop = displayedWorkshops.find(w => w.level === 0);
-    const conceptionWorkshops = displayedWorkshops
-        .filter(w => w.level > 0)
-        .sort((a, b) => a.level - b.level);
+    // 🏺 Répartition des paliers techniques
+    const discoveryWorkshop = sortedWorkshops.find(w => w.level === 0);
+    const conceptionWorkshops = sortedWorkshops.filter(w => w.level > 0);
 
     if (loading) return (
         <div className="py-20 text-center text-rhum-gold font-serif uppercase tracking-[0.3em] text-[10px] font-black">
@@ -68,20 +66,18 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
     );
 
     return (
-        /* 🏺 Fond passé en blanc pour une clarté maximale */
         <section id="workshops" className="py-16 md:py-32 bg-rhum-cream px-4 md:px-6 overflow-hidden font-sans">
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold tracking-[0.4em] uppercase text-xs mb-3 md:mb-4 font-black">
-                        {isPro ? "Offres entreprise" : "Nos Ateliers & Boutique"}
+                        {isPro ? "Architecture Institutionnelle" : "Nos Séances & Boutique"}
                     </h2>
-                    {/* 🏺 Titre passé en sombre pour le contraste sur fond blanc */}
-                    <h3 className="text-4xl md:text-6xl font-serif text-[#0a1a14]">
+                    <h3 className="text-4xl md:text-6xl font-serif text-[#0a1a14] uppercase">
                         Le Registre des Ateliers
                     </h3>
                     {isPro && (
-                        <p className="mt-6 text-rhum-gold/80 font-serif italic text-lg">
-                            Ravi de vous revoir, {user?.companyName}.
+                        <p className="text-[#0a1a14]/60 mt-4 italic font-serif">
+                            Ravi de vous revoir, {user?.companyName}. Vos tarifs privilèges sont appliqués.
                         </p>
                     )}
                 </header>

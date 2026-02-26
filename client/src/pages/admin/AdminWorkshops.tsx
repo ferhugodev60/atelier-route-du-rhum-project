@@ -8,19 +8,25 @@ export default function AdminWorkshops() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedWorkshop, setSelectedWorkshop] = useState<any>(null);
 
+    /**
+     * 🏺 Synchronisation avec le Registre
+     * Récupère les 5 paliers techniques consolidés.
+     */
     const fetchWorkshops = async () => {
         try {
             const res = await api.get('/workshops');
-            // On filtre pour ne garder que les 5 niveaux uniques (type PARTICULIER par défaut)
             setWorkshops(res.data);
         } catch (error) {
-            console.error("Erreur de synchronisation du registre technique");
+            console.error("Erreur de synchronisation du registre technique.");
         }
     };
 
     useEffect(() => { fetchWorkshops(); }, []);
 
-    // 🏺 Classement simple par niveau technique
+    /**
+     * 🏺 Ordonnancement du Cursus
+     * Classement automatique par palier de progression technique.
+     */
     const sortedWorkshops = useMemo(() => {
         return [...workshops].sort((a, b) => a.level - b.level);
     }, [workshops]);
@@ -29,7 +35,7 @@ export default function AdminWorkshops() {
         <div className="bg-[#050d0a] border border-white/5 p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between group hover:border-rhum-gold/30 transition-all duration-500 rounded-sm">
             <div className="flex items-center gap-10 flex-1">
                 <div className="flex flex-col items-center min-w-[80px]">
-                    <span className="text-rhum-gold font-serif text-2xl uppercase leading-none">Niveau</span>
+                    <span className="text-rhum-gold font-serif text-2xl uppercase leading-none">Palier</span>
                     <span className="text-rhum-gold font-serif text-5xl leading-none mt-2">{ws.level}</span>
                 </div>
                 <div className="h-16 w-px bg-white/5 hidden md:block" />
@@ -43,9 +49,9 @@ export default function AdminWorkshops() {
                         </p>
                         <span className="h-1 w-1 rounded-full bg-white/10" />
                         <p className="text-[10px] uppercase tracking-widest font-bold">
-                            <span className="text-white/40">Public :</span> <span className="text-white">{ws.price}€</span>
+                            <span className="text-white/40">Tarif Standard :</span> <span className="text-white">{ws.price}€</span>
                             <span className="mx-3 text-white/10">|</span>
-                            <span className="text-rhum-gold/60">Pro :</span> <span className="text-rhum-gold">{ws.priceInstitutional}€</span>
+                            <span className="text-rhum-gold/60">Privilège Pro :</span> <span className="text-rhum-gold">{ws.priceInstitutional}€</span>
                         </p>
                     </div>
                 </div>
@@ -56,7 +62,7 @@ export default function AdminWorkshops() {
                     className="flex items-center gap-3 px-6 py-3 bg-rhum-gold/5 text-rhum-gold text-[9px] uppercase tracking-widest font-black border border-rhum-gold/10 hover:bg-rhum-gold hover:text-rhum-green transition-all rounded-sm"
                 >
                     <Edit3 size={14} />
-                    Modifier
+                    Réviser la séance
                 </button>
             </div>
         </div>
@@ -67,7 +73,9 @@ export default function AdminWorkshops() {
             <header className="border-b border-rhum-gold/10 pb-8 flex justify-between items-end">
                 <div>
                     <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture du Cursus</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Registre consolidé (5 Niveaux • Double Tarification)</p>
+                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">
+                        Registre consolidé (5 Niveaux • Double Tarification Certifiée)
+                    </p>
                 </div>
             </header>
 
@@ -75,8 +83,10 @@ export default function AdminWorkshops() {
                 <header className="flex items-center gap-6 border-l-2 border-rhum-gold pl-6 mb-10">
                     <Layers className="text-rhum-gold/40" size={24} />
                     <div>
-                        <h3 className="text-white text-xl font-serif uppercase tracking-wider">Les Ateliers</h3>
-                        <p className="text-[9px] text-rhum-gold/60 uppercase tracking-widest font-bold mt-1">Contrôle des flux Particuliers et Institutionnels</p>
+                        <h3 className="text-white text-xl font-serif uppercase tracking-wider">Le Catalogue Maître</h3>
+                        <p className="text-[9px] text-rhum-gold/60 uppercase tracking-widest font-bold mt-1">
+                            Contrôle des flux Standard et Institutionnels
+                        </p>
                     </div>
                 </header>
 
