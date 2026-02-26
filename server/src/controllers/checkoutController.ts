@@ -20,16 +20,27 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
                 if (!ws) throw new Error("Séance de formation introuvable.");
 
-                // 🏺 NOUVELLE LOGIQUE GRANDS COMPTES
+                // 🏺 LOGIQUE DE SEGMENTATION DU REGISTRE
                 if (ws.type === "ENTREPRISE") {
-                    // Autorise désormais l'incrémentation libre à partir de 50
-                    if (item.quantity < 50) {
-                        return res.status(400).json({ error: "L'offre Grand Compte requiert un minimum de 50 participants." });
+                    // 🏢 RÈGLE PRO : Min 25, Paliers de 10
+                    if (item.quantity < 25) {
+                        return res.status(400).json({ error: "L'offre entreprise requiert un minimum de 25 places." });
                     }
+                    if ((item.quantity - 25) % 10 !== 0) {
+                        return res.status(400).json({ error: "Le volume de places professionnelles doit progresser par paliers de 10." });
+                    }
+                    item.isBusiness = true;
+                } else {
+                    // 👤 RÈGLE PARTICULIER : 1 à 10 personnes maximum
+                    if (item.quantity < 1 || item.quantity > 10) {
+                        return res.status(400).json({
+                            error: "Pour les particuliers, les réservations sont limitées de 1 à 10 personnes."
+                        });
+                    }
+                    item.isBusiness = false;
                 }
 
                 item.price = ws.price;
-                item.isBusiness = (ws.type === "ENTREPRISE");
             } else if (item.volumeId) {
                 const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId } });
                 if (!vol || vol.stock < item.quantity) {
@@ -39,29 +50,28 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         }
 
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
-        const businessItem = items.find((i: any) => i.isBusiness);
+        const hasBusinessItem = items.some((i: any) => i.isBusiness);
 
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
-                reference: businessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
+                reference: hasBusinessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
                 total: totalAmount,
                 status: 'EN_ATTENTE_PAIEMENT',
-                isBusiness: !!businessItem,
+                isBusiness: hasBusinessItem,
                 items: {
                     create: items.map((item: any) => ({
                         quantity: item.quantity,
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        companyGroupId: item.companyGroupId || null,
-                        participants: item.workshopId ? {
+                        // 🏺 Nominatif pour particuliers, vierge pour pros
+                        participants: (item.workshopId && !item.isBusiness) ? {
                             create: item.participants?.map((p: any) => ({
                                 firstName: p.firstName,
                                 lastName: p.lastName,
                                 phone: p.phone || "",
                                 email: p.email || "",
-                                memberCode: p.memberCode || null,
                             }))
                         } : undefined
                     }))
@@ -77,7 +87,9 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                     unit_amount: Math.round(item.price * 100),
                     product_data: {
                         name: item.name,
-                        description: item.isBusiness ? `Privatisation Grand Compte - ${item.quantity} pers.` : "Séance Particulier"
+                        description: item.isBusiness
+                            ? `Pack de ${item.quantity} bons de formation vierges (PDF). Capacité max 15 pers/session. Contacter l'Atelier pour réserver.`
+                            : "Séance Particulier - Inscription nominative"
                     },
                 },
                 quantity: item.quantity,
@@ -89,21 +101,17 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             metadata: {
                 orderId: pendingOrder.id,
                 userId: userId,
-                // 🏺 On stocke les noms des groupes sous forme de chaîne JSON pour le Webhook
-                groupNames: businessItem?.groupNames ? JSON.stringify(businessItem.groupNames) : ""
+                isBusiness: hasBusinessItem ? "true" : "false"
             }
         });
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        console.error("Erreur Checkout Session:", error);
+        console.error("❌ Erreur Session Checkout:", error);
         res.status(500).json({ error: "Échec de l'initialisation du dossier de vente." });
     }
 };
 
-/**
- * 🏺 GESTION DU WEBHOOK : Décomposition en paquets de 25
- */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
@@ -117,7 +125,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const orderId = session.metadata?.orderId;
-        const groupNames = session.metadata?.groupNames ? JSON.parse(session.metadata.groupNames) : [];
 
         try {
             await prisma.$transaction(async (tx) => {
@@ -125,7 +132,13 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     where: { id: orderId },
                     data: { status: "PAYÉ" },
                     include: {
-                        items: { include: { workshop: true, participants: true } },
+                        items: {
+                            include: {
+                                workshop: true,
+                                // 🏺 Inclusion nécessaire pour le nom des bouteilles dans l'e-mail
+                                volume: { include: { product: true } }
+                            }
+                        },
                         user: true
                     }
                 });
@@ -138,42 +151,28 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
-                    // 🏺 DÉCOMPOSITION AUTOMATIQUE DES COHORTES
                     if (item.workshop && order.isBusiness) {
-                        const allParticipants = item.participants;
-
-                        // On découpe les participants en paquets de 25
-                        for (let i = 0; i < allParticipants.length; i += 25) {
-                            const chunk = allParticipants.slice(i, i + 25);
-                            const packetIndex = Math.floor(i / 25);
-                            const groupName = groupNames[packetIndex] || `Cohorte ${order.reference} - ${packetIndex + 1}`;
-
-                            // Création d'une CompanyGroup pour chaque paquet de 25
-                            const newGroup = await tx.companyGroup.create({
-                                data: {
-                                    name: groupName,
-                                    ownerId: order.userId,
-                                    currentLevel: item.workshop.level,
-                                }
-                            });
-
-                            // On lie physiquement ces 25 participants à ce nouveau groupe
-                            await tx.participant.updateMany({
-                                where: { id: { in: chunk.map(p => p.id) } },
-                                data: { companyGroupId: newGroup.id }
-                            });
-                        }
+                        await tx.companyGroup.create({
+                            data: {
+                                name: `Contrat ${order.reference} - ${item.quantity} places`,
+                                ownerId: order.userId,
+                                currentLevel: item.workshop.level,
+                            }
+                        });
                     }
                 }
 
                 if (order.user) {
                     await sendOrderConfirmationEmail(order.user.email, {
-                        reference: order.reference, total: order.total, items: order.items
+                        reference: order.reference,
+                        total: order.total,
+                        items: order.items,
+                        isBusiness: order.isBusiness
                     });
                 }
             });
         } catch (error: any) {
-            console.error("Erreur Webhook traitement:", error.message);
+            console.error("❌ Erreur Webhook:", error.message);
         }
     }
     res.json({ received: true });

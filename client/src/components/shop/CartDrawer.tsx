@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance.ts';
-import { Trash2, Briefcase, Users } from 'lucide-react';
+import { Trash2, Briefcase, Users, Info } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 
 interface CartItem {
@@ -14,8 +14,6 @@ interface CartItem {
     volumeId?: string;
     level?: number;
     isBusiness?: boolean;
-    groupNames?: string[]; // 🏺 Tableau des noms des sous-groupes de 25
-    companyGroupId?: string;
     participants?: { firstName: string; lastName: string; phone: string; email: string }[];
 }
 
@@ -34,7 +32,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
     const isPro = user?.role === 'PRO';
 
-    // 🏺 Calcul du total basé sur l'effectif exact
     const total = useMemo(() => {
         return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
     }, [items]);
@@ -45,7 +42,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
         setOrderError(null);
 
         try {
-            // 🏺 Transmission du dossier complet au registre central
+            // 🏺 Transmission simplifiée : On envoie le volume et la nature de l'achat
             const response = await api.post('/checkout/create-session', {
                 items: items.map(item => ({
                     workshopId: item.workshopId,
@@ -54,19 +51,15 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                     price: item.price,
                     quantity: item.quantity,
                     isBusiness: item.isBusiness,
-                    groupNames: item.groupNames, // 🏺 Liste des noms de cohortes
-                    companyGroupId: item.companyGroupId,
-                    participants: item.participants
+                    // 👤 Les participants ne sont envoyés que pour les particuliers
+                    participants: !item.isBusiness ? item.participants : []
                 }))
             });
 
             if (response.data.url) {
                 window.location.href = response.data.url;
-            } else {
-                throw new Error("Échec de la passerelle de paiement.");
             }
         } catch (error: any) {
-            // 🏺 Capture et clarification des erreurs de cohorte
             const errorMsg = error.response?.data?.error || "Erreur lors de la validation du registre.";
             setOrderError(errorMsg);
         } finally {
@@ -110,7 +103,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1 pr-4">
                                                         <span className="text-[7px] uppercase tracking-[0.4em] text-rhum-gold/60 mb-1 block font-black italic">
-                                                            {item.isBusiness ? 'CONTRAT PROFESSIONNEL' : 'SÉLECTION INDIVIDUELLE'}
+                                                            {item.isBusiness ? 'CONTRAT PROFESSIONNEL (25+)' : 'SÉLECTION INDIVIDUELLE (1-10)'}
                                                         </span>
                                                         <h4 className="text-white font-serif text-lg leading-tight uppercase tracking-tighter">
                                                             {item.name}
@@ -121,23 +114,22 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                     </button>
                                                 </div>
 
-                                                {/* 🏺 Affichage des groupes pour les Pros */}
-                                                {item.isBusiness && item.groupNames && (
-                                                    <div className="mt-2 flex flex-wrap gap-1">
-                                                        {item.groupNames.map((gn, idx) => (
-                                                            <span key={idx} className="text-[6px] px-1.5 py-0.5 bg-white/5 border border-rhum-gold/20 text-rhum-gold uppercase font-black rounded-full">
-                                                                {gn}
-                                                            </span>
-                                                        ))}
-                                                    </div>
-                                                )}
-
                                                 <p className="text-rhum-gold/60 text-[9px] uppercase tracking-[0.2em] mt-3 font-bold italic flex items-center gap-2">
                                                     <Users size={12} className="opacity-40" />
-                                                    {item.quantity} Participants au total
+                                                    {item.quantity} {item.isBusiness ? 'Bons vierges commandés' : 'Participants inscrits'}
                                                 </p>
+
+                                                {/* 🏺 Rappel logistique pour les Pros */}
+                                                {item.isBusiness && (
+                                                    <div className="mt-3 p-2 bg-white/5 border border-rhum-gold/10 rounded-sm flex gap-2 items-start">
+                                                        <Info size={10} className="text-rhum-gold mt-0.5 flex-shrink-0" />
+                                                        <p className="text-[7px] text-white/40 leading-relaxed uppercase font-black">
+                                                            Capacité max : 15 pers / session. Contactez l'Atelier après achat.
+                                                        </p>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <p className="text-white/40 font-serif italic text-sm">
+                                            <p className="text-white/40 font-serif italic text-sm mt-2">
                                                 {(item.price * item.quantity).toLocaleString('fr-FR')} €
                                             </p>
                                         </div>
@@ -161,7 +153,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         {hasAcceptedTerms && <span className="text-[10px] text-rhum-green font-black">✓</span>}
                                     </div>
                                     <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] leading-none pointer-events-none group-hover:text-white/60 transition-colors">
-                                        J'accepte les <span className="text-rhum-gold underline">Conditions de Vente</span>
+                                        J'accepte les <span className="text-rhum-gold underline font-black">Conditions du Registre</span>
                                     </label>
                                 </div>
 
