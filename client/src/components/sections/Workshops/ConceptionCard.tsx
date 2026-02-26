@@ -58,7 +58,7 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
                                             : 'text-rhum-gold border-rhum-gold/30 hover:bg-rhum-gold hover:text-rhum-green cursor-pointer'
                                         }`}
                                     >
-                                        {isLocked ? 'Verrouillé' : 'Détails'}
+                                        {isLocked ? 'Verrouillé' : 'Réserver'}
                                     </button>
                                 </li>
                             );

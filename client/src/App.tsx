@@ -15,6 +15,7 @@ import AdminCategories from "./pages/admin/AdminCategories.tsx";
 import AdminWorkshops from "./pages/admin/AdminWorkshops.tsx";
 import AdminCustomers from "./pages/admin/AdminCustomers.tsx";
 import AdminOrders from "./pages/admin/AdminOrders.tsx";
+import NotFound from "./pages/NotFound.tsx";
 
 // --- Imports Admin (Lazy Loading) ---
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -85,6 +86,7 @@ export default function App() {
                             <Route path="customers" element={<AdminCustomers />} />
                             <Route path="orders" element={<AdminOrders />} />
                         </Route>
+                        <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Suspense>
 
