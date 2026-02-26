@@ -11,7 +11,19 @@ interface AuthRequest extends Request {
 
 type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
-        user: { select: { id: true, firstName: true, lastName: true, email: true, phone: true, memberCode: true, companyName: true, siret: true } },
+        user: {
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                phone: true,
+                memberCode: true,
+                companyName: true,
+                siret: true,
+                isEmployee: true
+            }
+        },
         items: {
             include: {
                 workshop: true,
@@ -23,18 +35,39 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
     };
 }>;
 
-// --- 🏺 Extraction du Registre des Commandes ---
+/**
+ * 🏺 Extraction du Registre des Commandes
+ */
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
-    if (!userId) return res.status(401).json({ error: "Identification requise." });
+
+    if (!userId) {
+        return res.status(401).json({ error: "Identification requise." });
+    }
 
     try {
         const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
-                user: { select: { firstName: true, lastName: true, email: true, memberCode: true, companyName: true } },
-                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
+                user: {
+                    select: {
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        memberCode: true,
+                        companyName: true,
+                        isEmployee: true
+                    }
+                },
+                items: {
+                    include: {
+                        workshop: true,
+                        volume: { include: { product: true } },
+                        participants: true,
+                        companyGroup: true
+                    }
+                }
             },
             orderBy: { createdAt: 'desc' }
         }) as OrderWithRelations[];
@@ -48,18 +81,27 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             user: order.user,
             isBusiness: order.isBusiness,
             items: order.items.map(item => ({
-                name: item.workshop ? `Séance : ${item.workshop.title}` : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
+                name: item.workshop
+                    ? `Séance : ${item.workshop.title}`
+                    : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
                 groupName: item.companyGroup?.name || null,
-                participants: item.participants.map(p => p.memberCode ? `${p.firstName} ${p.lastName} (${p.memberCode})` : `${p.firstName} ${p.lastName}`)
+                participants: item.participants.map(p =>
+                    p.memberCode ? `${p.firstName} ${p.lastName} (${p.memberCode})` : `${p.firstName} ${p.lastName}`
+                )
             }))
         }));
+
         res.status(200).json(formattedOrders);
-    } catch (error) { res.status(500).json({ error: "Erreur de lecture du registre." }); }
+    } catch (error) {
+        res.status(500).json({ error: "Erreur de lecture du registre." });
+    }
 };
 
-// --- 🏺 Détails d'un Dossier de Vente ---
+/**
+ * 🏺 Détails d'un Dossier de Vente
+ */
 export const getOrderDetails = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const userId = req.user?.userId;
@@ -70,17 +112,34 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
             where: { id },
             include: {
                 user: true,
-                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
+                items: {
+                    include: {
+                        workshop: true,
+                        volume: { include: { product: true } },
+                        participants: true,
+                        companyGroup: true
+                    }
+                }
             }
         }) as OrderWithRelations | null;
 
-        if (!order) return res.status(404).json({ error: "Document introuvable." });
-        if (!isAdmin && order.userId !== userId) return res.status(403).json({ error: "Accès refusé." });
+        if (!order) {
+            return res.status(404).json({ error: "Document introuvable." });
+        }
+
+        if (!isAdmin && order.userId !== userId) {
+            return res.status(403).json({ error: "Accès refusé." });
+        }
+
         res.json(order);
-    } catch (error) { res.status(500).json({ error: "Erreur d'extraction." }); }
+    } catch (error) {
+        res.status(500).json({ error: "Erreur d'extraction." });
+    }
 };
 
-// --- 🏺 Mise à jour du Statut ---
+/**
+ * 🏺 Mise à jour du Statut et Promotion Technique
+ */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
@@ -89,7 +148,14 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
         const order = await prisma.order.update({
             where: { id },
             data: { status },
-            include: { items: { include: { workshop: true, participants: true } } }
+            include: {
+                items: {
+                    include: {
+                        workshop: true,
+                        participants: true
+                    }
+                }
+            }
         });
 
         if (status === 'FINALISÉ') {
@@ -100,23 +166,35 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 
             if (individualCodes.length > 0) {
                 await Promise.all([...new Set(individualCodes)].map(code =>
-                    prisma.user.update({ where: { memberCode: code }, data: { conceptionLevel: { increment: 1 } } })
+                    prisma.user.update({
+                        where: { memberCode: code },
+                        data: { conceptionLevel: { increment: 1 } }
+                    })
                 ));
             }
 
-            const businessItems = order.items.filter(item => item.workshop !== null && order.isBusiness && item.companyGroupId);
+            const businessItems = order.items.filter(item =>
+                item.workshop !== null && order.isBusiness && item.companyGroupId
+            );
+
             if (businessItems.length > 0) {
                 await Promise.all(businessItems.map(item =>
-                    prisma.companyGroup.update({ where: { id: item.companyGroupId! }, data: { currentLevel: { increment: 1 } } })
+                    prisma.companyGroup.update({
+                        where: { id: item.companyGroupId! },
+                        data: { currentLevel: { increment: 1 } }
+                    })
                 ));
             }
         }
+
         res.json(order);
-    } catch (error) { res.status(400).json({ error: "Échec de mise à jour logistique." }); }
+    } catch (error) {
+        res.status(400).json({ error: "Échec de mise à jour logistique." });
+    }
 };
 
 /**
- * 🏺 Génération du Certificat / Billetterie (Version Pro Enrichie)
+ * 🏺 Génération du Certificat / Billetterie
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
@@ -127,11 +205,20 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             where: { id: orderId, userId: userId },
             include: {
                 user: true,
-                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
+                items: {
+                    include: {
+                        workshop: true,
+                        volume: { include: { product: true } },
+                        participants: true,
+                        companyGroup: true
+                    }
+                }
             }
         }) as OrderWithRelations | null;
 
-        if (!order) return res.status(404).json({ error: "Dossier introuvable." });
+        if (!order) {
+            return res.status(404).json({ error: "Dossier introuvable." });
+        }
 
         const workshopItems = order.items.filter(i => i.workshop);
         const bottleItems = order.items.filter(i => i.volume);
@@ -193,12 +280,11 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                         doc.moveDown(1.5);
                     });
 
-                    // 🏺 Zone Signature & Cachet (Plus d'espace disponible en dessous)
                     doc.moveDown(2);
                     doc.fontSize(9).font('Helvetica-Bold').fillColor('#D4AF37').text("SIGNATURE DU BÉNÉFICIAIRE / CACHET CE :", margin + 30);
                     doc.rect(margin + 30, doc.y + 10, contentWidth - 60, 60).strokeColor('#EEEEEE').lineWidth(0.5).stroke();
 
-                    // 🏺 Encart RÉSERVATION - BAISSÉ À 635
+                    // 🏺 Encart RÉSERVATION - AJOUT DU NUMÉRO
                     const boxTop = 635;
                     doc.rect(margin + 20, boxTop, contentWidth - 40, 120).strokeColor('#D4AF37').lineWidth(1).stroke();
 
@@ -215,14 +301,21 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                             lineGap: 2
                         });
 
-                    // 🏺 Mention de caducité calée en bas de page
                     doc.fontSize(9).font('Helvetica-Bold').fillColor('#FF0000')
                         .text("POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE LA CARTE CADEAU SERA CADUC.", margin, 785, { width: contentWidth, align: 'center' });
                 }
             } else {
                 // 👤 SCÉNARIO PARTICULIER
                 doc.addPage();
-                doc.fontSize(8).font('Helvetica').fillColor('#999999').text(`Réf : ${order.reference} | Émis le : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`, margin, 40);
+
+                doc.fontSize(7).font('Helvetica').fillColor('#999999');
+                doc.text(`Réf : ${order.reference} | Émis le : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`, margin, 35);
+
+                // 🏺 Ajout Employeur pour Salarié CE
+                if (order.user.isEmployee) {
+                    doc.text(`BÉNÉFICIAIRE CE : ${order.user.companyName} | SIRET : ${order.user.siret}`, margin, 45);
+                }
+
                 doc.text(wsTitle, margin, 40, { width: contentWidth, align: 'right' });
                 if (fileExists) {
                     try { doc.image(logoPath, (pageWidth - 140) / 2, 85, { width: 140 }); } catch(e) {}
@@ -251,55 +344,36 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                 });
 
                 const boxTop = 580;
-                const boxHeight = 120;
+                doc.rect(margin + 20, boxTop, contentWidth - 40, 120).strokeColor('#D4AF37').lineWidth(1).stroke();
 
-                doc.rect(margin + 20, boxTop, contentWidth - 40, boxHeight)
-                    .strokeColor('#D4AF37')
-                    .lineWidth(1)
-                    .stroke();
+                doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000')
+                    .text("PLANIFICATION DE L'ATELIER SUR RENDEZ-VOUS", margin, boxTop + 15, { width: contentWidth, align: 'center' });
 
-                doc.fontSize(10)
-                    .font('Helvetica-Bold')
-                    .fillColor('#000000')
-                    .text("PLANIFICATION DE L'ATELIER SUR RENDEZ-VOUS", margin, boxTop + 15, {
-                        width: contentWidth,
-                        align: 'center'
+                doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37')
+                    .text("06 41 42 00 28", margin, boxTop + 40, { width: contentWidth, align: 'center' });
+
+                doc.fontSize(8).font('Helvetica').fillColor('#000000')
+                    .text("Veuillez contacter l'Établissement pour convenir d'un créneau pour votre atelier. Munissez-vous de ce document et d'une pièce d'identité.", margin + 40, boxTop + 85, {
+                        width: contentWidth - 80,
+                        align: 'center',
+                        lineGap: 2
                     });
-
-                doc.fontSize(22)
-                    .font('Helvetica-Bold')
-                    .fillColor('#D4AF37')
-                    .text("06 41 42 00 28", margin, boxTop + 40, {
-                        width: contentWidth,
-                        align: 'center'
-                    });
-
-                doc.fontSize(8)
-                    .font('Helvetica')
-                    .fillColor('#000000')
-                    .text(
-                        "Veuillez contacter l'Établissement pour convenir d'un créneau pour votre atelier. Munissez-vous de ce document et d'une pièce d'identité.",
-                        margin + 40,
-                        boxTop + 85,
-                        {
-                            width: contentWidth - 80,
-                            align: 'center',
-                            lineGap: 2
-                        }
-                    );
 
                 doc.fontSize(9).font('Helvetica-Bold').fillColor('#FF0000').text("POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE, LA CARTE CADEAU SERA CADUC.", margin, 780, { width: contentWidth, align: 'center' });
             }
         });
 
         if (bottleItems.length > 0) {
+            // 🍷 SECTION DOTATIONS
             doc.addPage();
 
-            // Métadonnées Header
             doc.fontSize(7).font('Helvetica').fillColor('#999999');
             doc.text(`RÉF COMMANDE : ${order.reference}`, margin, 35);
             doc.text(`DATE D'ÉMISSION : ${new Date(order.createdAt).toLocaleDateString('fr-FR')}`, margin, 45);
-            if (order.isBusiness) doc.text(`SIRET CLIENT : ${order.user.siret || 'Non renseigné'}`, margin, 55);
+
+            if (order.user.isEmployee) {
+                doc.text(`ACHETEUR BÉNÉFICIAIRE : ${order.user.companyName}`, margin, 55);
+            }
 
             if (fileExists) {
                 try { doc.image(logoPath, (pageWidth - 140) / 2, 85, { width: 140 }); } catch(e) {}
@@ -314,8 +388,8 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             doc.moveDown(1);
             doc.fillColor('#000000');
 
-            const identity = order.isBusiness
-                ? `${order.user.companyName} (Responsable : ${order.user.firstName} ${order.user.lastName})`
+            const identity = order.user.isEmployee
+                ? `${order.user.firstName} ${order.user.lastName} (Entreprise : ${order.user.companyName})`
                 : `${order.user.firstName} ${order.user.lastName}`;
 
             doc.fontSize(10).font('Helvetica-Bold').text(identity, margin + 15);
@@ -336,48 +410,22 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             });
 
             const boxTop = 580;
-            const boxHeight = 120;
+            doc.rect(margin + 20, boxTop, contentWidth - 40, 120).strokeColor('#D4AF37').lineWidth(1).stroke();
 
-            doc.rect(margin + 20, boxTop, contentWidth - 40, boxHeight)
-                .strokeColor('#D4AF37')
-                .lineWidth(1)
-                .stroke();
+            doc.fontSize(10).font('Helvetica-Bold').fillColor('#000000').text("RETRAIT SUR RENDEZ-VOUS", margin, boxTop + 15, { width: contentWidth, align: 'center' });
 
-            doc.fontSize(10)
-                .font('Helvetica-Bold')
-                .fillColor('#000000')
-                .text("RETRAIT SUR RENDEZ-VOUS", margin, boxTop + 15, {
-                    width: contentWidth,
-                    align: 'center'
-                });
+            doc.fontSize(22).font('Helvetica-Bold').fillColor('#D4AF37').text("06 41 42 00 28", margin, boxTop + 40, { width: contentWidth, align: 'center' });
 
-            doc.fontSize(22)
-                .font('Helvetica-Bold')
-                .fillColor('#D4AF37')
-                .text("06 41 42 00 28", margin, boxTop + 40, {
-                    width: contentWidth,
-                    align: 'center'
-                });
-
-            doc.fontSize(8)
-                .font('Helvetica')
-                .fillColor('#000000')
-                .text(
-                    "Veuillez contacter l'Établissement pour convenir d'un créneau de récupération de vos produits. Munissez-vous de ce document et d'une pièce d'identité.",
-                    margin + 40,
-                    boxTop + 85,
-                    {
-                        width: contentWidth - 80,
-                        align: 'center',
-                        lineGap: 2
-                    }
-                );
+            doc.fontSize(8).font('Helvetica').fillColor('#000000').text("Veuillez contacter l'Établissement pour convenir d'un créneau de récupération de vos produits. Munissez-vous de ce document et d'une pièce d'identité.", margin + 40, boxTop + 85, { width: contentWidth - 80, align: 'center', lineGap: 2 });
         }
 
         doc.end();
     } catch (error) {
-        if (!res.headersSent) res.status(500).json({ error: "Échec technique du registre PDF." });
-        else res.end();
+        if (!res.headersSent) {
+            res.status(500).json({ error: "Échec technique du registre PDF." });
+        } else {
+            res.end();
+        }
     }
 };
 

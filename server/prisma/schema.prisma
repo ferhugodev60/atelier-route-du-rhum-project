@@ -19,17 +19,18 @@ model User {
 
   // 🏺 Statut Institutionnel
   role       String  @default("USER") // "USER", "PRO", "ADMIN"
+  isEmployee Boolean @default(false) // 🏺 Nouveau : Identifie le particulier rattaché à un CE
   memberCode String? @unique
 
   // 🏺 Attributs Professionnels (CE)
   companyName String?
-  siret       String? @unique
+  siret       String? // 🏺 @unique retiré pour permettre le rattachement de plusieurs salariés
 
   conceptionLevel Int      @default(0)
   createdAt       DateTime @default(now())
 
   orders      Order[]
-  ownedGroups CompanyGroup[] // Groupes gérés par ce compte pro
+  ownedGroups CompanyGroup[] // Groupes gérés par ce compte pro (PRO uniquement)
 }
 
 model Category {
@@ -79,16 +80,16 @@ model Workshop {
   @@unique([level, type])
 }
 
-// 🏺 Unité de progression certifiée (25 personnes)
 model CompanyGroup {
   id           String @id @default(cuid())
-  name         String // Ex: "Direction Commerciale" ou "Logistique"
+  name         String
   currentLevel Int    @default(0)
+  totalSlots   Int    @default(25) // 🏺 Suivi du volume initial (25, 35...)
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
 
-  participants Participant[] // Les membres rattachés à cette cohorte
+  participants Participant[]
   orderItems   OrderItem[]
   createdAt    DateTime      @default(now())
 }
@@ -114,8 +115,6 @@ model OrderItem {
 
   participants Participant[]
 
-  // 🏺 Stockage des noms de cohortes avant création officielle
-  // Contiendra un tableau JSON : ["Groupe A", "Groupe B", ...]
   groupNames String?
 
   companyGroupId String?
@@ -137,7 +136,6 @@ model Participant {
   memberCode String?
   userId     String?
 
-  // 🏺 Rattachement à une cohorte fixe
   companyGroupId String?
   companyGroup   CompanyGroup? @relation(fields: [companyGroupId], references: [id])
 

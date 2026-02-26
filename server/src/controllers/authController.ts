@@ -4,38 +4,26 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
-/**
- * 🏺 Génération du Code Passeport Membre
- * Format institutionnel : RR-26-XXXX [cite: 2026-02-12]
- */
 const generateMemberCode = () => {
     const year = "26";
     const random = crypto.randomBytes(2).toString('hex').toUpperCase();
     return `RR-${year}-${random}`;
 };
 
-/**
- * 🏺 Enregistrement au Registre
- * Gestion hybride : Particulier ou Professionnel (CE)
- */
 export const register = async (req: Request, res: Response) => {
     try {
-        const { email, password, firstName, lastName, phone, companyName, siret } = req.body;
+        const { email, password, firstName, lastName, phone, companyName, siret, isEmployee } = req.body;
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) return res.status(400).json({ error: "Cet email est déjà répertorié." });
-
-        // 🏺 Validation du SIRET si profil Entreprise
-        if (siret) {
-            const existingSiret = await prisma.user.findUnique({ where: { siret } });
-            if (existingSiret) return res.status(400).json({ error: "Ce numéro SIRET est déjà associé à un compte." });
-        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const memberCode = generateMemberCode();
 
         // 🏺 Détermination du statut institutionnel
-        const role = (companyName && siret) ? "PRO" : "USER";
+        // PRO : Gestionnaire de CE (isEmployee est false mais infos société présentes)
+        // USER : Particulier indépendant OU Salarié rattaché (isEmployee est true)
+        const role = (companyName && siret && !isEmployee) ? "PRO" : "USER";
 
         const user = await prisma.user.create({
             data: {
@@ -46,6 +34,7 @@ export const register = async (req: Request, res: Response) => {
                 lastName,
                 phone,
                 role,
+                isEmployee: !!isEmployee, // 🏺 Stockage du statut bénéficiaire
                 companyName: companyName || null,
                 siret: siret || null,
                 conceptionLevel: 0
@@ -62,9 +51,6 @@ export const register = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * 🏺 Authentification & Ouverture de Session
- */
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
@@ -87,6 +73,7 @@ export const login = async (req: Request, res: Response) => {
                     email: user.email,
                     phone: user.phone,
                     role: user.role,
+                    isEmployee: user.isEmployee, // 🏺 Inclus pour le frontend
                     companyName: user.companyName,
                     siret: user.siret,
                     conceptionLevel: user.conceptionLevel
@@ -99,31 +86,18 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-/**
- * 🏺 Mise à jour du secret de connexion
- */
 export const changePassword = async (req: Request, res: Response) => {
-    // @ts-ignore - Injecté par le middleware d'authentification
+    // @ts-ignore
     const userId = req.user?.userId;
     const { currentPassword, newPassword } = req.body;
-
     if (!userId) return res.status(401).json({ error: "Session non identifiée." });
-
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier introuvable." });
-
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ error: "Le secret actuel est erroné." });
-
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await prisma.user.update({
-            where: { id: userId },
-            data: { password: hashedPassword }
-        });
-
+        await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword } });
         return res.status(200).json({ message: "Le secret a été mis à jour avec succès." });
-    } catch (error: any) {
-        return res.status(500).json({ error: "Échec technique du changement de secret." });
-    }
+    } catch (error: any) { return res.status(500).json({ error: "Échec technique du changement de secret." }); }
 };

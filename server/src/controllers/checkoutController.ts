@@ -5,6 +5,10 @@ import { sendOrderConfirmationEmail } from '../services/emailService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
+/**
+ * 🏺 Initialisation de la Session de Paiement
+ * Gère les quotas Particuliers (1-10) et Pros (25+) [cite: 2026-02-12]
+ */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
     const { items } = req.body;
@@ -22,19 +26,26 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
                 // 🏺 LOGIQUE DE SEGMENTATION DU REGISTRE
                 if (ws.type === "ENTREPRISE") {
-                    // 🏢 RÈGLE PRO : Min 25, Paliers de 10
+                    // 🏢 RÈGLE PRO : Réservée aux comptes "PRO" (Gestionnaires CE)
+                    if (user.role !== "PRO") {
+                        return res.status(403).json({ error: "L'offre entreprise est réservée aux comptes gestionnaires de CE." });
+                    }
+
+                    // Validation du seuil minimal (25 places)
                     if (item.quantity < 25) {
                         return res.status(400).json({ error: "L'offre entreprise requiert un minimum de 25 places." });
                     }
+                    // Validation des paliers de 10 (25, 35, 45, etc.)
                     if ((item.quantity - 25) % 10 !== 0) {
                         return res.status(400).json({ error: "Le volume de places professionnelles doit progresser par paliers de 10." });
                     }
                     item.isBusiness = true;
                 } else {
-                    // 👤 RÈGLE PARTICULIER : 1 à 10 personnes maximum
+                    // 👤 RÈGLE PARTICULIER (Indépendant ou Salarié CE) [cite: 2026-02-12]
+                    // Limite stricte de 1 à 10 personnes maximum
                     if (item.quantity < 1 || item.quantity > 10) {
                         return res.status(400).json({
-                            error: "Pour les particuliers, les réservations sont limitées de 1 à 10 personnes."
+                            error: "Pour les particuliers (y compris salariés), les réservations sont limitées de 1 à 10 personnes."
                         });
                     }
                     item.isBusiness = false;
@@ -52,9 +63,11 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
         const hasBusinessItem = items.some((i: any) => i.isBusiness);
 
+        // 🏺 CRÉATION DU DOSSIER DE VENTE
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
+                // CORP pour les gros contrats, ORD pour les particuliers/salariés
                 reference: hasBusinessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
                 total: totalAmount,
                 status: 'EN_ATTENTE_PAIEMENT',
@@ -65,7 +78,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        // 🏺 Nominatif pour particuliers, vierge pour pros
+                        // Les participants sont nominatifs uniquement pour les particuliers/salariés
                         participants: (item.workshopId && !item.isBusiness) ? {
                             create: item.participants?.map((p: any) => ({
                                 firstName: p.firstName,
@@ -89,7 +102,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         name: item.name,
                         description: item.isBusiness
                             ? `Pack de ${item.quantity} bons de formation vierges (PDF). Capacité max 15 pers/session. Contacter l'Atelier pour réserver.`
-                            : "Séance Particulier - Inscription nominative"
+                            : "Séance Particulier / Salarié - Inscription nominative"
                     },
                 },
                 quantity: item.quantity,
@@ -112,6 +125,9 @@ export const createCheckoutSession = async (req: any, res: Response) => {
     }
 };
 
+/**
+ * 🏺 Confirmation Technique et Archivage : Webhook
+ */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
@@ -135,7 +151,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         items: {
                             include: {
                                 workshop: true,
-                                // 🏺 Inclusion nécessaire pour le nom des bouteilles dans l'e-mail
                                 volume: { include: { product: true } }
                             }
                         },
@@ -144,6 +159,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                 });
 
                 for (const item of order.items) {
+                    // Mise à jour des stocks pour les bouteilles
                     if (item.volumeId) {
                         await tx.productVolume.update({
                             where: { id: item.volumeId },
@@ -151,6 +167,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
+                    // Création du groupe de cohorte pour les comptes PRO
                     if (item.workshop && order.isBusiness) {
                         await tx.companyGroup.create({
                             data: {
