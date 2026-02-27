@@ -86,7 +86,7 @@ export const deleteWorkshop = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
         await prisma.workshop.delete({ where: { id } });
-        res.json({ message: "La formation a été retirée du catalogue." });
+        res.json({ message: "L'atelier a été retirée du catalogue." });
     } catch (error) {
         res.status(400).json({ error: "Suppression impossible : des commandes y sont rattachées." });
     }

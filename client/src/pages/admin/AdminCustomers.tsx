@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search, Mail, Phone, User, Fingerprint, Briefcase, Building2 } from 'lucide-react';
+import { Search, Mail, Phone, Fingerprint, Building2, Loader2 } from 'lucide-react';
 import CustomerDetailsModal from '../../components/admin/CustomerDetailsModal';
 import AdminPagination from '../../components/admin/AdminPagination';
 import { useToastStore } from '../../store/toastStore';
@@ -8,8 +8,8 @@ import { useToastStore } from '../../store/toastStore';
 export default function AdminCustomers() {
     const [customers, setCustomers] = useState<any[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [filterRole, setFilterRole] = useState<'ALL' | 'USER' | 'PRO'>('ALL'); // 🏺 Nouveau filtre par rang
-    const [loading, setLoading] = useState(true);
+    const [filterRole, setFilterRole] = useState<'ALL' | 'USER' | 'PRO'>('ALL');
+    const [loading, setLoading] = useState(true); // 🏺 Désormais utilisé ci-dessous
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
     const addToast = useToastStore(state => state.addToast);
@@ -19,7 +19,6 @@ export default function AdminCustomers() {
 
     const fetchCustomers = () => {
         setLoading(true);
-        // Note : Vérifiez bien que votre route backend renvoie tous les rôles
         api.get('/users').then(res => {
             setCustomers(res.data);
             setLoading(false);
@@ -32,24 +31,15 @@ export default function AdminCustomers() {
     useEffect(() => { fetchCustomers(); }, []);
     useEffect(() => { setCurrentPage(1); }, [searchTerm, filterRole]);
 
-    /**
-     * 🏺 Logique de filtrage multi-critères
-     * Combine la recherche textuelle et le filtre par rôle institutionnel.
-     */
     const filteredCustomers = useMemo(() => {
         const lowerSearch = searchTerm.toLowerCase();
-
         return customers.filter(c => {
-            // 1. Filtre par rôle
             if (filterRole !== 'ALL' && c.role !== filterRole) return false;
-
-            // 2. Recherche textuelle
             return (
                 `${c.firstName} ${c.lastName}`.toLowerCase().includes(lowerSearch) ||
                 c.email.toLowerCase().includes(lowerSearch) ||
                 (c.memberCode && c.memberCode.toLowerCase().includes(lowerSearch)) ||
-                (c.companyName && c.companyName.toLowerCase().includes(lowerSearch)) ||
-                (c.siret && c.siret.includes(lowerSearch))
+                (c.companyName && c.companyName.toLowerCase().includes(lowerSearch))
             );
         });
     }, [customers, searchTerm, filterRole]);
@@ -60,23 +50,37 @@ export default function AdminCustomers() {
         return filteredCustomers.slice(start, start + itemsPerPage);
     }, [filteredCustomers, currentPage]);
 
+    /**
+     * 🏺 ÉCRAN DE CHARGEMENT HAUTE VISIBILITÉ
+     * Résout l'erreur TS6133 et guide l'utilisateur
+     */
+    if (loading) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6">
+                <Loader2 className="w-16 h-16 text-emerald-600 animate-spin" strokeWidth={3} />
+                <h2 className="text-2xl font-black text-black uppercase tracking-widest">
+                    Extraction du Registre...
+                </h2>
+            </div>
+        );
+    }
+
     return (
-        <section className="space-y-10 font-sans selection:bg-rhum-gold/30">
-            <header className="flex flex-col md:flex-row justify-between items-start md:items-end border-b border-rhum-gold/10 pb-8 gap-6">
+        <section className="space-y-10 font-sans selection:bg-emerald-100 pb-20">
+            {/* --- EN-TÊTE DE DIRECTION --- */}
+            <header className="flex flex-col lg:flex-row justify-between lg:items-center border-b-4 border-slate-100 pb-8 gap-6">
                 <div>
-                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Registre de la Clientèle</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">Pilotage des dossiers membres & entreprises</p>
+                    <h2 className="text-4xl font-black text-black tracking-tighter">Clientèle</h2>
                 </div>
 
-                <div className="flex flex-wrap items-center gap-4 w-full md:w-auto">
-                    {/* 🏺 Sélecteur de type de compte */}
-                    <div className="flex bg-white/5 border border-white/5 rounded-sm p-1">
+                <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+                    <div className="flex bg-slate-100 border-2 border-slate-200 rounded-2xl p-1.5 shadow-sm">
                         {(['ALL', 'USER', 'PRO'] as const).map((role) => (
                             <button
                                 key={role}
                                 onClick={() => setFilterRole(role)}
-                                className={`px-4 py-2 text-[9px] uppercase tracking-widest font-black transition-all ${
-                                    filterRole === role ? 'bg-rhum-gold text-rhum-green shadow-lg' : 'text-white/40 hover:text-white'
+                                className={`px-6 py-2.5 rounded-xl text-[10px] uppercase tracking-widest font-black transition-all ${
+                                    filterRole === role ? 'bg-white text-emerald-700 shadow-md' : 'text-slate-500 hover:text-black'
                                 }`}
                             >
                                 {role === 'ALL' ? 'Tous' : role === 'USER' ? 'Membres' : 'Entreprises'}
@@ -84,135 +88,93 @@ export default function AdminCustomers() {
                         ))}
                     </div>
 
-                    <div className="bg-white/5 border border-white/5 px-6 py-3 rounded-sm flex items-center gap-4 flex-1 md:w-[260px]">
-                        <Search size={14} className="text-rhum-gold/40" />
+                    <div className="bg-white border-2 border-slate-200 px-6 py-3.5 rounded-2xl flex items-center gap-4 w-full sm:w-[300px] shadow-sm focus-within:border-emerald-500 transition-all">
+                        <Search size={20} className="text-emerald-600" strokeWidth={3} />
                         <input
                             type="text"
                             placeholder="RECHERCHER..."
-                            className="bg-transparent text-[11px] text-white outline-none w-full uppercase tracking-widest font-black placeholder:text-white/10"
+                            className="bg-transparent text-[11px] text-black outline-none w-full font-black uppercase tracking-widest placeholder:text-slate-300"
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
                 </div>
             </header>
 
-            <div className="overflow-x-auto bg-white/[0.01] border border-white/5 rounded-sm">
+            {/* --- TABLEAU DU REGISTRE --- */}
+            <div className="bg-white border-2 border-slate-100 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
-                    <tr className="border-b border-white/5 text-[11px] uppercase tracking-[0.2em] text-rhum-gold/40">
-                        <th className="py-6 px-8 font-black">Identité & Statut</th>
-                        <th className="py-6 px-8 font-black">Coordonnées</th>
-                        <th className="py-6 px-8 font-black">Progression</th>
-                        <th className="py-6 px-8 font-black text-center">Volume</th>
+                    <tr className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-900 border-b border-slate-100">
+                        <th className="py-6 px-10 font-black">Identité & Statut</th>
+                        <th className="py-6 px-10 font-black">Coordonnées</th>
+                        <th className="py-6 px-10 font-black">Atelier conception</th>
+                        <th className="py-6 px-10 font-black text-center">Commande(s)</th>
                     </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y-2 divide-slate-50">
                     {displayedCustomers.map(customer => (
                         <tr
                             key={customer.id}
-                            onClick={() => {
-                                setSelectedCustomer(customer);
-                                setIsDetailsOpen(true);
-                            }}
-                            className="group hover:bg-white/[0.03] transition-colors cursor-pointer"
+                            onClick={() => { setSelectedCustomer(customer); setIsDetailsOpen(true); }}
+                            className="group hover:bg-slate-50/50 transition-all cursor-pointer align-middle"
                         >
-                            <td className="py-6 px-8">
+                            <td className="py-8 px-10">
                                 <div className="flex items-center gap-6">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center border ${
-                                        customer.role === 'PRO' ? 'border-rhum-gold/30 bg-rhum-gold/5' : 'border-white/5 bg-white/5'
-                                    }`}>
-                                        {customer.role === 'PRO' ? (
-                                            <Briefcase size={18} className="text-rhum-gold" />
-                                        ) : (
-                                            <User size={18} className="text-rhum-gold/40" />
-                                        )}
-                                    </div>
                                     <div>
                                         <div className="flex items-center gap-3">
-                                            <p className="text-white text-base font-bold uppercase tracking-tight">
-                                                {customer.lastName} <span className="text-rhum-gold font-bold">{customer.firstName}</span>
+                                            <p className="text-black text-base font-black uppercase tracking-tighter">
+                                                {customer.lastName} <span className="text-emerald-700">{customer.firstName}</span>
                                             </p>
-                                            {customer.role === 'PRO' && (
-                                                <span className="text-[7px] bg-rhum-gold text-rhum-green px-2 py-0.5 rounded-full font-black uppercase tracking-tighter shadow-sm">
-                                                    Compte CE
-                                                </span>
-                                            )}
                                         </div>
-
-                                        {customer.role === 'PRO' ? (
-                                            <div className="mt-1 space-y-0.5">
-                                                {/* On utilise companyName si présent, sinon le nom complet */}
-                                                <div className="flex items-center gap-1.5 text-[10px] text-white/60 font-black uppercase tracking-widest">
-                                                    <Building2 size={10} className="text-rhum-gold/60" />
-                                                    {customer.companyName || customer.lastName}
-                                                </div>
-                                                <div className="text-[8px] text-white/20 font-black uppercase tracking-widest pl-4">
-                                                    SIRET : {customer.siret || "NON RENSEIGNÉ"}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <Fingerprint size={10} className="text-rhum-gold/60" />
-                                                <span className="text-[11px] text-rhum-gold font-black uppercase tracking-[0.2em]">
-                                                    {customer.memberCode || "NON CERTIFIÉ"}
+                                        <div className="flex items-center gap-2 mt-1.5 bg-slate-50 border border-slate-100 w-fit px-2 py-0.5 rounded-lg">
+                                            {customer.role === 'PRO' ? <Building2 size={10} className="text-emerald-700" /> : <Fingerprint size={10} className="text-emerald-700" />}
+                                            <span className="text-[10px] text-black font-black uppercase tracking-widest">
+                                                    {customer.role === 'PRO' ? (customer.companyName || "Entreprise Certifiée") : (customer.memberCode || "PASSEPORT NON DÉLIVRÉ")}
                                                 </span>
-                                            </div>
-                                        )}
+                                        </div>
                                     </div>
                                 </div>
                             </td>
-                            <td className="py-6 px-8 space-y-3">
-                                <div className="flex items-center gap-3 text-[11px] text-rhum-cream font-black uppercase tracking-widest">
-                                    <Mail size={12} className="text-rhum-gold/40" /> {customer.email}
+                            <td className="py-8 px-10 space-y-2">
+                                <div className="flex items-center gap-3 text-[11px] text-black font-black uppercase tracking-widest">
+                                    <Mail size={14} className="text-emerald-600" strokeWidth={3} /> {customer.email}
                                 </div>
-                                <div className="flex items-center gap-3 text-[11px] text-rhum-cream font-black uppercase tracking-widest">
-                                    <Phone size={12} className="text-rhum-gold/40" /> {customer.phone || 'N/A'}
+                                <div className="flex items-center gap-3 text-[11px] text-black font-black uppercase tracking-widest">
+                                    <Phone size={14} className="text-emerald-600" strokeWidth={3} /> {customer.phone || 'NON RENSEIGNÉ'}
                                 </div>
                             </td>
-                            <td className="py-6 px-8">
+                            <td className="py-8 px-10">
                                 <div className="flex items-center gap-4">
-                                    <div className="flex gap-1.5">
+                                    <div className="flex gap-2">
                                         {[1, 2, 3, 4].map(lvl => (
                                             <div
                                                 key={lvl}
-                                                className={`w-2 h-5 rounded-full transition-all ${lvl <= (customer.conceptionLevel || 0) ? 'bg-rhum-gold shadow-[0_0_10px_rgba(212,175,55,0.4)]' : 'bg-white/5'}`}
+                                                className={`w-3 h-6 rounded-md transition-all border ${lvl <= (customer.conceptionLevel || 0) ? 'bg-emerald-600 border-emerald-700 shadow-md shadow-emerald-900/10' : 'bg-slate-100 border-slate-200'}`}
                                             />
                                         ))}
                                     </div>
-                                    <span className="text-[11px] text-rhum-gold font-black uppercase tracking-widest">
-                                        {customer.role === 'PRO' ? "Cohorte" : (customer.conceptionLevel === 0 ? "Initié" : `Niveau ${customer.conceptionLevel}`)}
-                                    </span>
+                                    <span className="text-[10px] text-black font-black uppercase tracking-widest">
+                                            {customer.role === 'PRO' ? "Niveau grp" : (customer.conceptionLevel === 0 ? "Niveau : Initié" : `Niveau ${customer.conceptionLevel}`)}
+                                        </span>
                                 </div>
                             </td>
-                            <td className="py-6 px-8 text-center">
-                                <span className="text-2xl font-serif text-white font-bold">{customer._count?.orders || 0}</span>
-                                <p className="text-[10px] text-white/30 uppercase font-black mt-2 tracking-widest">Dossiers</p>
+                            <td className="py-8 px-10 text-center">
+                                <div className="flex flex-col items-center">
+                                    <span className="text-3xl font-black text-black tracking-tighter">{customer._count?.orders || 0}</span>
+                                </div>
                             </td>
                         </tr>
                     ))}
                     </tbody>
                 </table>
-
-                {(displayedCustomers.length === 0 && !loading) && (
-                    <div className="py-24 text-center text-white/20 text-xs font-black uppercase tracking-[0.3em]">
-                        Aucun dossier correspondant dans le registre.
-                    </div>
-                )}
             </div>
 
-            <AdminPagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={(page) => setCurrentPage(page)}
-            />
+            <AdminPagination currentPage={currentPage} totalPages={totalPages} onPageChange={(page: number) => setCurrentPage(page)} />
 
             <CustomerDetailsModal
                 isOpen={isDetailsOpen}
                 customerId={selectedCustomer?.id}
-                onClose={() => {
-                    setIsDetailsOpen(false);
-                    setSelectedCustomer(null);
-                }}
+                onClose={() => { setIsDetailsOpen(false); setSelectedCustomer(null); }}
                 onRefresh={fetchCustomers}
             />
         </section>

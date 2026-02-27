@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus, Trash2, CheckCircle } from 'lucide-react';
 import api from '../../api/axiosInstance';
-import { useToastStore } from '../../store/toastStore'; // 🏺
+import { useToastStore } from '../../store/toastStore';
 
 export default function AddProductModal({ isOpen, onClose, onRefresh }: any) {
     const [categories, setCategories] = useState<any[]>([]);
-    // 🏺 Unité "centilitres" par défaut
     const [volumes, setVolumes] = useState([{ size: 25, unit: 'centilitres', price: 0, stock: 0 }]);
     const [isUploading, setIsUploading] = useState(false);
     const addToast = useToastStore(state => state.addToast);
@@ -38,11 +37,11 @@ export default function AddProductModal({ isOpen, onClose, onRefresh }: any) {
             await api.post('/admin/products', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            addToast("Nouvelle référence enregistrée au catalogue."); // 🏺 Notification
+            addToast("Nouvelle référence enregistrée au Registre.");
             onRefresh();
             onClose();
         } catch (error) {
-            addToast("Erreur lors de la création de la fiche.", "error");
+            addToast("Erreur lors de la création technique.", "error");
         } finally {
             setIsUploading(false);
         }
@@ -51,74 +50,91 @@ export default function AddProductModal({ isOpen, onClose, onRefresh }: any) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm font-sans">
-            <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 rounded-sm shadow-2xl">
-                <header className="flex justify-between items-center mb-8 border-b border-white/5 pb-4">
-                    <h2 className="text-xl font-serif text-white uppercase tracking-wider">Nouvelle Référence</h2>
-                    <button onClick={onClose} className="text-rhum-gold/40 hover:text-white"><X size={24} /></button>
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/95 backdrop-blur-md font-sans">
+            <div className="bg-white border-4 border-slate-200 w-full max-w-3xl max-h-[92vh] overflow-y-auto p-12 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.5)] relative">
+                <button onClick={onClose} className="absolute top-8 right-8 text-black hover:text-emerald-600 z-20 transition-colors">
+                    <X size={32} strokeWidth={3} />
+                </button>
+
+                <header className="mb-12 border-b-4 border-slate-50 pb-8">
+                    <h2 className="text-4xl font-black text-black uppercase tracking-tighter">Nouvelle Bouteille</h2>
                 </header>
 
-                <form onSubmit={handleSubmit} className="space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Désignation du flacon</label>
-                            <input name="name" required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
+                <form onSubmit={handleSubmit} className="space-y-10">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                        <div className="space-y-3">
+                            <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Nom de la bouteille</label>
+                            <input name="name" required className="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-black font-bold outline-none focus:border-emerald-600 transition-all text-sm uppercase" />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Famille de produit</label>
-                            <select name="categoryId" required className="w-full bg-white/5 border-b border-rhum-gold/20 py-2 text-rhum-cream outline-none focus:border-rhum-gold transition-all cursor-pointer">
-                                <option value="" className="bg-[#0a1a14]">Sélectionner...</option>
-                                {categories.map(cat => <option key={cat.id} value={cat.id} className="bg-[#0a1a14]">{cat.name}</option>)}
+                        <div className="space-y-3">
+                            <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Collection</label>
+                            <select name="categoryId" required className="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-black font-black outline-none focus:border-emerald-600 transition-all text-sm uppercase cursor-pointer">
+                                <option value="">SÉLECTIONNER...</option>
+                                {categories.map(cat => <option key={cat.id} value={cat.id}>{cat.name.toUpperCase()}</option>)}
                             </select>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Description commerciale</label>
-                        <textarea name="description" rows={3} className="w-full bg-white/5 border border-rhum-gold/10 p-3 text-rhum-cream outline-none focus:border-rhum-gold transition-all" />
+                    <div className="space-y-3">
+                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Description & Notes</label>
+                        <textarea name="description" rows={3} className="w-full bg-slate-50 border-2 border-slate-200 p-5 rounded-2xl text-slate-900 font-bold outline-none focus:border-emerald-600 transition-all text-sm" />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Photographie institutionnelle</label>
-                        <input type="file" name="image" accept="image/*" required className="text-[10px] text-rhum-cream/60 file:bg-rhum-gold/10 file:text-rhum-gold file:border-none file:px-4 file:py-2 file:mr-4 file:cursor-pointer font-black uppercase tracking-tighter" />
+                    <div className="space-y-3">
+                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Image</label>
+                        <div className="bg-slate-50 p-6 border-2 border-slate-100 rounded-2xl">
+                            <input type="file" name="image" accept="image/*" required className="text-xs text-black file:bg-black file:text-white file:border-none file:px-6 file:py-3 file:rounded-xl file:cursor-pointer file:font-black file:uppercase file:tracking-widest hover:file:bg-emerald-600 transition-all" />
+                        </div>
                     </div>
 
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-end">
-                            <label className="text-[9px] uppercase tracking-widest text-rhum-gold/50 font-black ml-1">Formats & Tarifications</label>
-                            <button type="button" onClick={addVolumeRow} className="text-[9px] text-rhum-gold flex items-center gap-1 hover:text-white transition-colors font-black uppercase tracking-widest"><Plus size={12} /> Ajouter un format</button>
+                    {/* 🏺 SECTION FORMATS RENFORCÉE */}
+                    <div className="space-y-6">
+                        <div className="flex justify-between items-center border-l-4 border-emerald-600 pl-6">
+                            <h3 className="text-xs text-black font-black uppercase tracking-[0.3em]">Formats & Tarifications</h3>
+                            <button type="button" onClick={addVolumeRow} className="flex items-center gap-2 bg-slate-900 text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 transition-all">
+                                <Plus size={14} strokeWidth={3} /> Ajouter un format
+                            </button>
                         </div>
 
-                        {volumes.map((v, index) => (
-                            <div key={index} className="grid grid-cols-4 gap-4 items-end bg-white/[0.02] p-4 border border-white/5 rounded-sm group hover:border-rhum-gold/20 transition-all">
-                                <div className="space-y-1">
-                                    <p className="text-[8px] text-white/20 uppercase font-black tracking-widest">Valeur</p>
-                                    <input type="number" step="0.01" value={v.size} onChange={e => { const newV = [...volumes]; newV[index].size = parseFloat(e.target.value); setVolumes(newV); }} className="w-full bg-transparent border-b border-white/10 text-xs text-white outline-none focus:border-rhum-gold transition-colors" />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-[8px] text-white/20 uppercase font-black tracking-widest">Unité</p>
-                                    <select value={v.unit} onChange={e => { const newV = [...volumes]; newV[index].unit = e.target.value; setVolumes(newV); }} className="w-full bg-transparent border-b border-white/10 text-[9px] text-white outline-none cursor-pointer focus:border-rhum-gold transition-colors">
-                                        <option value="centilitres" className="bg-[#0a1a14]">centilitres</option>
-                                        <option value="Litre(s)" className="bg-[#0a1a14]">Litre(s)</option>
-                                    </select>
-                                </div>
-                                <div className="space-y-1 text-right">
-                                    <p className="text-[8px] text-white/20 uppercase font-black tracking-widest">Prix HT / TTC (€)</p>
-                                    <input type="number" value={v.price} onChange={e => { const newV = [...volumes]; newV[index].price = parseFloat(e.target.value); setVolumes(newV); }} className="w-full bg-transparent border-b border-white/10 text-xs text-rhum-gold outline-none font-bold" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="flex-1 space-y-1 text-right">
-                                        <p className="text-[8px] text-white/20 uppercase font-black tracking-widest">Stock</p>
-                                        <input type="number" value={v.stock} onChange={e => { const newV = [...volumes]; newV[index].stock = parseInt(e.target.value); setVolumes(newV); }} className="w-full bg-transparent border-b border-white/10 text-xs text-white outline-none focus:border-rhum-gold transition-colors" />
+                        <div className="space-y-4">
+                            {volumes.map((v, index) => (
+                                <div key={index} className="grid grid-cols-4 gap-6 items-end bg-slate-50 border-2 border-slate-200 p-6 rounded-2xl shadow-sm animate-in fade-in slide-in-from-left-2">
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-black font-black uppercase tracking-widest">Valeur</p>
+                                        <input type="number" step="0.01" value={v.size} onChange={e => { const newV = [...volumes]; newV[index].size = parseFloat(e.target.value); setVolumes(newV); }} className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-black font-black outline-none focus:border-emerald-600" />
                                     </div>
-                                    <button type="button" onClick={() => removeVolumeRow(index)} className="text-red-400/40 hover:text-red-400 pb-1 transition-colors"><Trash2 size={14} /></button>
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-black font-black uppercase tracking-widest">Unité</p>
+                                        <select value={v.unit} onChange={e => { const newV = [...volumes]; newV[index].unit = e.target.value; setVolumes(newV); }} className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-black font-black outline-none cursor-pointer uppercase text-xs">
+                                            <option value="centilitres">centilitres</option>
+                                            <option value="Litre(s)">Litre(s)</option>
+                                        </select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] text-emerald-700 font-black uppercase tracking-widest">Prix (€)</p>
+                                        <input type="number" value={v.price} onChange={e => { const newV = [...volumes]; newV[index].price = parseFloat(e.target.value); setVolumes(newV); }} className="w-full bg-emerald-50 border-2 border-emerald-100 p-3 rounded-xl text-emerald-900 font-black outline-none" />
+                                    </div>
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1 space-y-2">
+                                            <p className="text-[10px] text-black font-black uppercase tracking-widest text-right">Stock</p>
+                                            <input type="number" value={v.stock} onChange={e => { const newV = [...volumes]; newV[index].stock = parseInt(e.target.value); setVolumes(newV); }} className="w-full bg-white border-2 border-slate-100 p-3 rounded-xl text-black font-black outline-none text-right" />
+                                        </div>
+                                        <button type="button" onClick={() => removeVolumeRow(index)} className="w-10 h-10 bg-white border-2 border-slate-200 text-red-600 rounded-xl flex items-center justify-center hover:bg-red-50 transition-colors">
+                                            <Trash2 size={18} strokeWidth={2.5} />
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
 
-                    <button type="submit" disabled={isUploading} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-xl rounded-sm disabled:opacity-30">
-                        {isUploading ? 'Synchronisation...' : 'Enregistrer la référence'}
+                    <button type="submit" disabled={isUploading} className="w-full bg-emerald-600 text-white py-6 rounded-2xl font-black uppercase tracking-[0.3em] text-[12px] hover:bg-black shadow-2xl transition-all flex items-center justify-center gap-4 disabled:opacity-50">
+                        {isUploading ? 'SYNCHRONISATION DU REGISTRE...' : (
+                            <>
+                                <CheckCircle size={18} strokeWidth={3} />
+                                Enregistrer
+                            </>
+                        )}
                     </button>
                 </form>
             </div>

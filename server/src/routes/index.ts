@@ -11,7 +11,6 @@ import workshopRoutes from "./workshopRoutes";
 
 const router = Router();
 
-// Préfixes des routes de l'Atelier
 router.use("/auth", authRoutes);
 router.use("/orders", orderRoutes);
 router.use("/shop", shopRoutes);

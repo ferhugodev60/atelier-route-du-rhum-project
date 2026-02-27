@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Edit3, Layers } from 'lucide-react';
+import { Edit3, ShieldCheck, Banknote } from 'lucide-react';
 import EditWorkshopModal from "../../components/admin/EditWorkshopModal.tsx";
 
 export default function AdminWorkshops() {
@@ -8,10 +8,6 @@ export default function AdminWorkshops() {
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [selectedWorkshop, setSelectedWorkshop] = useState<any>(null);
 
-    /**
-     * 🏺 Synchronisation avec le Registre
-     * Récupère les 5 paliers techniques consolidés.
-     */
     const fetchWorkshops = async () => {
         try {
             const res = await api.get('/workshops');
@@ -23,74 +19,66 @@ export default function AdminWorkshops() {
 
     useEffect(() => { fetchWorkshops(); }, []);
 
-    /**
-     * 🏺 Ordonnancement du Cursus
-     * Classement automatique par palier de progression technique.
-     */
     const sortedWorkshops = useMemo(() => {
         return [...workshops].sort((a, b) => a.level - b.level);
     }, [workshops]);
 
     const WorkshopEntry = ({ ws }: { ws: any }) => (
-        <div className="bg-[#050d0a] border border-white/5 p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between group hover:border-rhum-gold/30 transition-all duration-500 rounded-sm">
+        /* 🏺 Carte Blanche Haute Visibilité */
+        <div className="bg-white border-2 border-slate-200 p-8 md:p-10 flex flex-col md:flex-row md:items-center justify-between group hover:border-emerald-500 hover:shadow-xl transition-all duration-300 rounded-3xl">
             <div className="flex items-center gap-10 flex-1">
-                <div className="flex flex-col items-center min-w-[80px]">
-                    <span className="text-rhum-gold font-serif text-2xl uppercase leading-none">Palier</span>
-                    <span className="text-rhum-gold font-serif text-5xl leading-none mt-2">{ws.level}</span>
+                {/* 🏺 Indicateur de Palier Emerald & Black */}
+                <div className="flex flex-col items-center min-w-[100px] bg-emerald-50 py-4 rounded-2xl border border-emerald-100">
+                    <span className="text-emerald-700 font-black text-xs uppercase tracking-tighter">Niveau</span>
+                    <span className="text-slate-950 font-black text-6xl leading-none mt-1">{ws.level}</span>
                 </div>
-                <div className="h-16 w-px bg-white/5 hidden md:block" />
-                <div className="space-y-2 flex-1 max-w-xl">
-                    <h4 className="text-2xl font-serif text-white uppercase tracking-wide group-hover:text-rhum-gold transition-colors">
+
+                <div className="h-20 w-1 bg-slate-100 hidden md:block rounded-full" />
+
+                <div className="space-y-3 flex-1 max-w-xl">
+                    <h4 className="text-3xl font-black text-black uppercase tracking-tighter group-hover:text-emerald-700 transition-colors">
                         {ws.title}
                     </h4>
-                    <div className="flex items-center gap-4">
-                        <p className="text-[10px] text-white/40 uppercase tracking-widest leading-loose">
-                            {ws.format}
-                        </p>
-                        <span className="h-1 w-1 rounded-full bg-white/10" />
-                        <p className="text-[10px] uppercase tracking-widest font-bold">
-                            <span className="text-white/40">Tarif Standard :</span> <span className="text-white">{ws.price}€</span>
-                            <span className="mx-3 text-white/10">|</span>
-                            <span className="text-rhum-gold/60">Privilège Pro :</span> <span className="text-rhum-gold">{ws.priceInstitutional}€</span>
-                        </p>
+                    <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-2 bg-slate-900 text-white px-3 py-1 rounded-lg">
+                            <ShieldCheck size={12} />
+                            <p className="text-[10px] uppercase font-black tracking-widest">{ws.format}</p>
+                        </div>
+                        <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 px-4 py-1.5 rounded-xl">
+                            <Banknote size={14} className="text-emerald-600" />
+                            <p className="text-[11px] uppercase tracking-tighter font-black">
+                                <span className="text-slate-500">Public :</span> <span className="text-black">{ws.price}€</span>
+                                <span className="mx-3 text-slate-300">|</span>
+                                <span className="text-emerald-700">Offre Pro :</span> <span className="text-emerald-800">{ws.priceInstitutional}€</span>
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div className="mt-8 md:mt-0 flex items-center gap-12 border-t md:border-t-0 md:border-l border-white/5 pt-6 md:pt-0 md:pl-12">
+
+            <div className="mt-8 md:mt-0 flex items-center border-t md:border-t-0 md:border-l-2 border-slate-100 pt-6 md:pt-0 md:pl-10">
                 <button
                     onClick={() => { setSelectedWorkshop(ws); setIsEditOpen(true); }}
-                    className="flex items-center gap-3 px-6 py-3 bg-rhum-gold/5 text-rhum-gold text-[9px] uppercase tracking-widest font-black border border-rhum-gold/10 hover:bg-rhum-gold hover:text-rhum-green transition-all rounded-sm"
+                    className="flex items-center gap-3 px-8 py-4 bg-emerald-600 text-white text-[11px] uppercase tracking-widest font-black shadow-lg shadow-emerald-900/20 hover:bg-black transition-all rounded-2xl"
                 >
-                    <Edit3 size={14} />
-                    Réviser la séance
+                    <Edit3 size={16} strokeWidth={3} />
+                    Modifier
                 </button>
             </div>
         </div>
     );
 
     return (
-        <section className="space-y-16 font-sans pb-20 selection:bg-rhum-gold/30">
-            <header className="border-b border-rhum-gold/10 pb-8 flex justify-between items-end">
+        <section className="space-y-12 font-sans pb-20 selection:bg-emerald-100">
+            {/* --- EN-TÊTE DE DIRECTION --- */}
+            <header className="border-b-4 border-slate-100 pb-8 flex justify-between items-center">
                 <div>
-                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Architecture du Cursus</h2>
-                    <p className="text-[10px] text-rhum-gold/50 uppercase tracking-[0.4em] mt-2 font-black">
-                        Registre consolidé (5 Niveaux • Double Tarification Certifiée)
-                    </p>
+                    <h2 className="text-4xl font-black text-black tracking-tighter">Architecture des ateliers</h2>
                 </div>
             </header>
 
-            <div className="space-y-6">
-                <header className="flex items-center gap-6 border-l-2 border-rhum-gold pl-6 mb-10">
-                    <Layers className="text-rhum-gold/40" size={24} />
-                    <div>
-                        <h3 className="text-white text-xl font-serif uppercase tracking-wider">Le Catalogue Maître</h3>
-                        <p className="text-[9px] text-rhum-gold/60 uppercase tracking-widest font-bold mt-1">
-                            Contrôle des flux Standard et Institutionnels
-                        </p>
-                    </div>
-                </header>
-
-                <div className="grid grid-cols-1 gap-6">
+            <div className="space-y-8">
+                <div className="grid grid-cols-1 gap-8">
                     {sortedWorkshops.map(ws => (
                         <WorkshopEntry key={ws.id} ws={ws} />
                     ))}

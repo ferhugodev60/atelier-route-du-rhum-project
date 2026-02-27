@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone, Fingerprint } from 'lucide-react';
+import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone, Fingerprint, ShieldCheck } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import OrderDetailsModal from './OrderDetailsModal';
 import { useToastStore } from '../../store/toastStore';
@@ -10,18 +10,15 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
     const [loading, setLoading] = useState(true);
     const [isUpdating, setIsUpdating] = useState(false);
     const addToast = useToastStore(state => state.addToast);
-
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen && customerId) {
             setLoading(true);
-            api.get(`/users/${customerId}`)
-                .then(res => {
-                    setFullData(res.data);
-                    setLoading(false);
-                })
-                .catch(() => setLoading(false));
+            api.get(`/users/${customerId}`).then(res => {
+                setFullData(res.data);
+                setLoading(false);
+            }).catch(() => setLoading(false));
         }
     }, [isOpen, customerId]);
 
@@ -29,163 +26,151 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
         setIsUpdating(true);
         try {
             await api.patch(`/users/${fullData.id}/level`, { newLevel });
-            addToast(`Certification mise à jour : Palier technique ${newLevel} validé.`);
+            addToast(`Certification mise à jour : Niveau technique ${newLevel} scellé.`);
             onRefresh();
             onClose();
         } catch (error) {
-            addToast("Échec de la validation du palier technique.", "error");
+            addToast("Échec de la validation technique.", "error");
         } finally {
             setIsUpdating(false);
-        }
-    };
-
-    /**
-     * 🏺 Signalétique Institutionnelle Certifiée
-     */
-    const getStatusStyles = (status: string) => {
-        switch (status) {
-            case 'PAYÉ':
-            case 'FINALISÉ':
-                return 'border-green-500/30 text-green-500 bg-green-500/5';
-            case 'ATELIER PLANIFIÉ':
-                return 'border-yellow-500/30 text-yellow-500 bg-yellow-500/5';
-            case 'À TRAITER':
-            case 'EN ATTENTE':
-            default:
-                return 'border-red-500/30 text-red-500 bg-red-500/5';
         }
     };
 
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md font-sans selection:bg-rhum-gold/30">
-            <div className="bg-[#0a1a14] border border-rhum-gold/20 w-full max-w-3xl h-[80vh] flex flex-col rounded-sm shadow-2xl relative">
-                <button onClick={onClose} className="absolute top-6 right-6 text-rhum-gold/40 hover:text-white z-10 transition-colors">
-                    <X size={24} />
+        <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md font-sans">
+            <div className="bg-white border-4 border-slate-200 w-full max-w-4xl h-[85vh] flex flex-col rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.3)] relative overflow-hidden">
+                <button onClick={onClose} className="absolute top-8 right-8 text-black hover:text-emerald-600 z-20 transition-colors">
+                    <X size={32} strokeWidth={3} />
                 </button>
 
                 {loading ? (
-                    <div className="flex-1 flex items-center justify-center text-rhum-gold uppercase tracking-[0.4em] text-[10px] animate-pulse font-black">
-                        <Loader2 className="animate-spin mr-3" size={14} /> Extraction du dossier...
+                    <div className="flex-1 flex flex-col items-center justify-center">
+                        <Loader2 className="animate-spin text-emerald-600 mb-6" size={48} strokeWidth={3} />
+                        <p className="text-black font-black uppercase tracking-widest text-xs">Extraction du dossier certifié</p>
                     </div>
                 ) : (
                     <>
-                        <header className="p-10 border-b border-white/5 bg-white/[0.02]">
-                            <div className="flex items-center gap-8">
-                                <div className="w-20 h-20 bg-rhum-gold/10 rounded-full flex items-center justify-center border border-rhum-gold/20 shadow-xl">
-                                    <User size={32} className="text-rhum-gold" />
+                        <header className="p-10 md:p-14 border-b-4 border-slate-50 bg-white relative z-10">
+                            <div className="flex items-center gap-10">
+                                <div className="w-24 h-24 bg-slate-900 rounded-3xl flex items-center justify-center shadow-xl">
+                                    <User size={40} className="text-white" strokeWidth={2.5} />
                                 </div>
                                 <div>
-                                    <h2 className="text-3xl font-serif text-white uppercase tracking-tight">
-                                        {fullData.lastName} <span className="text-rhum-gold font-bold">{fullData.firstName}</span>
+                                    <h2 className="text-4xl font-black text-black uppercase tracking-tighter leading-none">
+                                        {fullData.lastName} <span className="text-emerald-600">{fullData.firstName}</span>
                                     </h2>
 
-                                    {/* 🏺 Identification unique : Code Client */}
-                                    <div className="flex items-center gap-2 mt-2 bg-rhum-gold/5 border border-rhum-gold/10 px-3 py-1.5 w-fit rounded-sm">
-                                        <Fingerprint size={12} className="text-rhum-gold/60" />
-                                        <span className="text-[11px] text-rhum-gold font-black uppercase tracking-[0.2em]">
-                                            {fullData.memberCode || "Non Certifié"}
+                                    <div className="flex items-center gap-3 mt-4 bg-emerald-50 border-2 border-emerald-100 px-4 py-2 w-fit rounded-xl">
+                                        <Fingerprint size={16} className="text-emerald-700" strokeWidth={3} />
+                                        <span className="text-[11px] text-emerald-800 font-black uppercase tracking-widest">
+                                            {fullData.memberCode || "IDENTITÉ NON CERTIFIÉE"}
                                         </span>
                                     </div>
 
-                                    <div className="mt-4 space-y-1">
-                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-black flex items-center gap-2">
-                                            <Mail size={12} className="text-rhum-gold/40" /> {fullData.email}
+                                    <div className="mt-6 flex gap-8">
+                                        <p className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
+                                            <Mail size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.email}
                                         </p>
-                                        <p className="text-[11px] text-white/50 uppercase tracking-[0.2em] font-black flex items-center gap-2">
-                                            <Phone size={12} className="text-rhum-gold/40" /> {fullData.phone || 'Non renseigné'}
+                                        <p className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
+                                            <Phone size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.phone || 'NON RENSEIGNÉ'}
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <nav className="flex gap-10 mt-10">
+                            <nav className="flex gap-12 mt-12">
                                 {[
-                                    { id: 'cursus', label: 'Maîtrise Cursus', icon: GraduationCap },
-                                    { id: 'orders', label: 'Historique Ventes', icon: ShoppingBag }
+                                    { id: 'cursus', label: 'Certification Cursus', icon: GraduationCap },
+                                    { id: 'orders', label: 'Historique des Flux', icon: ShoppingBag }
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
-                                        className={`flex items-center gap-2 pb-4 text-[10px] uppercase tracking-[0.2em] font-black transition-all border-b-2 ${
+                                        className={`flex items-center gap-3 pb-4 text-[11px] uppercase tracking-widest font-black transition-all border-b-4 ${
                                             activeTab === tab.id
-                                                ? 'text-rhum-gold border-rhum-gold'
-                                                : 'text-white/20 border-transparent hover:text-white/60'
+                                                ? 'text-emerald-600 border-emerald-600'
+                                                : 'text-slate-300 border-transparent hover:text-black'
                                         }`}
                                     >
-                                        <tab.icon size={12} /> {tab.label}
+                                        <tab.icon size={16} strokeWidth={3} /> {tab.label}
                                     </button>
                                 ))}
                             </nav>
                         </header>
 
-                        <div className="flex-1 overflow-y-auto p-10 custom-scrollbar relative z-10">
+                        <div className="flex-1 overflow-y-auto p-10 md:p-14 bg-white relative z-10">
                             {activeTab === 'cursus' && (
-                                <div className="space-y-10 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                                    <div className="bg-white/[0.02] border border-white/5 p-8 rounded-sm space-y-8 shadow-inner">
-                                        <div className="flex justify-between items-center border-b border-white/5 pb-6">
-                                            <p className="text-[10px] text-rhum-gold font-black uppercase tracking-widest">État de maîtrise technique</p>
-                                            <span className="text-sm font-serif text-white font-bold uppercase tracking-widest">
-                                                {fullData.conceptionLevel === 0 ? "Initié" : `Palier ${fullData.conceptionLevel} / 4`}
+                                <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                                    <div className="bg-slate-50 border-2 border-slate-100 p-10 rounded-3xl space-y-10">
+                                        <div className="flex justify-between items-center border-b-2 border-white pb-6">
+                                            <p className="text-xs text-black font-black uppercase tracking-widest">Maîtrise Technique Actuelle</p>
+                                            <span className="text-lg text-emerald-700 font-black uppercase tracking-tighter">
+                                                {fullData.conceptionLevel === 0 ? "Initié" : `Niveau ${fullData.conceptionLevel} / 4 certifié`}
                                             </span>
                                         </div>
-                                        <div className="flex gap-2">
+                                        <div className="flex gap-4">
                                             {[0, 1, 2, 3, 4].map((level) => (
                                                 <button
                                                     key={level}
                                                     disabled={isUpdating}
                                                     onClick={() => handleLevelUpdate(level)}
-                                                    className={`flex-1 py-6 border transition-all flex flex-col items-center gap-2 rounded-sm ${
+                                                    className={`flex-1 py-8 border-4 transition-all flex flex-col items-center gap-3 rounded-2xl shadow-sm ${
                                                         fullData.conceptionLevel === level
-                                                            ? 'bg-rhum-gold border-rhum-gold text-rhum-green font-black shadow-lg shadow-rhum-gold/20'
-                                                            : 'bg-white/5 border-white/10 text-white/30 hover:border-rhum-gold/40 hover:text-white'
+                                                            ? 'bg-emerald-600 border-emerald-700 text-white font-black shadow-lg shadow-emerald-900/20'
+                                                            : 'bg-white border-slate-100 text-slate-400 hover:border-emerald-600 hover:text-emerald-600'
                                                     }`}
                                                 >
-                                                    <span className="text-[9px] uppercase font-black tracking-tighter">
-                                                        {level === 0 ? "Départ" : "Palier"}
+                                                    <span className="text-[10px] uppercase font-black tracking-tighter">
+                                                        {level === 0 ? "ACCÈS" : "Niveau"}
                                                     </span>
-                                                    <span className="text-3xl font-serif">{level}</span>
+                                                    <span className="text-4xl font-black">{level}</span>
                                                 </button>
                                             ))}
                                         </div>
                                     </div>
-                                    <p className="text-[11px] text-white/20 text-center leading-relaxed font-sans font-black uppercase tracking-widest px-10">
-                                        L'ajustement manuel du palier technique permet de réguler l'accès aux formations de niveau supérieur pour ce membre.
-                                    </p>
+                                    <div className="flex items-start gap-4 bg-emerald-50 p-6 rounded-2xl border-2 border-emerald-100">
+                                        <ShieldCheck className="text-emerald-700 flex-shrink-0" size={20} strokeWidth={3} />
+                                        <p className="text-[11px] text-emerald-900 font-bold uppercase tracking-widest leading-relaxed">
+                                            L'ajustement du palier technique modifie instantanément les privilèges d'accès du membre au sein du Registre.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
                             {activeTab === 'orders' && (
-                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
+                                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
                                     {fullData.orders?.map((order: any) => (
                                         <div
                                             key={order.id}
                                             onClick={() => setSelectedOrderId(order.id)}
-                                            className="bg-white/[0.02] border border-white/5 p-6 flex justify-between items-center group hover:bg-white/[0.05] hover:border-rhum-gold/30 transition-all cursor-pointer rounded-sm shadow-sm"
+                                            className="bg-white border-2 border-slate-100 p-8 flex justify-between items-center group hover:border-emerald-500 hover:shadow-xl transition-all cursor-pointer rounded-2xl"
                                         >
-                                            <div className="flex items-center gap-8">
-                                                <div className="p-4 bg-white/5 rounded-full text-rhum-gold/40 group-hover:text-rhum-gold group-hover:bg-rhum-gold/10 transition-colors border border-white/5">
-                                                    <ArrowUpRight size={18} />
+                                            <div className="flex items-center gap-10">
+                                                <div className="w-14 h-14 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg group-hover:bg-emerald-600 transition-colors">
+                                                    <ArrowUpRight size={22} strokeWidth={3} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-black text-white uppercase tracking-widest group-hover:text-rhum-gold transition-colors">{order.reference}</p>
-                                                    <p className="text-[11px] text-white/40 uppercase mt-2 font-black tracking-widest">
+                                                    <p className="text-lg font-black text-black uppercase tracking-tighter">{order.reference}</p>
+                                                    <p className="text-[11px] text-slate-500 uppercase mt-1.5 font-bold tracking-widest">
                                                         {new Date(order.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
                                                     </p>
                                                 </div>
                                             </div>
-                                            <div className="text-right space-y-2">
-                                                <p className="text-rhum-gold font-serif text-xl font-bold">{order.total.toFixed(2)}€</p>
-                                                <span className={`inline-block text-[8px] px-3 py-1 border font-black uppercase tracking-widest rounded-sm ${getStatusStyles(order.status)}`}>
+                                            <div className="text-right">
+                                                <p className="text-black font-black text-2xl tracking-tighter">{order.total.toFixed(2)}€</p>
+                                                <span className={`inline-block text-[9px] px-3 py-1 border-2 font-black uppercase tracking-widest rounded-lg mt-2 ${
+                                                    order.status === 'FINALISÉ' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'
+                                                }`}>
                                                     {order.status}
                                                 </span>
                                             </div>
                                         </div>
                                     ))}
                                     {fullData.orders?.length === 0 && (
-                                        <div className="py-24 text-center text-white/10 uppercase tracking-[0.3em] text-xs font-black">
-                                            Aucun flux transactionnel répertorié au sein du registre.
+                                        <div className="py-24 text-center text-slate-300 uppercase tracking-widest text-xs font-black">
+                                            AUCUN FLUX TRANSACTIONNEL RÉPERTORIÉ AU REGISTRE.
                                         </div>
                                     )}
                                 </div>
@@ -195,11 +180,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                 )}
             </div>
 
-            <OrderDetailsModal
-                isOpen={!!selectedOrderId}
-                orderId={selectedOrderId}
-                onClose={() => setSelectedOrderId(null)}
-            />
+            <OrderDetailsModal isOpen={!!selectedOrderId} orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
         </div>
     );
 }
