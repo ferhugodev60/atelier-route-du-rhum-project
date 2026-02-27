@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2, CheckCircle, Edit3, Image as ImageIcon } from 'lucide-react';
+import { X, Plus, Trash2, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import { useToastStore } from '../../store/toastStore';
 

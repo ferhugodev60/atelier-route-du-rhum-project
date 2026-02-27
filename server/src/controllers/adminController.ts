@@ -6,51 +6,66 @@ interface RequestWithFile extends Request {
 }
 
 // --- 📈 INDICATEURS DU REGISTRE (Dashboard) ---
+
 export const getStats = async (req: Request, res: Response) => {
     try {
-        const [aggregate, recentOrders, lowStockVolumes, userStats] = await Promise.all([
+        const { month, year } = req.query;
+        const m = Number(month);
+        const y = Number(year);
+
+        // 🏺 1. Détermination de la borne historique (Premier flux en base)
+        const firstOrder = await prisma.order.findFirst({
+            orderBy: { createdAt: 'asc' },
+            select: { createdAt: true }
+        });
+        const earliestYear = firstOrder ? firstOrder.createdAt.getFullYear() : new Date().getFullYear();
+
+        // 🏺 2. Construction du filtre de période (Audit)
+        let periodFilter: any = {};
+        if (y > 0) {
+            const start = m > 0 ? new Date(y, m - 1, 1) : new Date(y, 0, 1);
+            const end = m > 0 ? new Date(y, m, 1) : new Date(y + 1, 0, 1);
+            periodFilter = { gte: start, lt: end };
+        }
+        const whereClause = periodFilter.gte ? { createdAt: periodFilter } : {};
+
+        // 🏺 3. Extraction parallèle (Vitesse ERP)
+        const [aggregate, recentOrders, lowStockVolumes, pendingCount, totalUsersCount] = await Promise.all([
+            // Filtré : CA et Volume de la période
             prisma.order.aggregate({
+                where: whereClause,
                 _sum: { total: true },
                 _count: { id: true }
             }),
+            // Filtré : Flux récents de la période
             prisma.order.findMany({
-                include: {
-                    user: { select: { firstName: true, lastName: true, role: true, isEmployee: true } }
-                },
+                where: whereClause,
+                include: { user: { select: { firstName: true, lastName: true } } },
                 orderBy: { createdAt: 'desc' },
-                take: 10
+                take: 5
             }),
+            // 🚫 GLOBAL : Stocks critiques (Temps réel)
             prisma.productVolume.findMany({
                 where: { stock: { lt: 5 } },
                 include: { product: true }
             }),
-            // 🏺 Segmentation précise du Registre des membres
-            prisma.user.groupBy({
-                by: ['role', 'isEmployee'],
-                _count: { id: true }
-            })
+            // 🚫 GLOBAL : Dossiers urgents "À TRAITER"
+            prisma.order.count({ where: { status: 'À TRAITER' } }),
+            // 🚫 GLOBAL : Répertoire Clients total
+            prisma.user.count()
         ]);
-
-        const institutionalCount = userStats
-            .filter(s => s.role === 'PRO' || s.isEmployee)
-            .reduce((acc, curr) => acc + curr._count.id, 0);
-
-        const standardCount = userStats
-            .filter(s => s.role === 'USER' && !s.isEmployee)
-            .reduce((acc, curr) => acc + curr._count.id, 0);
 
         res.json({
             totalRevenue: aggregate._sum.total || 0,
             totalSales: aggregate._count.id,
             recentOrders,
             lowStockAlerts: lowStockVolumes,
-            registryBreakdown: {
-                institutional: institutionalCount,
-                standard: standardCount
-            }
+            pendingOrdersCount: pendingCount,
+            totalUsers: totalUsersCount,
+            earliestYear
         });
     } catch (error) {
-        res.status(500).json({ error: "Échec de l'extraction des rapports d'activité." });
+        res.status(500).json({ error: "Échec technique de l'audit." });
     }
 };
 

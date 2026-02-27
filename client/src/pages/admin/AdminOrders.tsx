@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom'; // 🏺 Import pour la liaison profonde
 import api from '../../api/axiosInstance';
 import { Search, Package, GraduationCap, Filter, Calendar, CreditCard } from 'lucide-react';
 import OrderDetailsModal from '../../components/admin/OrderDetailsModal';
@@ -12,10 +13,34 @@ export default function AdminOrders() {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 10;
 
+    // 🏺 Gestion des paramètres d'URL pour l'ouverture automatique
+    const [searchParams, setSearchParams] = useSearchParams();
+
     const fetchOrders = () => api.get('/orders').then(res => setOrders(res.data));
+
     useEffect(() => { fetchOrders(); }, []);
 
-    useEffect(() => { setCurrentPage(1); }, [searchTerm, statusFilter]);
+    // 🏺 DÉTECTEUR DE DOSSIER ENTRANT
+    // Si un ID est présent dans l'URL (ex: ?id=...), la modale s'ouvre d'elle-même
+    useEffect(() => {
+        const idFromUrl = searchParams.get('id');
+        if (idFromUrl) {
+            setSelectedOrderId(idFromUrl);
+        }
+    }, [searchParams]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, statusFilter]);
+
+    /**
+     * 🏺 FERMETURE SÉCURISÉE
+     * Réinitialise l'état ET nettoie l'URL pour éviter la réouverture au refresh
+     */
+    const handleCloseModal = () => {
+        setSelectedOrderId(null);
+        setSearchParams({});
+    };
 
     const handleStatusChange = async (orderId: string, newStatus: string) => {
         try {
@@ -52,6 +77,7 @@ export default function AdminOrders() {
 
     return (
         <section className="space-y-10 font-sans selection:bg-emerald-100 pb-20">
+            {/* --- EN-TÊTE HAUTE VISIBILITÉ --- */}
             <header className="flex flex-col lg:flex-row justify-between lg:items-center border-b-4 border-slate-100 pb-8 gap-6">
                 <div>
                     <h2 className="text-4xl font-black text-black tracking-tighter">Registre des Ventes</h2>
@@ -85,6 +111,7 @@ export default function AdminOrders() {
                 </div>
             </header>
 
+            {/* --- TABLEAU DU REGISTRE INTERACTIF --- */}
             <div className="bg-white border-2 border-slate-100 rounded-3xl shadow-xl shadow-slate-200/50 overflow-hidden">
                 <table className="w-full text-left border-collapse">
                     <thead>
@@ -129,7 +156,6 @@ export default function AdminOrders() {
                                     </div>
                                 </td>
                                 <td className="py-8 px-10 text-center" onClick={(e) => e.stopPropagation()}>
-                                    {/* 🏺 Le stopPropagation() empêche l'ouverture de la modale lors du changement de statut */}
                                     <select
                                         value={order.status}
                                         onChange={(e) => handleStatusChange(order.id, e.target.value)}
@@ -156,7 +182,7 @@ export default function AdminOrders() {
             <OrderDetailsModal
                 isOpen={!!selectedOrderId}
                 orderId={selectedOrderId}
-                onClose={() => setSelectedOrderId(null)}
+                onClose={handleCloseModal}
                 onRefresh={fetchOrders}
             />
         </section>
