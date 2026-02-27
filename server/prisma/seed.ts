@@ -30,21 +30,24 @@ async function main() {
     const catRhum = await prisma.category.create({
         data: {
             name: "Rhum arrangé",
-            description: "Préparations artisanales avec fruits entiers. Potentiel de macération prolongée."
+            description: "Préparations artisanales avec fruits entiers. Potentiel de macération prolongée.",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
     });
 
     const catVrac = await prisma.category.create({
         data: {
             name: "Vrac",
-            description: "Sélections prêtes à la dégustation immédiate, sans résidus solides."
+            description: "Sélections prêtes à la dégustation immédiate, sans résidus solides.",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
     });
 
     const catDame = await prisma.category.create({
         data: {
             name: "Location de Dame-Jeanne",
-            description: "Prestations événementielles de prestige en grands formats."
+            description: "Prestations événementielles de prestige en grands formats.",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
     });
 
