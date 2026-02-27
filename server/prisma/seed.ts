@@ -183,6 +183,7 @@ async function main() {
     await prisma.user.create({
         data: {
             email: "jean.dupont@exemple.com",
+            phone: "0768976012",
             memberCode: generateMemberCode(),
             password: defaultPassword,
             firstName: "Jean",
@@ -195,12 +196,28 @@ async function main() {
     await prisma.user.create({
         data: {
             email: "ce@airbus.com",
+            phone: "0768976012",
             memberCode: generateMemberCode(),
             password: proPassword,
             firstName: "Responsable",
             lastName: "CE Airbus",
             role: "PRO",
             companyName: "Airbus SAS",
+            siret: "12345678901234"
+        }
+    });
+
+    await prisma.user.create({
+        data: {
+            email: "ferreira.hugo602@gmail.com",
+            phone: "0768976012",
+            memberCode: generateMemberCode(),
+            password: defaultPassword,
+            firstName: "Hugo",
+            lastName: "FERREIRA",
+            role: "USER",
+            isEmployee: true,
+            companyName: "Analis Finance",
             siret: "12345678901234"
         }
     });

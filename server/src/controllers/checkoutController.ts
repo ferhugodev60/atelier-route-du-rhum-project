@@ -188,14 +188,27 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
+                    // 🏺 LOGIQUE DE COHORTE PRO
                     if (item.workshop && order.isBusiness) {
-                        await tx.companyGroup.create({
+                        const group = await tx.companyGroup.create({
                             data: {
                                 name: `Contrat ${order.reference} - ${item.quantity} places`,
                                 ownerId: order.userId,
                                 currentLevel: item.workshop.level,
                             }
                         });
+
+                        // 🏺 GÉNÉRATION AUTOMATIQUE DES SLOTS DE PRÉSENCE
+                        // On crée physiquement les 25 ou 35 lignes vides dans le Registre
+                        for (let i = 0; i < item.quantity; i++) {
+                            await tx.participant.create({
+                                data: {
+                                    orderItemId: item.id,
+                                    companyGroupId: group.id,
+                                    isValidated: false // En attente d'émargement manuel par l'Admin
+                                }
+                            });
+                        }
                     }
                 }
 

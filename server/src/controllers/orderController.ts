@@ -13,15 +13,9 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
     include: {
         user: {
             select: {
-                id: true,
-                firstName: true,
-                lastName: true,
-                email: true,
-                phone: true,
-                memberCode: true,
-                companyName: true,
-                siret: true,
-                isEmployee: true
+                id: true, firstName: true, lastName: true, email: true,
+                phone: true, memberCode: true, companyName: true,
+                siret: true, isEmployee: true, conceptionLevel: true
             }
         },
         items: {
@@ -42,32 +36,14 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
     const isAdmin = req.user?.role === 'ADMIN';
 
-    if (!userId) {
-        return res.status(401).json({ error: "Identification requise." });
-    }
+    if (!userId) return res.status(401).json({ error: "Identification requise." });
 
     try {
         const rawOrders = await prisma.order.findMany({
             where: isAdmin ? {} : { userId },
             include: {
-                user: {
-                    select: {
-                        firstName: true,
-                        lastName: true,
-                        email: true,
-                        memberCode: true,
-                        companyName: true,
-                        isEmployee: true
-                    }
-                },
-                items: {
-                    include: {
-                        workshop: true,
-                        volume: { include: { product: true } },
-                        participants: true,
-                        companyGroup: true
-                    }
-                }
+                user: { select: { firstName: true, lastName: true, email: true, memberCode: true, companyName: true, isEmployee: true } },
+                items: { include: { workshop: true, volume: { include: { product: true } }, participants: true, companyGroup: true } }
             },
             orderBy: { createdAt: 'desc' }
         }) as OrderWithRelations[];
@@ -81,15 +57,14 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             user: order.user,
             isBusiness: order.isBusiness,
             items: order.items.map(item => ({
+                id: item.id,
                 name: item.workshop
                     ? `Séance : ${item.workshop.title}`
                     : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
                 quantity: item.quantity,
                 price: item.price,
                 groupName: item.companyGroup?.name || null,
-                participants: item.participants.map(p =>
-                    p.memberCode ? `${p.firstName} ${p.lastName} (${p.memberCode})` : `${p.firstName} ${p.lastName}`
-                )
+                participants: item.participants
             }))
         }));
 
@@ -123,13 +98,8 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
             }
         }) as OrderWithRelations | null;
 
-        if (!order) {
-            return res.status(404).json({ error: "Document introuvable." });
-        }
-
-        if (!isAdmin && order.userId !== userId) {
-            return res.status(403).json({ error: "Accès refusé." });
-        }
+        if (!order) return res.status(404).json({ error: "Document introuvable." });
+        if (!isAdmin && order.userId !== userId) return res.status(403).json({ error: "Accès refusé." });
 
         res.json(order);
     } catch (error) {
@@ -138,72 +108,142 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * 🏺 Mise à jour du Statut et Promotion Technique
+ * 🏺 ÉMARGEMENT ET CERTIFICATION TECHNIQUE (Version Institutionnelle)
+ */
+export const updateParticipantStatus = async (req: AuthRequest, res: Response) => {
+    const { participantId } = req.params;
+    const { firstName, lastName, isValidated } = req.body;
+
+    try {
+        // 1. Mise à jour de la présence individuelle
+        const participant = await prisma.participant.update({
+            where: { id: participantId as string },
+            data: {
+                firstName,
+                lastName,
+                isValidated,
+                validatedAt: isValidated ? new Date() : null
+            },
+            include: {
+                orderItem: {
+                    include: {
+                        participants: true,
+                        workshop: true,
+                        companyGroup: true,
+                        order: true // 🏺 CRUCIAL : Permet de remonter jusqu'à l'acheteur (User)
+                    }
+                }
+            }
+        });
+
+        const orderItem = (participant as any).orderItem;
+        if (!orderItem) return res.status(404).json({ error: "Lien de commande rompu." });
+
+        const validatedCount = orderItem.participants.filter((p: any) => p.isValidated).length;
+        const totalRequired = orderItem.quantity;
+        const isCohortComplete = validatedCount === totalRequired;
+
+        // 2. 🏺 DÉBLOCAGE TRANSACTIONNEL DES COMPÉTENCES
+        // Se déclenche uniquement à 100% de présence physique
+        if (isCohortComplete && orderItem.workshop) {
+            const levelTarget = orderItem.workshop.level;
+
+            await prisma.$transaction([
+                // Mise à jour du palier du Groupe Institutionnel
+                prisma.companyGroup.update({
+                    where: { id: orderItem.companyGroupId },
+                    data: { currentLevel: levelTarget }
+                }),
+                // Mise à jour du Passeport Technique de l'acheteur (User.conceptionLevel)
+                // C'est ce qui allumera les barres dans AdminCustomers
+                prisma.user.update({
+                    where: { id: orderItem.order.userId },
+                    data: { conceptionLevel: levelTarget }
+                })
+            ]);
+        }
+
+        res.json({
+            message: "Certification scellée au Registre.",
+            currentCount: validatedCount,
+            isComplete: isCohortComplete
+        });
+    } catch (error) {
+        res.status(400).json({ error: "Échec de la validation technique." });
+    }
+};
+
+/* Gardez le reste du fichier (getOrders, updateOrderStatus, etc.) tel quel */
+
+/**
+ * 🏺 Mise à jour du Statut et Promotion (Rectifiée)
  */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
 
     try {
-        // 1. On récupère la commande avec les ateliers et l'acheteur
         const order = await prisma.order.findUnique({
             where: { id },
-            include: {
-                items: {
-                    include: {
-                        workshop: true,
-                    }
-                },
-                user: true // Vital pour identifier l'élève
-            }
+            include: { items: { include: { workshop: true } }, user: true }
         });
 
         if (!order) return res.status(404).json({ error: "Commande introuvable." });
 
-        // 2. Mise à jour de l'état dans le registre
         const updatedOrder = await prisma.order.update({
             where: { id },
             data: { status },
             include: { items: { include: { workshop: true } } }
         });
 
-        // 3. Logique de déblocage technique lors de la FINALISATION
         if (status === 'FINALISÉ') {
             for (const item of order.items) {
                 if (item.workshop) {
-                    const workshopLevel = item.workshop.level;
-
-                    if (order.isBusiness && item.companyGroupId) {
-                        // 🏢 CAS PRO : On met à jour le niveau du groupe
-                        await prisma.companyGroup.update({
-                            where: { id: item.companyGroupId },
-                            data: {
-                                currentLevel: {
-                                    set: workshopLevel // On scelle le niveau atteint
-                                }
-                            }
-                        });
-                    } else {
-                        // 👤 CAS PARTICULIER : On met à jour le passeport de l'acheteur
-                        // On ne débloque le niveau suivant que si l'élève vient de réussir
-                        // son niveau actuel ou un niveau supérieur
-                        if (workshopLevel >= order.user.conceptionLevel) {
+                    // 👤 CAS PARTICULIER / SALARIÉ : Promotion automatique
+                    if (!order.isBusiness) {
+                        if (item.workshop.level >= order.user.conceptionLevel) {
                             await prisma.user.update({
                                 where: { id: order.userId },
-                                data: {
-                                    conceptionLevel: workshopLevel // Le niveau de l'atelier devient le nouveau palier acquis
-                                }
+                                data: { conceptionLevel: item.workshop.level }
                             });
                         }
                     }
+                    // 🏢 CAS PRO : On ne fait rien ici (Verrouillé jusqu'à l'émargement complet).
                 }
             }
         }
-
         res.json(updatedOrder);
     } catch (error) {
-        console.error("❌ Erreur Registre :", error);
         res.status(400).json({ error: "Échec de mise à jour logistique." });
+    }
+};
+
+/**
+ * 🏺 CRÉATION MANUELLE D'UN SLOT D'ÉMARGEMENT
+ */
+export const addManualParticipant = async (req: AuthRequest, res: Response) => {
+    const { orderItemId } = req.body; // L'ID de la ligne de commande (ex: la séance de 25 places)
+
+    try {
+        const orderItem = await prisma.orderItem.findUnique({
+            where: { id: orderItemId },
+            include: { order: true }
+        });
+
+        if (!orderItem) return res.status(404).json({ error: "Ligne de commande introuvable." });
+
+        // Création du participant vide rattaché à cet item
+        const newParticipant = await prisma.participant.create({
+            data: {
+                orderItemId: orderItem.id,
+                companyGroupId: orderItem.companyGroupId,
+                isValidated: false
+            }
+        });
+
+        res.status(201).json(newParticipant);
+    } catch (error) {
+        res.status(400).json({ error: "Échec de l'ajout manuel au registre." });
     }
 };
 

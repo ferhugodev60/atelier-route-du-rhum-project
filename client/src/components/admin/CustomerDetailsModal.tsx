@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone, Fingerprint, ShieldCheck } from 'lucide-react';
+import { X, User, Mail, GraduationCap, ShoppingBag, ArrowUpRight, Loader2, Phone, Fingerprint, ShieldCheck, Building2 } from 'lucide-react';
 import api from '../../api/axiosInstance';
 import OrderDetailsModal from './OrderDetailsModal';
 import { useToastStore } from '../../store/toastStore';
@@ -12,16 +12,27 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
     const addToast = useToastStore(state => state.addToast);
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
+    /**
+     * 🏺 Extraction des données du Registre
+     */
     useEffect(() => {
         if (isOpen && customerId) {
             setLoading(true);
-            api.get(`/users/${customerId}`).then(res => {
-                setFullData(res.data);
-                setLoading(false);
-            }).catch(() => setLoading(false));
+            api.get(`/users/${customerId}`)
+                .then(res => {
+                    setFullData(res.data);
+                    setLoading(false);
+                })
+                .catch(() => {
+                    addToast("Échec de l'extraction du dossier client.", "error");
+                    setLoading(false);
+                });
         }
-    }, [isOpen, customerId]);
+    }, [isOpen, customerId, addToast]);
 
+    /**
+     * 🏺 Scellage du Palier Technique
+     */
     const handleLevelUpdate = async (newLevel: number) => {
         setIsUpdating(true);
         try {
@@ -41,6 +52,8 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
     return (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md font-sans">
             <div className="bg-white border-4 border-slate-200 w-full max-w-4xl h-[85vh] flex flex-col rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.3)] relative overflow-hidden">
+
+                {/* Fermeture */}
                 <button onClick={onClose} className="absolute top-8 right-8 text-black hover:text-emerald-600 z-20 transition-colors">
                     <X size={32} strokeWidth={3} />
                 </button>
@@ -52,9 +65,10 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                     </div>
                 ) : (
                     <>
+                        {/* --- EN-TÊTE INSTITUTIONNEL --- */}
                         <header className="p-10 md:p-14 border-b-4 border-slate-50 bg-white relative z-10">
                             <div className="flex items-center gap-10">
-                                <div className="w-24 h-24 bg-slate-900 rounded-3xl flex items-center justify-center shadow-xl">
+                                <div className="w-24 h-24 bg-slate-900 rounded-3xl flex items-center justify-center shadow-xl shadow-slate-900/10">
                                     <User size={40} className="text-white" strokeWidth={2.5} />
                                 </div>
                                 <div>
@@ -62,24 +76,39 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                         {fullData.lastName} <span className="text-emerald-600">{fullData.firstName}</span>
                                     </h2>
 
-                                    <div className="flex items-center gap-3 mt-4 bg-emerald-50 border-2 border-emerald-100 px-4 py-2 w-fit rounded-xl">
-                                        <Fingerprint size={16} className="text-emerald-700" strokeWidth={3} />
-                                        <span className="text-[11px] text-emerald-800 font-black uppercase tracking-widest">
-                                            {fullData.memberCode || "IDENTITÉ NON CERTIFIÉE"}
-                                        </span>
+                                    {/* 🏺 Identification Professionnelle & Institutionnelle */}
+                                    <div className="flex flex-wrap items-center gap-3 mt-4">
+                                        {fullData.role === 'PRO' && (
+                                            <div className="flex items-center gap-3 bg-slate-900 border-2 border-slate-800 px-4 py-2 w-fit rounded-xl">
+                                                <Building2 size={16} className="text-emerald-400" strokeWidth={3} />
+                                                <span className="text-[11px] text-white font-black uppercase tracking-widest">
+                                                    {fullData.companyName || "ENTITÉ NON RENSEIGNÉE"}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        <div className="flex items-center gap-3 bg-emerald-50 border-2 border-emerald-100 px-4 py-2 w-fit rounded-xl">
+                                            <Fingerprint size={16} className="text-emerald-700" strokeWidth={3} />
+                                            <span className="text-[11px] text-emerald-800 font-black uppercase tracking-widest">
+                                                {fullData.role === 'PRO'
+                                                    ? `SIRET : ${fullData.siret || "NON RENSEIGNÉ"}`
+                                                    : (fullData.memberCode || "IDENTITÉ NON CERTIFIÉE")}
+                                            </span>
+                                        </div>
                                     </div>
 
                                     <div className="mt-6 flex gap-8">
-                                        <p className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
+                                        <div className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
                                             <Mail size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.email}
-                                        </p>
-                                        <p className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
+                                        </div>
+                                        <div className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
                                             <Phone size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.phone || 'NON RENSEIGNÉ'}
-                                        </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Navigation des sections */}
                             <nav className="flex gap-12 mt-12">
                                 {[
                                     { id: 'cursus', label: 'Certification Cursus', icon: GraduationCap },
@@ -100,7 +129,10 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                             </nav>
                         </header>
 
+                        {/* --- CONTENU --- */}
                         <div className="flex-1 overflow-y-auto p-10 md:p-14 bg-white relative z-10">
+
+                            {/* Onglet Certification */}
                             {activeTab === 'cursus' && (
                                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-400">
                                     <div className="bg-slate-50 border-2 border-slate-100 p-10 rounded-3xl space-y-10">
@@ -139,6 +171,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                 </div>
                             )}
 
+                            {/* Onglet Historique des Flux */}
                             {activeTab === 'orders' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
                                     {fullData.orders?.map((order: any) => (
@@ -168,7 +201,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             </div>
                                         </div>
                                     ))}
-                                    {fullData.orders?.length === 0 && (
+                                    {(!fullData.orders || fullData.orders.length === 0) && (
                                         <div className="py-24 text-center text-slate-300 uppercase tracking-widest text-xs font-black">
                                             AUCUN FLUX TRANSACTIONNEL RÉPERTORIÉ AU REGISTRE.
                                         </div>
@@ -180,7 +213,12 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                 )}
             </div>
 
-            <OrderDetailsModal isOpen={!!selectedOrderId} orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
+            {/* Modal de détails de commande lié au Registre */}
+            <OrderDetailsModal
+                isOpen={!!selectedOrderId}
+                orderId={selectedOrderId}
+                onClose={() => setSelectedOrderId(null)}
+            />
         </div>
     );
 }

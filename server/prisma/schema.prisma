@@ -86,7 +86,7 @@ model CompanyGroup {
   id           String @id @default(cuid())
   name         String
   currentLevel Int    @default(0)
-  totalSlots   Int    @default(25) // 🏺 Suivi du volume initial (25, 35...)
+  totalSlots   Int    @default(25)
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id])
@@ -134,6 +134,9 @@ model Participant {
   lastName  String?
   phone     String?
   email     String?
+
+  isValidated Boolean   @default(false)
+  validatedAt DateTime?
 
   memberCode String?
   userId     String?

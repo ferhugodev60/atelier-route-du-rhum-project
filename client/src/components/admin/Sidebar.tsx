@@ -18,7 +18,7 @@ export default function Sidebar() {
     const navItems = [
         { name: 'Tableau de bord', path: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Boutique', path: '/admin/boutique', icon: ShoppingBag },
-        { name: 'Gestion Collections', path: '/admin/categories', icon: Tag },
+        { name: 'Collections', path: '/admin/categories', icon: Tag },
         { name: 'Ateliers', path: '/admin/ateliers', icon: GraduationCap },
         { name: 'Commandes', path: '/admin/orders', icon: ClipboardList },
         { name: 'Clientèle', path: '/admin/customers', icon: Users }
