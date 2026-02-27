@@ -195,15 +195,15 @@ async function main() {
     // Partenaire Institutionnel (PRO)
     await prisma.user.create({
         data: {
-            email: "ce@airbus.com",
+            email: "ce@chanel.com",
             phone: "0768976012",
             memberCode: generateMemberCode(),
             password: proPassword,
-            firstName: "Responsable",
-            lastName: "CE Airbus",
+            firstName: "Lucas",
+            lastName: "Martin",
             role: "PRO",
-            companyName: "Airbus SAS",
-            siret: "12345678901234"
+            companyName: "CHANEL",
+            siret: "54205276600087"
         }
     });
 

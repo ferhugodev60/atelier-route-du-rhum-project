@@ -176,7 +176,7 @@ export default function AdminCustomers() {
                                             {/* 🏺 RENDU DYNAMIQUE DU NIVEAU SCELLÉ */}
                                         {customer.role === 'PRO'
                                             ? `Niveau ${customer.conceptionLevel || 0}`
-                                            : (customer.conceptionLevel === 0 ? "Niveau : Initié" : `Niveau ${customer.conceptionLevel}`)}
+                                            : (customer.conceptionLevel === 0 ? "Niveau 0" : `Niveau ${customer.conceptionLevel}`)}
                                         </span>
                                 </div>
                             </td>
