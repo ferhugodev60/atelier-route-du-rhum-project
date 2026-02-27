@@ -46,7 +46,7 @@ async function main() {
     const catDame = await prisma.category.create({
         data: {
             name: "Location de Dame-Jeanne",
-            description: "Prestations événementielles de prestige en grands formats.",
+            description: "Prestations événementielles de prestige en grands formats. Une caution de 50 € est exigée par bouteille lors de la mise à disposition. La restitution doit impérativement être effectuée sous 3 jours après l'événement ; passé ce délai, le dépôt de garantie ne pourra plus être récupéré.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
     });
@@ -79,6 +79,21 @@ async function main() {
                     { size: 33, unit: " Centilitres", price: 25.0, stock: 10 },
                     { size: 70, unit: " Centilitres", price: 65.0, stock: 15 },
                     { size: 1, unit: " Litre", price: 75.0, stock: 5 }
+                ]
+            }
+        }
+    });
+
+    await prisma.product.create({
+        data: {
+            name: "Dame-Jeanne Location",
+            description: "Test",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
+            categoryId: catDame.id,
+            volumes: {
+                create: [
+                    { size: 3, unit: " Litre", price: 150.0, stock: 5 },
+                    { size: 6, unit: " Litre", price: 300.0, stock: 5 },
                 ]
             }
         }
