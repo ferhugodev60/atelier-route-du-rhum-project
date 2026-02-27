@@ -9,7 +9,7 @@ import api from '../../api/axiosInstance';
 
 /**
  * 🏺 DOSSIER DE VENTE ET CERTIFICATION
- * Version Scellée : Restitution du détail Particuliers et Synchronisation PRO.
+ * Version Scellée : Correction des contrastes (Texte Noir) et visibilité des logos.
  */
 export default function OrderDetailsModal({ isOpen, orderId, onClose, onRefresh }: any) {
     const [order, setOrder] = useState<any>(null);
@@ -129,7 +129,7 @@ export default function OrderDetailsModal({ isOpen, orderId, onClose, onRefresh 
                                                         <div className="flex justify-between items-end">
                                                             <div className="flex items-center gap-3">
                                                                 <UserCheck className="text-emerald-600" size={24} strokeWidth={3} />
-                                                                <p className="text-xs font-black uppercase text-black">Certification de Cohorte</p>
+                                                                <p className="text-xs font-black uppercase tracking-widest text-black">Certification de Cohorte</p>
                                                             </div>
                                                             <p className="text-sm font-black text-emerald-700">
                                                                 {validatedCount} / {item.quantity} PRÉSENCES SCELLÉES
@@ -178,7 +178,8 @@ export default function OrderDetailsModal({ isOpen, orderId, onClose, onRefresh 
                             <div className="lg:col-span-4 border-l-4 border-slate-50 pl-12 space-y-12">
                                 <section className="space-y-10 sticky top-0">
                                     <div className="flex items-center gap-4 border-l-4 border-black pl-4">
-                                        <UserCircle size={24} strokeWidth={3} />
+                                        {/* 🏺 ICONE FORCEE EN NOIR POUR VISIBILITÉ */}
+                                        <UserCircle className="text-black" size={24} strokeWidth={3} />
                                         <h3 className="text-xs text-black font-black uppercase tracking-widest">Dossier Client</h3>
                                     </div>
                                     <div className="bg-slate-900 text-white p-10 rounded-[2.5rem] shadow-2xl space-y-8">
@@ -205,17 +206,44 @@ export default function OrderDetailsModal({ isOpen, orderId, onClose, onRefresh 
 
 function ParticipantRow({ index, participant, onCertify, isUpdating }: any) {
     const [fn, setFn] = useState(participant.firstName || '');
-    const [ln, setLn] = useState(participant.lastName || '');
+    const [lastNameValue, setLastNameValue] = useState(participant.lastName || '');
 
     return (
-        <div className={`flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl border-2 transition-all ${participant.isValidated ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200'}`}>
-            <span className="text-[10px] font-black text-slate-300 w-6">{index}.</span>
-            <input type="text" placeholder="PRÉNOM" value={fn} onChange={(e) => setFn(e.target.value.toUpperCase())} disabled={participant.isValidated} className="flex-1 bg-transparent border-b-2 border-slate-100 text-[11px] font-black uppercase outline-none focus:border-emerald-500 disabled:opacity-50 transition-all" />
-            <input type="text" placeholder="NOM" value={ln} onChange={(e) => setLn(e.target.value.toUpperCase())} disabled={participant.isValidated} className="flex-1 bg-transparent border-b-2 border-slate-100 text-[11px] font-black uppercase outline-none focus:border-emerald-500 disabled:opacity-50 transition-all" />
+        <div className={`flex flex-col sm:flex-row items-center gap-4 p-4 rounded-2xl border-2 transition-all ${participant.isValidated ? 'bg-emerald-50 border-emerald-200' : 'bg-white border-slate-200 shadow-sm'}`}>
+            <span className="text-[10px] font-black text-slate-400 w-6">{index}.</span>
+
+            {/* 🏺 INPUTS NOIRS SUR BLANC */}
+            <input
+                type="text"
+                placeholder="PRÉNOM"
+                value={fn}
+                onChange={(e) => setFn(e.target.value.toUpperCase())}
+                disabled={participant.isValidated}
+                className="flex-1 bg-transparent border-b-2 border-slate-100 text-[11px] text-black font-black uppercase outline-none focus:border-emerald-500 disabled:opacity-50 transition-all placeholder:text-slate-300"
+            />
+            <input
+                type="text"
+                placeholder="NOM"
+                value={lastNameValue}
+                onChange={(e) => setLastNameValue(e.target.value.toUpperCase())}
+                disabled={participant.isValidated}
+                className="flex-1 bg-transparent border-b-2 border-slate-100 text-[11px] text-black font-black uppercase outline-none focus:border-emerald-500 disabled:opacity-50 transition-all placeholder:text-slate-300"
+            />
+
             {participant.isValidated ? (
-                <div className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-900/10"><Check size={14} strokeWidth={4} /><span className="text-[9px] font-black uppercase tracking-widest">Certifié</span></div>
+                <div className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl shadow-md shadow-emerald-900/10">
+                    <Check size={14} strokeWidth={4} />
+                    <span className="text-[9px] font-black uppercase tracking-widest">Certifié</span>
+                </div>
             ) : (
-                <button onClick={() => onCertify(fn, ln)} disabled={isUpdating || !fn || !ln} className="flex items-center gap-3 px-8 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase hover:bg-emerald-600 disabled:opacity-20 transition-all shadow-lg active:scale-95">{isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />} Valider</button>
+                <button
+                    onClick={() => onCertify(fn, lastNameValue)}
+                    disabled={isUpdating || !fn || !lastNameValue}
+                    className="flex items-center gap-3 px-8 py-2 bg-slate-900 text-white rounded-xl text-[9px] font-black uppercase hover:bg-emerald-600 disabled:opacity-20 transition-all shadow-lg active:scale-95"
+                >
+                    {isUpdating ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                    Valider
+                </button>
             )}
         </div>
     );
