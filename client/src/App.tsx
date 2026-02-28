@@ -17,7 +17,8 @@ import AdminCustomers from "./pages/admin/AdminCustomers.tsx";
 import AdminOrders from "./pages/admin/AdminOrders.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
-// --- Imports Admin (Lazy Loading) ---
+// --- Imports (Lazy Loading) ---
+const ValidationPage = lazy(() => import('./pages/ValidationPage.tsx')); // 🏺 Nouveauté pour le scellage QR Code
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -57,8 +58,10 @@ export default function App() {
         <BrowserRouter>
             <div className="min-h-screen bg-[#0a1a14] font-sans text-rhum-cream">
 
+                {/* --- 🏺 GESTION DE LA NAVBAR (Exclue sur Admin et Validation) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
+                    <Route path="/validate/*" element={null} />
                     <Route
                         path="*"
                         element={
@@ -73,10 +76,13 @@ export default function App() {
                 <Suspense fallback={<div className="h-screen bg-[#0a1a14] flex items-center justify-center" />}>
                     <Routes>
                         <Route path="/" element={<HomePage />} />
-                        {/* 🏺 CORRECTION : Passage de la prop cart={items} pour sécuriser les stocks */}
                         <Route path="/boutique" element={<ShopPage onAddToCart={addItem} cart={items} />} />
                         <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
 
+                        {/* 🏺 ROUTE PUBLIQUE DE SCELLAGE PAR QR CODE */}
+                        <Route path="/validate/:participantId" element={<ValidationPage />} />
+
+                        {/* --- ROUTES ADMIN --- */}
                         <Route path="/admin" element={<AdminLogin />} />
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
@@ -96,8 +102,10 @@ export default function App() {
                 <PaymentSuccess />
                 <PaymentError />
 
+                {/* --- 🏺 GESTION DU PANIER (Exclu sur Admin et Validation) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
+                    <Route path="/validate/*" element={null} />
                     <Route
                         path="*"
                         element={
@@ -111,8 +119,10 @@ export default function App() {
                     />
                 </Routes>
 
+                {/* --- 🏺 GESTION DU FOOTER (Exclu sur Admin et Validation) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
+                    <Route path="/validate/*" element={null} />
                     <Route path="*" element={<Footer />} />
                 </Routes>
             </div>

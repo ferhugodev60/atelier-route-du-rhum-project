@@ -8,11 +8,13 @@ import productRoutes from "./productRoutes";
 import checkoutRoutes from "./checkoutRoutes";
 import categoryRoutes from "./categoryRoutes";
 import workshopRoutes from "./workshopRoutes";
+import participantRoutes from "./participantRoutes";
 
 const router = Router();
 
 router.use("/auth", authRoutes);
 router.use("/orders", orderRoutes);
+router.use('/public/participants', participantRoutes);
 router.use("/shop", shopRoutes);
 router.use("/checkout", checkoutRoutes);
 router.use("/admin", adminRoutes);

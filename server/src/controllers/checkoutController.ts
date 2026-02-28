@@ -6,8 +6,8 @@ import { sendOrderConfirmationEmail } from '../services/emailService';
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 /**
- * 🏛️ Initialisation de la Session de Paiement
- * Intègre le Verrou d'Homogénéité : Empêche la mixité des profils (Standard vs Institutionnel).
+ * 🏛️ INITIALISATION DE LA SESSION DE PAIEMENT
+ * Intègre le Verrou d'Homogénéité et la détection des quotas institutionnels.
  */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
@@ -19,7 +19,6 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
-        // 🏺 Statut institutionnel de l'acheteur (Organisateur)
         const isBookerInstitutional = user.role === 'PRO' || user.isEmployee;
 
         for (const item of items) {
@@ -27,91 +26,64 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
                 if (!ws) throw new Error("Séance de formation introuvable.");
 
-                // 1️⃣ VÉRIFICATION DU VERROU D'HOMOGÉNÉITÉ SUR LES PARTICIPANTS
+                // 1️⃣ VÉRIFICATION DU VERROU D'HOMOGÉNÉITÉ
                 if (item.participants && item.participants.length > 0) {
                     for (const participant of item.participants) {
                         if (participant.memberCode) {
-                            // On vérifie le rang de chaque invité dans le Registre
                             const guest = await prisma.user.findUnique({
                                 where: { memberCode: participant.memberCode.toUpperCase() }
                             });
+                            if (!guest) return res.status(400).json({ error: `Le code ${participant.memberCode} est inconnu.` });
 
-                            if (!guest) {
-                                return res.status(400).json({
-                                    error: `Le code ${participant.memberCode} est inconnu au Registre.`
-                                });
-                            }
-
-                            // 🏺 Interdiction de mixité (Standard vs Pro/CE)
                             const isGuestInstitutional = guest.role === 'PRO' || guest.isEmployee;
                             if (isBookerInstitutional !== isGuestInstitutional) {
-                                return res.status(400).json({
-                                    error: "Incohérence de profil : La mixité entre membres standards et entreprises est interdite."
-                                });
+                                return res.status(400).json({ error: "La mixité entre membres standards et entreprises est interdite." });
                             }
                         } else if (isBookerInstitutional) {
-                            // 🏺 Un membre institutionnel doit identifier chaque participant
-                            return res.status(400).json({
-                                error: "Les membres CE doivent certifier l'identité de chaque participant via leur code membre."
-                            });
+                            return res.status(400).json({ error: "Les membres CE doivent certifier l'identité via un code membre." });
                         }
                     }
                 }
 
-                // 2️⃣ LOGIQUE DE QUOTAS ET TARIFICATION
-                if (item.quantity >= 25) {
-                    if (user.role !== "PRO") return res.status(403).json({ error: "Packs de groupe réservés aux comptes PRO." });
-                    item.isBusiness = true;
-                } else {
-                    item.isBusiness = false;
-                }
-
-                // Application du tarif certifié selon le statut
+                // 2️⃣ DÉTERMINATION DU STATUT BUSINESS (CE / GROUPES)
+                item.isBusiness = item.quantity >= 25 || user.role === "PRO";
                 item.price = isBookerInstitutional ? ws.priceInstitutional : ws.price;
                 item.name = ws.title;
                 item.description = ws.description;
                 item.image = ws.image;
 
             } else if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({
-                    where: { id: item.volumeId },
-                    include: { product: true }
-                });
-                if (!vol || vol.stock < item.quantity) {
-                    return res.status(400).json({ error: `Stock insuffisant.` });
-                }
+                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId }, include: { product: true } });
+                if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Stock insuffisant." });
                 item.price = vol.price;
                 item.name = `${vol.product.name} (${vol.size}${vol.unit})`;
                 item.description = vol.product.description;
-                item.image = vol.product.image;
                 item.isBusiness = false;
             }
         }
 
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
-        const hasBusinessItem = items.some((i: any) => i.isBusiness);
+        const isOrderBusiness = items.some((i: any) => i.isBusiness);
 
-        // 3️⃣ CRÉATION DU DOSSIER DE VENTE (ORDER)
+        // 3️⃣ CRÉATION DU DOSSIER EN ATTENTE
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
-                reference: hasBusinessItem ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
+                reference: isOrderBusiness ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
                 total: totalAmount,
                 status: 'EN_ATTENTE_PAIEMENT',
-                isBusiness: hasBusinessItem,
+                isBusiness: isOrderBusiness,
                 items: {
                     create: items.map((item: any) => ({
                         quantity: item.quantity,
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
+                        // Pour les commandes non-business (individuelles), on crée les participants de suite
                         participants: (item.workshopId && !item.isBusiness) ? {
                             create: item.participants?.map((p: any) => ({
-                                firstName: p.firstName,
-                                lastName: p.lastName,
-                                phone: p.phone || "",
-                                email: p.email || "",
-                                memberCode: p.memberCode?.toUpperCase() // Archivage du code membre
+                                firstName: p.firstName, lastName: p.lastName, phone: p.phone || "", email: p.email || "",
+                                memberCode: p.memberCode?.toUpperCase()
                             }))
                         } : undefined
                     }))
@@ -119,18 +91,12 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         });
 
-        // 4️⃣ GÉNÉRATION DE LA SESSION STRIPE
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             line_items: items.map((item: any) => ({
                 price_data: {
-                    currency: 'eur',
-                    unit_amount: Math.round(item.price * 100),
-                    product_data: {
-                        name: item.name,
-                        description: `${item.description}${isBookerInstitutional ? ' (Tarif institutionnel certifié)' : ''}`,
-                        images: item.image ? [item.image] : [],
-                    },
+                    currency: 'eur', unit_amount: Math.round(item.price * 100),
+                    product_data: { name: item.name, description: item.description, images: item.image ? [item.image] : [] },
                 },
                 quantity: item.quantity,
             })),
@@ -148,7 +114,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 };
 
 /**
- * 🏛️ Confirmation Technique (Webhook Stripe)
+ * 📜 CONFIRMATION TECHNIQUE (WEBHOOK STRIPE)
+ * Assure le scellage des places en base de données pour les commandes de groupe.
  */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
@@ -166,63 +133,62 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
         try {
             await prisma.$transaction(async (tx) => {
-                const order = await tx.order.update({
+                // 1. Validation du Dossier
+                const updatedOrder = await tx.order.update({
                     where: { id: orderId },
                     data: { status: "PAYÉ" },
-                    include: {
-                        items: {
-                            include: {
-                                workshop: true,
-                                volume: { include: { product: true } }
-                            }
-                        },
-                        user: true
-                    }
+                    include: { items: { include: { workshop: true, participants: true } } }
                 });
 
-                for (const item of order.items) {
+                // 2. Scellage des stocks et des places (Slots)
+                for (const item of updatedOrder.items) {
                     if (item.volumeId) {
                         await tx.productVolume.update({
-                            where: { id: item.volumeId },
-                            data: { stock: { decrement: item.quantity } }
+                            where: { id: item.volumeId }, data: { stock: { decrement: item.quantity } }
                         });
                     }
 
-                    // 🏺 LOGIQUE DE COHORTE PRO
-                    if (item.workshop && order.isBusiness) {
-                        const group = await tx.companyGroup.create({
-                            data: {
-                                name: `Contrat ${order.reference} - ${item.quantity} places`,
-                                ownerId: order.userId,
-                                currentLevel: item.workshop.level,
-                            }
-                        });
+                    // 🏺 LOGIQUE DE GÉNÉRATION MASSIVE DES PLACES
+                    // Indispensable pour les 25 places CE (isBusiness) ou toute séance sans participants identifiés
+                    if (item.workshop && item.participants.length === 0) {
 
-                        // 🏺 GÉNÉRATION AUTOMATIQUE DES SLOTS DE PRÉSENCE
-                        // On crée physiquement les 25 ou 35 lignes vides dans le Registre
-                        for (let i = 0; i < item.quantity; i++) {
-                            await tx.participant.create({
+                        // Si c'est un achat Business, on crée d'abord le groupe institutionnel
+                        let companyGroupId = null;
+                        if (updatedOrder.isBusiness) {
+                            const group = await tx.companyGroup.create({
                                 data: {
-                                    orderItemId: item.id,
-                                    companyGroupId: group.id,
-                                    isValidated: false // En attente d'émargement manuel par l'Admin
+                                    name: `Contrat ${updatedOrder.reference}`,
+                                    ownerId: updatedOrder.userId,
+                                    currentLevel: item.workshop.level,
                                 }
                             });
+                            companyGroupId = group.id;
                         }
+
+                        // 🏺 Gravure des identifiants réels pour le PDF (25 places)
+                        const participantsData = Array.from({ length: item.quantity }).map(() => ({
+                            orderItemId: item.id,
+                            companyGroupId: companyGroupId,
+                            isValidated: false
+                        }));
+
+                        await tx.participant.createMany({ data: participantsData });
+                        console.log(`✅ ${item.quantity} slots participants scellés pour l'item ${item.id}`);
                     }
                 }
 
-                if (order.user) {
-                    await sendOrderConfirmationEmail(order.user.email, {
-                        reference: order.reference,
-                        total: order.total,
-                        items: order.items,
-                        isBusiness: order.isBusiness
-                    });
+                // 3. Extraction finale pour confirmation
+                const finalOrder = await tx.order.findUnique({
+                    where: { id: orderId },
+                    include: { user: true, items: { include: { workshop: true, participants: true } } }
+                });
+
+                if (finalOrder?.user) {
+                    await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
                 }
             });
         } catch (error: any) {
-            console.error("❌ Erreur Webhook:", error.message);
+            console.error("❌ Incident de scellage Webhook :", error.message);
         }
     }
     res.json({ received: true });
