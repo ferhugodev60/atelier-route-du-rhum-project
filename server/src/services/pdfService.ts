@@ -102,40 +102,122 @@ export const generateOrderPDF = async (order: any) => {
     return await pdfDoc.save();
 };
 
-/**
- * 📜 GÉNÉRATION DU CERTIFICAT INDIVIDUEL (Après validation)
- * Document officiel Noir & Or avec Code Client.
- */
 export const generateCertificationPDF = async (participant: any) => {
     const pdfDoc = await PDFDocument.create();
-    const page = pdfDoc.addPage([595.28, 420]); // Format paysage type diplôme
-    const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const page = pdfDoc.addPage([595.28, 842.89]);
+    const { width, height } = page.getSize();
 
-    const workshopTitle = participant.orderItem?.workshop?.title || "SÉANCE INDIVIDUELLE";
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-    // 🏺 Design Institutionnel
-    page.drawRectangle({ x: 0, y: 0, width: 595.28, height: 420, color: rgb(0.04, 0.1, 0.08) }); // Fond Noir
-    page.drawRectangle({ x: 20, y: 20, width: 555.28, height: 380, borderColor: rgb(0.83, 0.69, 0.22), borderWidth: 2 }); // Bordure Or
+    // Couleurs Institutionnelles
+    const gold = rgb(0.83, 0.69, 0.22);
+    const darkGreen = rgb(0.04, 0.1, 0.08);
+    const softRed = rgb(0.8, 0, 0);
+    const black = rgb(0, 0, 0);
 
-    page.drawText('CERTIFICAT DE PRÉSENCE', { x: 50, y: 340, size: 26, font, color: rgb(0.83, 0.69, 0.22) });
-    page.drawText('SCELLÉ AU REGISTRE DE L\'ÉTABLISSEMENT', { x: 50, y: 315, size: 8, font, color: rgb(1, 1, 1) });
+    const workshop = participant.orderItem?.workshop;
+    const workshopTitle = (workshop?.title || "SÉANCE INDIVIDUELLE").toUpperCase();
 
-    // Informations Identité
-    page.drawText(`MEMBRE : ${participant.firstName} ${participant.lastName}`, { x: 50, y: 250, size: 16, font, color: rgb(1, 1, 1) });
-    page.drawText(`SÉANCE : ${workshopTitle.toUpperCase()}`, { x: 50, y: 215, size: 16, font, color: rgb(1, 1, 1) });
+    // 🏺 Extraction des données scellées (Deep Nesting)
+    const orderRef = participant.orderItem?.order?.reference || "REF-INCONNUE";
+    const companyName = participant.orderItem?.order?.user?.companyName || "ÉTABLISSEMENT";
 
-    page.drawText(`CONTACT : ${participant.email}`, { x: 50, y: 180, size: 10, font, color: rgb(0.5, 0.5, 0.5) });
-    if (participant.phone) {
-        page.drawText(`TEL : ${participant.phone}`, { x: 50, y: 160, size: 10, font, color: rgb(0.5, 0.5, 0.5) });
+    // 🏺 Logique de Validité par Level
+    const isConception = workshop && workshop.level > 0;
+    const dateGeneration = new Date();
+    const dateFin = new Date();
+    if (isConception) {
+        dateFin.setMonth(dateFin.getMonth() + 6);
+    } else {
+        dateFin.setDate(dateFin.getDate() + 30);
     }
 
-    // 🏺 Mise en avant du Code Client (Rectange translucide Or)
-    page.drawRectangle({ x: 50, y: 60, width: 250, height: 70, color: rgb(0.83, 0.69, 0.22), opacity: 0.1 });
-    page.drawText('VOTRE CODE CLIENT OFFICIEL :', { x: 65, y: 110, size: 9, font, color: rgb(0.83, 0.69, 0.22) });
-    page.drawText(participant.memberCode || "EN ATTENTE", { x: 65, y: 80, size: 22, font, color: rgb(0.83, 0.69, 0.22) });
+    const formatDate = (date: Date) => date.toLocaleDateString('fr-FR');
+    const validityPeriod = isConception ? "6 MOIS" : "30 JOURS";
 
-    // Note sur les avantages boutique
-    page.drawText('-10% SUR LA BOUTIQUE', { x: 320, y: 80, size: 10, font, color: rgb(1, 1, 1) });
+    // 🏺 DESIGN GLOBAL
+    page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
+    // Bordure fine Or
+    page.drawRectangle({ x: 20, y: 20, width: width - 40, height: height - 40, borderColor: gold, borderWidth: 0.5 });
+
+    // 🏺 1. BLOC ADMINISTRATIF (En haut à gauche)
+    const adminX = 50;
+    const adminY = height - 50;
+    page.drawText(`DATE D'ÉMISSION : ${formatDate(dateGeneration)}`, { x: adminX, y: adminY, size: 8, font: fontRegular, color: rgb(0.5, 0.5, 0.5) });
+    page.drawText(`DOSSIER : ${orderRef}`, { x: adminX, y: adminY - 12, size: 8, font: fontBold, color: black });
+    page.drawText(`ENTREPRISE : ${companyName.toUpperCase()}`, { x: adminX, y: adminY - 24, size: 8, font: fontBold, color: black });
+
+    // 🏺 2. LOGO INSTITUTIONNEL (Centré)
+    const logoPath = path.join(process.cwd(), 'public', 'assets', 'logo.jpg');
+    if (fs.existsSync(logoPath)) {
+        const logoBytes = fs.readFileSync(logoPath);
+        const logoImage = await pdfDoc.embedJpg(logoBytes);
+        const logoHeight = 70;
+        const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
+        page.drawImage(logoImage, { x: (width - logoWidth) / 2, y: height - 160, width: logoWidth, height: logoHeight });
+    }
+
+    // 🏺 3. TITRE DE LA SÉANCE
+    const subTitle = "BON POUR UNE SÉANCE";
+    const subTitleWidth = fontRegular.widthOfTextAtSize(subTitle, 10);
+    page.drawText(subTitle, { x: (width - subTitleWidth) / 2, y: height - 195, size: 10, font: fontRegular, color: gold });
+
+    const titleSize = 28;
+    const titleWidth = fontBold.widthOfTextAtSize(workshopTitle, titleSize);
+    page.drawText(workshopTitle, { x: (width - titleWidth) / 2, y: height - 235, size: titleSize, font: fontBold, color: darkGreen });
+
+    // 🏺 4. IDENTITÉ DU MEMBRE
+    const centerY = height - 370;
+    const nameText = `${participant.firstName} ${participant.lastName}`.toUpperCase();
+    const nameWidth = fontBold.widthOfTextAtSize(nameText, 32);
+    page.drawText(nameText, { x: (width - nameWidth) / 2, y: centerY, size: 32, font: fontBold, color: black });
+
+    const contactInfo = `${participant.email}   •   ${participant.phone || 'SANS TÉLÉPHONE'}`;
+    const contactWidth = fontRegular.widthOfTextAtSize(contactInfo, 11);
+    page.drawText(contactInfo, { x: (width - contactWidth) / 2, y: centerY - 40, size: 11, font: fontRegular, color: rgb(0.4, 0.4, 0.4) });
+
+    // 🏺 5. BLOC DE VALIDITÉ
+    const validityY = centerY - 120;
+    const validityLabel = `VALABLE : ${validityPeriod}`;
+    const vLabelWidth = fontBold.widthOfTextAtSize(validityLabel, 14);
+    page.drawText(validityLabel, { x: (width - vLabelWidth) / 2, y: validityY, size: 14, font: fontBold, color: black });
+
+    const rangeText = `DU ${formatDate(dateGeneration)} AU ${formatDate(dateFin)}`;
+    const rangeWidth = fontRegular.widthOfTextAtSize(rangeText, 12);
+    page.drawText(rangeText, { x: (width - rangeWidth) / 2, y: validityY - 25, size: 12, font: fontRegular, color: black });
+
+    // 🏺 6. APPEL À L'ACTION (Encadré décalé pour éviter la superposition)
+    const boxW = 460; const boxH = 55;
+    const boxX = (width - boxW) / 2;
+    const boxY = validityY - 100; // Position de sécurité
+    page.drawRectangle({ x: boxX, y: boxY, width: boxW, height: boxH, borderColor: softRed, borderWidth: 1.5, color: rgb(1, 0.98, 0.98) });
+
+    const actionT = "PROCHAINE ÉTAPE : RÉSERVEZ VOTRE SÉANCE AU 06 41 42 00 28";
+    const actionW = fontBold.widthOfTextAtSize(actionT, 11);
+    page.drawText(actionT, { x: (width - actionW) / 2, y: boxY + 22, size: 11, font: fontBold, color: softRed });
+
+    // 🏺 7. BLOC CODE CLIENT (Position abaissée pour le confort visuel)
+    const codeBoxY = 140; const codeBoxW = 420;
+    page.drawRectangle({ x: (width - codeBoxW) / 2, y: codeBoxY, width: codeBoxW, height: 115, color: gold, opacity: 0.03 });
+    page.drawRectangle({ x: (width - codeBoxW) / 2, y: codeBoxY, width: codeBoxW, height: 115, borderColor: gold, borderWidth: 0.2, opacity: 0.2 });
+
+    const helpT = "Ce code sert à vous connecter à votre compte personnel";
+    const helpW = fontRegular.widthOfTextAtSize(helpT, 9);
+    page.drawText(helpT, { x: (width - helpW) / 2, y: codeBoxY + 92, size: 9, font: fontRegular, color: rgb(0.5, 0.5, 0.5) });
+
+    const labelT = "VOTRE CODE CLIENT UNIQUE";
+    const labelW = fontBold.widthOfTextAtSize(labelT, 10);
+    page.drawText(labelT, { x: (width - labelW) / 2, y: codeBoxY + 74, size: 10, font: fontBold, color: black });
+
+    const codeV = participant.memberCode || "EN ATTENTE";
+    const codeW = fontBold.widthOfTextAtSize(codeV, 42);
+    page.drawText(codeV, { x: (width - codeW) / 2, y: codeBoxY + 25, size: 42, font: fontBold, color: darkGreen });
+
+    // 🏺 8. MENTION DE CADUCITÉ (Pied de page)
+    const warning = "POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE OU D'ABSENCE, LA CARTE CADEAU SERA CADUC";
+    const warnW = fontRegular.widthOfTextAtSize(warning, 8);
+    page.drawText(warning, { x: (width - warnW) / 2, y: 50, size: 8, font: fontRegular, color: rgb(0.7, 0.7, 0.7) });
 
     return await pdfDoc.save();
 };

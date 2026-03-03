@@ -1,4 +1,3 @@
-// server/src/controllers/workshopController.ts
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 
@@ -6,22 +5,38 @@ interface RequestWithFile extends Request {
     file?: Express.Multer.File;
 }
 
-// --- 📋 LECTURE ---
+/**
+ * 🏺 GESTIONNAIRE DES SÉANCES TECHNIQUE
+ * Administre les modules de formation et leurs règles de caducité.
+ */
+
+// --- 📋 LECTURE (Enrichie avec la validité) ---
 export const getWorkshops = async (req: Request, res: Response) => {
     try {
         const workshops = await prisma.workshop.findMany({
             orderBy: { level: 'asc' }
         });
-        res.json(workshops);
+
+        // 🏺 Application des règles de validité du Registre
+        const enrichedWorkshops = workshops.map(ws => {
+            const isConception = ws.level > 0 || ws.title.toLowerCase().includes('free');
+            return {
+                ...ws,
+                // 30 jours pour le Niveau 0, 6 mois pour les paliers techniques
+                validityDays: isConception ? 180 : 30,
+                validityPeriod: isConception ? "6 mois" : "30 jours"
+            };
+        });
+
+        res.json(enrichedWorkshops);
     } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la récupération des formations." });
+        res.status(500).json({ error: "Erreur lors de la récupération des séances." });
     }
 };
 
-// --- ➕ CRÉATION (Corrigé) ---
+// --- ➕ CRÉATION (Sécurisée) ---
 export const createWorkshop = async (req: RequestWithFile, res: Response) => {
     try {
-        // 🏺 Ajout de priceInstitutional dans la déstructuration
         const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
         const imageUrl = req.file ? req.file.path : null;
 
@@ -35,22 +50,21 @@ export const createWorkshop = async (req: RequestWithFile, res: Response) => {
                 availability,
                 quote,
                 price: parseFloat(price),
-                // 🏺 Sauvegarde explicite du tarif institutionnel
                 priceInstitutional: priceInstitutional ? parseFloat(priceInstitutional) : 0,
                 image: imageUrl
             }
         });
+
         res.status(201).json(workshop);
     } catch (error: any) {
-        res.status(400).json({ error: "Niveau déjà existant ou données invalides." });
+        res.status(400).json({ error: "Niveau déjà existant ou données de séance invalides." });
     }
 };
 
-// --- 🔧 MODIFICATION (Corrigé) ---
+// --- 🔧 MODIFICATION (Sécurisée) ---
 export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
     const id = req.params.id as string;
     try {
-        // 🏺 Ajout de priceInstitutional ici aussi
         const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
 
         const updateData: any = {
@@ -62,7 +76,6 @@ export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
             quote,
             level: level ? parseInt(level) : undefined,
             price: price ? parseFloat(price) : undefined,
-            // 🏺 Mise à jour du tarif institutionnel
             priceInstitutional: priceInstitutional ? parseFloat(priceInstitutional) : undefined
         };
 
@@ -77,7 +90,7 @@ export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
 
         res.json(workshop);
     } catch (error) {
-        res.status(404).json({ error: "Formation introuvable." });
+        res.status(404).json({ error: "Séance introuvable au Registre." });
     }
 };
 
@@ -86,8 +99,8 @@ export const deleteWorkshop = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
         await prisma.workshop.delete({ where: { id } });
-        res.json({ message: "L'atelier a été retirée du catalogue." });
+        res.json({ message: "La séance a été retirée du catalogue officiel." });
     } catch (error) {
-        res.status(400).json({ error: "Suppression impossible : des commandes y sont rattachées." });
+        res.status(400).json({ error: "Suppression impossible : des commandes sont liées à cette séance." });
     }
 };

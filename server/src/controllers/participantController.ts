@@ -68,7 +68,6 @@ export const validateParticipantFromPDF = async (req: Request, res: Response) =>
  * Génère un titre de présence avec Code Client et informations scellées.
  */
 export const downloadCertificationPDF = async (req: Request, res: Response) => {
-    // 🏺 FIX TS2322 : Cast explicite pour garantir que l'ID est une string unique
     const id = req.params.id as string;
 
     try {
@@ -76,7 +75,12 @@ export const downloadCertificationPDF = async (req: Request, res: Response) => {
             where: { id },
             include: {
                 orderItem: {
-                    include: { workshop: true }
+                    include: {
+                        workshop: true,
+                        order: {
+                            include: { user: true }
+                        }
+                    }
                 }
             }
         });
@@ -85,7 +89,6 @@ export const downloadCertificationPDF = async (req: Request, res: Response) => {
             return res.status(404).json({ error: "Certification non trouvée ou non scellée au Registre." });
         }
 
-        // 🏺 Utilisation du service de scellage PDF désormais importé
         const pdfBytes = await pdfService.generateCertificationPDF(participant);
 
         res.setHeader('Content-Type', 'application/pdf');
