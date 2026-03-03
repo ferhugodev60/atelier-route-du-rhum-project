@@ -5,12 +5,10 @@ import fs from 'fs';
 
 /**
  * 🏺 MOTEUR DE GÉNÉRATION DU REGISTRE PDF
- * Solution Certifiée : Sans caractères spéciaux pour éviter les erreurs 500.
+ * Aligne le rendu selon le profil : Résumé (Particulier) ou QR Code (Entreprise).
  */
 export const generateOrderPDF = async (order: any) => {
     const pdfDoc = await PDFDocument.create();
-
-    // 🏺 On charge Helvetica explicitement
     const helveticaFont = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
     const logoPath = path.join(process.cwd(), 'public', 'assets', 'logo.jpg');
@@ -32,31 +30,40 @@ export const generateOrderPDF = async (order: any) => {
                 page.drawImage(logoImage, { x: (width - 140) / 2, y: height - 120, width: 140, height: 60 });
             }
 
-            page.drawText(`RÉF : ${order.reference}`, {
+            page.drawText(`REF : ${order.reference}`, {
                 x: 50, y: height - 40, size: 7, color: rgb(0.6, 0.6, 0.6), font: helveticaFont
             });
 
-            if (p.isValidated) {
-                // --- 🏺 ÉTAT SCELLÉ (Affichage définitif après scan) ---
-                page.drawText("CERTIFICAT DE PRÉSENCE", {
+            // 🏺 LOGIQUE DE DIFFÉRENCIATION (Particulier vs Entreprise)
+            // Si le nom est déjà présent (saisi au checkout), on imprime le certificat direct
+            const isPreFilled = p.firstName && p.lastName;
+
+            if (isPreFilled || p.isValidated) {
+                // --- 🏺 MODE RÉSUMÉ (Particuliers / CSE) ---
+                // Aucune action de scan n'est requise pour ces profils
+                page.drawText("CONFIRMATION DE RESERVATION", {
                     x: 50, y: height - 250, size: 22, color: rgb(0.83, 0.68, 0.21), font: helveticaFont
+                });
+
+                page.drawText(`SEANCE : ${item.workshop.title.toUpperCase()}`, {
+                    x: 50, y: height - 280, size: 12, font: helveticaFont
                 });
 
                 const participantName = `${p.firstName || ''} ${p.lastName || ''}`.toUpperCase();
-                page.drawText(participantName, {
-                    x: 50, y: height - 300, size: 16, font: helveticaFont
+                page.drawText(`PARTICIPANT : ${participantName}`, {
+                    x: 50, y: height - 320, size: 16, font: helveticaFont
                 });
 
-                // 🏺 RECTIFICATION : On utilise du texte standard (pas de symboles spéciaux)
-                page.drawText("DOCUMENT OFFICIEL SCELLE AU REGISTRE", {
-                    x: 50, y: height - 330, size: 9, color: rgb(0.1, 0.6, 0.2), font: helveticaFont
+                page.drawText("DOCUMENT CERTIFIE PAR L'ETABLISSEMENT", {
+                    x: 50, y: height - 350, size: 9, color: rgb(0.1, 0.6, 0.2), font: helveticaFont
                 });
             } else {
-                // --- 🏺 ÉTAT À CERTIFIER (QR Code interactif) ---
-                page.drawText("JUSTIFICATIF DE SEANCE", {
+                // --- 🏺 MODE VALIDATION (Entreprises - 25/10 places) ---
+                // Génère un QR Code unique pour une saisie différée
+                page.drawText("JUSTIFICATIF DE SEANCE A VALIDER", {
                     x: 50, y: height - 250, size: 22, color: rgb(0.83, 0.68, 0.21), font: helveticaFont
                 });
-                page.drawText("A PRESENTER LORS DE VOTRE VENUE", {
+                page.drawText("A SCANNER POUR ENREGISTRER LE PARTICIPANT", {
                     x: 50, y: height - 280, size: 10, color: rgb(0.4, 0.4, 0.4), font: helveticaFont
                 });
 

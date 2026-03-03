@@ -106,16 +106,16 @@ export default function AdminOrders() {
             {/* --- SYSTÈME D'ONGLETS INSTITUTIONNELS --- */}
             <div className="flex gap-6 border-b-2 border-slate-100 pb-1">
                 <button
-                    onClick={() => setActiveTab('PRO')}
-                    className={`flex items-center gap-3 pb-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'PRO' ? 'text-emerald-700 border-emerald-600' : 'text-slate-300 border-transparent hover:text-black'}`}
-                >
-                    <Building2 size={16} strokeWidth={3} /> Professionnels
-                </button>
-                <button
                     onClick={() => setActiveTab('USER')}
                     className={`flex items-center gap-3 pb-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'USER' ? 'text-emerald-700 border-emerald-600' : 'text-slate-300 border-transparent hover:text-black'}`}
                 >
                     <User size={16} strokeWidth={3} /> Particuliers & CE
+                </button>
+                <button
+                    onClick={() => setActiveTab('PRO')}
+                    className={`flex items-center gap-3 pb-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-4 ${activeTab === 'PRO' ? 'text-emerald-700 border-emerald-600' : 'text-slate-300 border-transparent hover:text-black'}`}
+                >
+                    <Building2 size={16} strokeWidth={3} /> Professionnels
                 </button>
             </div>
 

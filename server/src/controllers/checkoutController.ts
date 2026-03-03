@@ -5,10 +5,6 @@ import { sendOrderConfirmationEmail } from '../services/emailService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-/**
- * 🏛️ INITIALISATION DE LA SESSION DE PAIEMENT
- * Intègre le Verrou d'Homogénéité et la détection des quotas institutionnels.
- */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
     const { items } = req.body;
@@ -19,43 +15,67 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
-        const isBookerInstitutional = user.role === 'PRO' || user.isEmployee;
+        // Détermination des profils bénéficiant des avantages (CSE / PRO)
+        const isInstitutional = user.role === 'PRO' || user.isEmployee;
 
         for (const item of items) {
             if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
-                if (!ws) throw new Error("Séance de formation introuvable.");
+                if (!ws) throw new Error("Séance introuvable.");
 
-                // 1️⃣ VÉRIFICATION DU VERROU D'HOMOGÉNÉITÉ
-                if (item.participants && item.participants.length > 0) {
-                    for (const participant of item.participants) {
-                        if (participant.memberCode) {
-                            const guest = await prisma.user.findUnique({
-                                where: { memberCode: participant.memberCode.toUpperCase() }
-                            });
-                            if (!guest) return res.status(400).json({ error: `Le code ${participant.memberCode} est inconnu.` });
+                // 🏺 1. RÈGLE DES QUOTAS ENTREPRISE (PRO)
+                if (user.role === 'PRO') {
+                    const previousOrders = await prisma.order.count({
+                        where: { userId, status: 'PAYÉ' }
+                    });
 
-                            const isGuestInstitutional = guest.role === 'PRO' || guest.isEmployee;
-                            if (isBookerInstitutional !== isGuestInstitutional) {
-                                return res.status(400).json({ error: "La mixité entre membres standards et entreprises est interdite." });
+                    if (previousOrders === 0 && item.quantity !== 25) {
+                        return res.status(400).json({ error: "La première réservation Entreprise doit être de 25 places exactement." });
+                    }
+                    if (previousOrders > 0 && item.quantity % 10 !== 0) {
+                        return res.status(400).json({ error: "Les recharges pour Entreprise se font par packs de 10 places." });
+                    }
+                    item.isBusiness = true;
+                } else {
+                    item.isBusiness = false;
+                }
+
+                // 🏺 2. VÉRIFICATION DES PARTICIPANTS (CONCEPTION VS DÉCOUVERTE)
+                if (!item.isBusiness) {
+                    const isConception = ws.title.toLowerCase().includes('conception');
+
+                    for (const p of item.participants) {
+                        if (isConception) {
+                            // Atelier Conception : Code client obligatoire
+                            if (!p.memberCode) return res.status(400).json({ error: "Code client obligatoire pour l'atelier Conception." });
+                            const guest = await prisma.user.findUnique({ where: { memberCode: p.memberCode.toUpperCase() } });
+                            if (!guest) return res.status(400).json({ error: `Le code ${p.memberCode} est inconnu au Registre.` });
+                        } else {
+                            // Atelier Découverte : Infos basiques obligatoires
+                            if (!p.firstName || !p.lastName || !p.email) {
+                                return res.status(400).json({ error: "Informations complètes requises pour l'atelier Découverte." });
                             }
-                        } else if (isBookerInstitutional) {
-                            return res.status(400).json({ error: "Les membres CE doivent certifier l'identité via un code membre." });
                         }
                     }
                 }
 
-                // 2️⃣ DÉTERMINATION DU STATUT BUSINESS (CE / GROUPES)
-                item.isBusiness = item.quantity >= 25 || user.role === "PRO";
-                item.price = isBookerInstitutional ? ws.priceInstitutional : ws.price;
+                item.price = isInstitutional ? ws.priceInstitutional : ws.price;
                 item.name = ws.title;
                 item.description = ws.description;
                 item.image = ws.image;
 
             } else if (item.volumeId) {
-                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId }, include: { product: true } });
+                // 🏺 3. LOGIQUE BOUTIQUE (-10% pour CSE et PRO)
+                const vol = await prisma.productVolume.findUnique({
+                    where: { id: item.volumeId },
+                    include: { product: true }
+                });
                 if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Stock insuffisant." });
-                item.price = vol.price;
+
+                // Application de la remise boutique
+                const basePrice = vol.price;
+                item.price = isInstitutional ? basePrice * 0.9 : basePrice;
+
                 item.name = `${vol.product.name} (${vol.size}${vol.unit})`;
                 item.description = vol.product.description;
                 item.isBusiness = false;
@@ -65,7 +85,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
         const isOrderBusiness = items.some((i: any) => i.isBusiness);
 
-        // 3️⃣ CRÉATION DU DOSSIER EN ATTENTE
+        // 🏺 4. CRÉATION DU DOSSIER DE VENTE
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
@@ -79,11 +99,15 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        // Pour les commandes non-business (individuelles), on crée les participants de suite
-                        participants: (item.workshopId && !item.isBusiness) ? {
-                            create: item.participants?.map((p: any) => ({
-                                firstName: p.firstName, lastName: p.lastName, phone: p.phone || "", email: p.email || "",
-                                memberCode: p.memberCode?.toUpperCase()
+                        // Pour les particuliers, on scelle les infos immédiatement
+                        participants: (!item.isBusiness) ? {
+                            create: item.participants.map((p: any) => ({
+                                firstName: p.firstName,
+                                lastName: p.lastName,
+                                email: p.email,
+                                phone: p.phone || "",
+                                memberCode: p.memberCode?.toUpperCase(),
+                                isValidated: true // Prêt pour impression sans QR code
                             }))
                         } : undefined
                     }))
@@ -95,8 +119,13 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             payment_method_types: ['card'],
             line_items: items.map((item: any) => ({
                 price_data: {
-                    currency: 'eur', unit_amount: Math.round(item.price * 100),
-                    product_data: { name: item.name, description: item.description, images: item.image ? [item.image] : [] },
+                    currency: 'eur',
+                    unit_amount: Math.round(item.price * 100),
+                    product_data: {
+                        name: item.name,
+                        description: isInstitutional ? `${item.description} (Tarif préférentiel)` : item.description,
+                        images: item.image ? [item.image] : []
+                    },
                 },
                 quantity: item.quantity,
             })),
@@ -109,13 +138,13 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
+        console.error("❌ Erreur Checkout :", error.message);
         res.status(500).json({ error: "Échec technique du registre de vente." });
     }
 };
 
 /**
- * 📜 CONFIRMATION TECHNIQUE (WEBHOOK STRIPE)
- * Assure le scellage des places en base de données pour les commandes de groupe.
+ * 📜 WEBHOOK STRIPE : Confirmation et Scellage des Slots PRO
  */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
@@ -133,14 +162,12 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
         try {
             await prisma.$transaction(async (tx) => {
-                // 1. Validation du Dossier
                 const updatedOrder = await tx.order.update({
                     where: { id: orderId },
                     data: { status: "PAYÉ" },
                     include: { items: { include: { workshop: true, participants: true } } }
                 });
 
-                // 2. Scellage des stocks et des places (Slots)
                 for (const item of updatedOrder.items) {
                     if (item.volumeId) {
                         await tx.productVolume.update({
@@ -148,11 +175,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
-                    // 🏺 LOGIQUE DE GÉNÉRATION MASSIVE DES PLACES
-                    // Indispensable pour les 25 places CE (isBusiness) ou toute séance sans participants identifiés
+                    // 🏺 CRÉATION DES PLACES VIDES POUR LES ENTREPRISES (PRO)
+                    // Déclenchera l'affichage des QR codes dans le PDF
                     if (item.workshop && item.participants.length === 0) {
-
-                        // Si c'est un achat Business, on crée d'abord le groupe institutionnel
                         let companyGroupId = null;
                         if (updatedOrder.isBusiness) {
                             const group = await tx.companyGroup.create({
@@ -165,19 +190,16 @@ export const handleWebhook = async (req: Request, res: Response) => {
                             companyGroupId = group.id;
                         }
 
-                        // 🏺 Gravure des identifiants réels pour le PDF (25 places)
                         const participantsData = Array.from({ length: item.quantity }).map(() => ({
                             orderItemId: item.id,
                             companyGroupId: companyGroupId,
-                            isValidated: false
+                            isValidated: false // Force le mode QR Code
                         }));
 
                         await tx.participant.createMany({ data: participantsData });
-                        console.log(`✅ ${item.quantity} slots participants scellés pour l'item ${item.id}`);
                     }
                 }
 
-                // 3. Extraction finale pour confirmation
                 const finalOrder = await tx.order.findUnique({
                     where: { id: orderId },
                     include: { user: true, items: { include: { workshop: true, participants: true } } }
@@ -188,7 +210,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
                 }
             });
         } catch (error: any) {
-            console.error("❌ Incident de scellage Webhook :", error.message);
+            console.error("❌ Incident Webhook :", error.message);
         }
     }
     res.json({ received: true });

@@ -81,7 +81,7 @@ export const getOrderDetails = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * 📜 ÉMARGEMENT ET CERTIFICATION TECHNIQUE
+ * 📜 ÉMARGEMENT ET CERTIFICATION TECHNIQUE (QR CODE)
  */
 export const updateParticipantStatus = async (req: AuthRequest, res: Response) => {
     const participantId = req.params.participantId as string;
@@ -98,11 +98,18 @@ export const updateParticipantStatus = async (req: AuthRequest, res: Response) =
         const validatedCount = orderItem.participants.filter((p: any) => p.isValidated).length;
         const isCohortComplete = validatedCount === orderItem.quantity;
 
+        // 🏺 Mise à jour des niveaux si la cohorte est complète
         if (isCohortComplete && orderItem.workshop) {
             const levelTarget = orderItem.workshop.level;
             await prisma.$transaction([
-                prisma.companyGroup.update({ where: { id: orderItem.companyGroupId }, data: { currentLevel: levelTarget } }),
-                prisma.user.update({ where: { id: orderItem.order.userId }, data: { conceptionLevel: levelTarget } })
+                prisma.companyGroup.updateMany({
+                    where: { id: orderItem.companyGroupId || undefined },
+                    data: { currentLevel: levelTarget }
+                }),
+                prisma.user.update({
+                    where: { id: orderItem.order.userId },
+                    data: { conceptionLevel: levelTarget }
+                })
             ]);
         }
         res.json({ message: "Certification scellée.", currentCount: validatedCount, isComplete: isCohortComplete });
@@ -125,25 +132,36 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             include: { items: { include: { workshop: true, participants: true } }, user: true }
         });
 
-        // 🏺 PROTOCOLE DE CRÉATION DES PLACES (CE / Particuliers)
-        // Dès que la commande est payée, on crée les identifiants réels en base
+        // 🏺 PROTOCOLE DE CRÉATION DES PLACES (Entreprises / Particuliers)
         if (status === 'PAYÉ' || status === 'FINALISÉ') {
             for (const item of updatedOrder.items) {
-                // On ne crée les places que pour les "Séances" qui n'en ont pas encore
+                // Création des slots uniquement si le registre est vide pour cet item
                 if (item.workshop && item.participants.length === 0) {
+
+                    let companyGroupId = null;
+                    // Pour les entreprises, on crée le groupe institutionnel s'il n'existe pas
+                    if (updatedOrder.isBusiness) {
+                        const group = await prisma.companyGroup.create({
+                            data: {
+                                name: `Contrat ${updatedOrder.reference}`,
+                                ownerId: updatedOrder.userId,
+                                currentLevel: item.workshop.level,
+                            }
+                        });
+                        companyGroupId = group.id;
+                    }
+
+                    // Gravure massive des places (Cas PRO : isValidated à false pour forcer le QR)
                     const participantsData = Array.from({ length: item.quantity }).map(() => ({
                         orderItemId: item.id,
-                        companyGroupId: item.companyGroupId, // Pour l'indexation CE
+                        companyGroupId: companyGroupId,
                         isValidated: false
                     }));
 
-                    // Création massive des 25 (ou n) places
-                    await prisma.participant.createMany({
-                        data: participantsData
-                    });
+                    await prisma.participant.createMany({ data: participantsData });
                 }
 
-                // Mise à jour du niveau de conception pour les particuliers
+                // Promotion de niveau pour les particuliers
                 if (!updatedOrder.isBusiness && item.workshop && item.workshop.level > updatedOrder.user.conceptionLevel) {
                     await prisma.user.update({
                         where: { id: updatedOrder.userId },
@@ -177,13 +195,12 @@ export const addManualParticipant = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * 📜 GÉNÉRATION DU JUSTIFICATIF PDF AVEC QR CODES SCELLÉS
+ * 📜 GÉNÉRATION DU JUSTIFICATIF PDF (HYBRIDE : RÉSUMÉ OU QR CODES)
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
 
     try {
-        // 🏺 Extraction complète incluant les participants créés lors du paiement
         const order = await prisma.order.findUnique({
             where: { id: orderId },
             include: {
@@ -192,7 +209,7 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
                     include: {
                         workshop: true,
                         volume: { include: { product: true } },
-                        participants: true, // Ces participants ont maintenant de vrais IDs
+                        participants: true,
                         companyGroup: true
                     }
                 }
@@ -201,15 +218,15 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
 
         if (!order) return res.status(404).json({ error: "Dossier introuvable au Registre." });
 
-        // Appel au service PDF (qui va boucler sur order.items[].participants)
+        // Appel au moteur hybride (Texte si noms présents, sinon QR Code)
         const pdfBytes = await pdfService.generateOrderPDF(order);
 
         res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename=Certification_${order.reference}.pdf`);
+        res.setHeader('Content-Disposition', `attachment; filename=Justificatif_${order.reference}.pdf`);
         res.send(Buffer.from(pdfBytes));
     } catch (error) {
-        console.error("❌ Erreur de génération du Registre PDF :", error);
-        res.status(500).json({ error: "Échec technique lors du scellage PDF." });
+        console.error("❌ Incident de scellage PDF :", error);
+        res.status(500).json({ error: "Échec technique du registre PDF." });
     }
 };
 

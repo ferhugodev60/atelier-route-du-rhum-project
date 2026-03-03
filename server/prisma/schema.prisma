@@ -29,8 +29,9 @@ model User {
   conceptionLevel Int      @default(0)
   createdAt       DateTime @default(now())
 
-  orders      Order[]
-  ownedGroups CompanyGroup[] // Groupes gérés par ce compte pro (PRO uniquement)
+  orders       Order[]
+  ownedGroups  CompanyGroup[] // Groupes gérés par ce compte pro (PRO uniquement)
+  participants Participant[]
 }
 
 model Category {
@@ -140,6 +141,7 @@ model Participant {
 
   memberCode String?
   userId     String?
+  user       User?   @relation(fields: [userId], references: [id])
 
   companyGroupId String?
   companyGroup   CompanyGroup? @relation(fields: [companyGroupId], references: [id])

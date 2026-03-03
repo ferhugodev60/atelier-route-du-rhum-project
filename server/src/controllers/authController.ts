@@ -4,37 +4,45 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 
+/**
+ * 🏺 GÉNÉRATEUR DE MATRICULE
+ * Format certifié : RR-26-XXXX
+ */
 const generateMemberCode = () => {
     const year = "26";
     const random = crypto.randomBytes(2).toString('hex').toUpperCase();
     return `RR-${year}-${random}`;
 };
 
+/**
+ * 📜 INSCRIPTION AU REGISTRE
+ * Gère les Particuliers, les Bénéficiaires CE (Toggle) et les PRO.
+ */
 export const register = async (req: Request, res: Response) => {
     try {
         const { email, password, firstName, lastName, phone, companyName, siret, isEmployee } = req.body;
 
-        const existingUser = await prisma.user.findUnique({ where: { email } });
-        if (existingUser) return res.status(400).json({ error: "Cet email est déjà répertorié." });
+        const existingUser = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
+        if (existingUser) return res.status(400).json({ error: "Cet email est déjà répertorié au Registre." });
 
         const hashedPassword = await bcrypt.hash(password, 10);
         const memberCode = generateMemberCode();
 
-        // 🏺 Détermination du statut institutionnel
-        // PRO : Gestionnaire de CE (isEmployee est false mais infos société présentes)
-        // USER : Particulier indépendant OU Salarié rattaché (isEmployee est true)
+        // 🏺 DÉTERMINATION DU RÔLE INSTITUTIONNEL
+        // PRO : Entreprise avec SIRET (non-salarié)
+        // USER : Particulier (Standard ou Salarié via Toggle isEmployee)
         const role = (companyName && siret && !isEmployee) ? "PRO" : "USER";
 
         const user = await prisma.user.create({
             data: {
-                email,
+                email: email.toLowerCase(),
                 memberCode,
                 password: hashedPassword,
-                firstName,
-                lastName,
-                phone,
+                firstName: firstName.toUpperCase(),
+                lastName: lastName.toUpperCase(),
+                phone: phone || null,
                 role,
-                isEmployee: !!isEmployee, // 🏺 Stockage du statut bénéficiaire
+                isEmployee: !!isEmployee,
                 companyName: companyName || null,
                 siret: siret || null,
                 conceptionLevel: 0
@@ -42,20 +50,24 @@ export const register = async (req: Request, res: Response) => {
         });
 
         return res.status(201).json({
-            message: "Inscription réussie !",
+            message: "Inscription réussie au Registre.",
             memberCode: user.memberCode,
             role: user.role
         });
     } catch (error: any) {
-        return res.status(400).json({ error: "Échec de l'enregistrement dans le registre." });
+        return res.status(400).json({ error: "Échec de l'enregistrement." });
     }
 };
 
+/**
+ * 📜 OUVERTURE DE SESSION
+ */
 export const login = async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
-        const user = await prisma.user.findUnique({ where: { email } });
+        const user = await prisma.user.findUnique({ where: { email: email.toLowerCase() } });
 
+        // Vérification du secret et du dossier
         if (user && await bcrypt.compare(password, user.password)) {
             const token = jwt.sign(
                 { userId: user.id, role: user.role },
@@ -71,11 +83,8 @@ export const login = async (req: Request, res: Response) => {
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
-                    phone: user.phone,
                     role: user.role,
-                    isEmployee: user.isEmployee, // 🏺 Inclus pour le frontend
-                    companyName: user.companyName,
-                    siret: user.siret,
+                    isEmployee: user.isEmployee,
                     conceptionLevel: user.conceptionLevel
                 }
             });
@@ -86,18 +95,27 @@ export const login = async (req: Request, res: Response) => {
     }
 };
 
-export const changePassword = async (req: Request, res: Response) => {
-    // @ts-ignore
+/**
+ * 📜 MISE À JOUR DU MOT DE PASSE
+ */
+export const changePassword = async (req: any, res: Response) => {
     const userId = req.user?.userId;
     const { currentPassword, newPassword } = req.body;
+
     if (!userId) return res.status(401).json({ error: "Session non identifiée." });
+
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier introuvable." });
+
         const isMatch = await bcrypt.compare(currentPassword, user.password);
         if (!isMatch) return res.status(400).json({ error: "Le secret actuel est erroné." });
+
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await prisma.user.update({ where: { id: userId }, data: { password: hashedPassword } });
-        return res.status(200).json({ message: "Le secret a été mis à jour avec succès." });
-    } catch (error: any) { return res.status(500).json({ error: "Échec technique du changement de secret." }); }
+
+        return res.status(200).json({ message: "Le secret a été mis à jour." });
+    } catch (error: any) {
+        return res.status(500).json({ error: "Échec technique du changement de secret." });
+    }
 };
