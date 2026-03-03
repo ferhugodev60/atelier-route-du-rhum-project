@@ -1,8 +1,13 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance.ts';
-import { Trash2, Briefcase, Users, Info } from 'lucide-react';
+import { Trash2, Briefcase, Users, Info, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
+
+/**
+ * 🏺 REGISTRE DE SÉLECTION (PANIER)
+ * Gère l'affichage des tarifs préférentiels et le scellage de la commande.
+ */
 
 interface CartItem {
     cartId: string;
@@ -30,7 +35,8 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
     const [orderError, setOrderError] = useState<string | null>(null);
     const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
 
-    const isPro = user?.role === 'PRO';
+    // 🏺 Détection du Statut Institutionnel pour les avantages boutique
+    const isInstitutional = user?.isEmployee || user?.role === 'PRO';
 
     const total = useMemo(() => {
         return items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -42,7 +48,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
         setOrderError(null);
 
         try {
-            // 🏺 Transmission simplifiée : On envoie le volume et la nature de l'achat
+            // 🏺 Transmission vers le protocole de paiement Stripe
             const response = await api.post('/checkout/create-session', {
                 items: items.map(item => ({
                     workshopId: item.workshopId,
@@ -51,7 +57,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                     price: item.price,
                     quantity: item.quantity,
                     isBusiness: item.isBusiness,
-                    // 👤 Les participants ne sont envoyés que pour les particuliers
+                    // 👤 Les participants (identifiés en amont) sont transmis pour le PDF résumé
                     participants: !item.isBusiness ? item.participants : []
                 }))
             });
@@ -60,7 +66,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                 window.location.href = response.data.url;
             }
         } catch (error: any) {
-            const errorMsg = error.response?.data?.error || "Erreur lors de la validation du registre.";
+            const errorMsg = error.response?.data?.error || "Échec technique lors du scellage du registre.";
             setOrderError(errorMsg);
         } finally {
             setIsSubmitting(false);
@@ -76,8 +82,13 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                         <div className="p-8 border-b border-rhum-gold/10 flex justify-between items-center bg-black/20">
                             <div>
-                                <h2 className="text-xl font-serif text-white tracking-widest uppercase">Votre Sélection</h2>
-                                {isPro && <p className="text-[8px] text-rhum-gold uppercase tracking-[0.3em] font-black mt-1">Accès Grand Compte</p>}
+                                <h2 className="text-xl font-serif text-white tracking-widest uppercase">Registre d'Achat</h2>
+                                {isInstitutional && (
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <ShieldCheck size={10} className="text-rhum-gold" />
+                                        <p className="text-[8px] text-rhum-gold uppercase tracking-[0.3em] font-black italic">Avantages Institutionnels Actifs (-10%)</p>
+                                    </div>
+                                )}
                             </div>
                             <button onClick={onClose} className="text-rhum-gold hover:text-white transition-colors uppercase text-[10px] tracking-widest font-black">Fermer ×</button>
                         </div>
@@ -103,7 +114,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-1 pr-4">
                                                         <span className="text-[7px] uppercase tracking-[0.4em] text-rhum-gold/60 mb-1 block font-black italic">
-                                                            {item.isBusiness ? 'CONTRAT PROFESSIONNEL (25+)' : 'SÉLECTION INDIVIDUELLE (1-10)'}
+                                                            {item.isBusiness ? 'Contrat Institutionnel' : 'Sélection Individuelle'}
                                                         </span>
                                                         <h4 className="text-white font-serif text-lg leading-tight uppercase tracking-tighter">
                                                             {item.name}
@@ -116,22 +127,27 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                                                 <p className="text-rhum-gold/60 text-[9px] uppercase tracking-[0.2em] mt-3 font-bold italic flex items-center gap-2">
                                                     <Users size={12} className="opacity-40" />
-                                                    {item.quantity} {item.isBusiness ? 'Bons vierges commandés' : 'Participants inscrits'}
+                                                    {item.quantity} {item.workshopId ? 'Places en Séance' : 'Unités'}
                                                 </p>
 
-                                                {/* 🏺 Rappel logistique pour les Pros */}
+                                                {/* 🏺 Rappel logistique pour les Professionnels */}
                                                 {item.isBusiness && (
                                                     <div className="mt-3 p-2 bg-white/5 border border-rhum-gold/10 rounded-sm flex gap-2 items-start">
                                                         <Info size={10} className="text-rhum-gold mt-0.5 flex-shrink-0" />
                                                         <p className="text-[7px] text-white/40 leading-relaxed uppercase font-black">
-                                                            Capacité max : 15 pers / session. Contactez l'Atelier après achat.
+                                                            Capacité max : 15 pers / session. Contactez l'Établissement après achat.
                                                         </p>
                                                     </div>
                                                 )}
                                             </div>
-                                            <p className="text-white/40 font-serif italic text-sm mt-2">
-                                                {(item.price * item.quantity).toLocaleString('fr-FR')} €
-                                            </p>
+                                            <div className="flex justify-between items-baseline mt-2">
+                                                <p className="text-white/40 font-serif italic text-sm">
+                                                    {(item.price * item.quantity).toLocaleString('fr-FR')} €
+                                                </p>
+                                                {isInstitutional && item.volumeId && (
+                                                    <span className="text-[7px] text-rhum-gold font-black uppercase tracking-widest border border-rhum-gold/20 px-1 rounded-sm">Tarif Membre</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 ))
@@ -153,14 +169,14 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         {hasAcceptedTerms && <span className="text-[10px] text-rhum-green font-black">✓</span>}
                                     </div>
                                     <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] leading-none pointer-events-none group-hover:text-white/60 transition-colors">
-                                        J'accepte les <span className="text-rhum-gold underline font-black">Conditions du Registre</span>
+                                        J'accepte les <span className="text-rhum-gold underline font-black uppercase">Conditions du Registre</span>
                                     </label>
                                 </div>
 
                                 <div className="flex justify-between items-baseline mb-8">
                                     <span className="text-rhum-cream/20 text-[9px] uppercase tracking-[0.4em] font-black">Investissement Global</span>
                                     <span className="text-3xl font-serif text-rhum-gold">
-                                        {total.toLocaleString('fr-FR')} €
+                                        {total.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €
                                     </span>
                                 </div>
 

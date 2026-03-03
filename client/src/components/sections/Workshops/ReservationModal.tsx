@@ -4,11 +4,18 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from "../../../api/axiosInstance.ts";
 import { useAuthStore } from '../../../store/authStore';
 
+/**
+ * 🏺 INTERFACE DE RÉSERVATION HYBRIDE
+ * Gère la collecte de données selon le protocole :
+ * - Découverte : Saisie manuelle (Nom, Prénom, Email, Tel)
+ * - Conception : Certification via Code Client obligatoire
+ */
+
 interface Participant {
     firstName: string;
     lastName: string;
     phone: string;
-    email?: string;
+    email: string;
     memberCode?: string;
     isValidated?: boolean;
 }
@@ -21,6 +28,8 @@ interface ReservationModalProps {
 
 export default function ReservationModal({ workshop, onClose, onConfirm }: ReservationModalProps) {
     const { user } = useAuthStore();
+
+    // 🏺 Détermination de la nature de la séance via le palier technique
     const isConceptionCursus = workshop.level > 0;
 
     const [step, setStep] = useState(1);
@@ -28,7 +37,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     const [numPeople, setNumPeople] = useState(1);
     const [hasValidatedStep1, setHasValidatedStep1] = useState(false);
 
-    // 🏺 Identifiant du rang de l'organisateur (Standard vs Institutionnel)
+    // Identifiant du rang de l'organisateur (Standard vs Institutionnel)
     const isBookerInstitutional = user?.isEmployee || user?.role === 'PRO';
 
     const [participants, setParticipants] = useState<Participant[]>(() => {
@@ -40,7 +49,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 phone: user.phone || '',
                 email: user.email || '',
                 memberCode: user.memberCode,
-                isValidated: true // L'organisateur est déjà certifié par sa session
+                isValidated: true // L'organisateur est scellé par sa session [cite: 2026-02-12]
             };
         }
         return initialArr;
@@ -66,16 +75,16 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     };
 
     /**
-     * 🏺 Verrou d'Homogénéité (Logique Métier)
-     * Interdiction stricte de mixer Particuliers Standards et Membres Pro/CE.
+     * 🏺 Verrou d'Homogénéité
+     * Interdiction de mixer Particuliers Standards et Membres Pro/CE.
      */
     const checkHomogeneity = (guestData: any) => {
         const isGuestInstitutional = guestData.isEmployee || guestData.role === 'PRO';
 
         if (isBookerInstitutional !== isGuestInstitutional) {
             const message = isBookerInstitutional
-                ? "Accès refusé : En tant que membre institutionnel, vous ne pouvez pas inscrire de particulier standard à votre séance."
-                : "Accès refusé : Ce participant est un membre Pro/CE. La mixité des profils et des tarifs est interdite.";
+                ? "Accès refusé : En tant que membre institutionnel (CSE/PRO), vous ne pouvez pas inscrire de particulier standard."
+                : "Accès refusé : Ce participant est un membre Pro/CE. La mixité des profils est interdite.";
             alert(message);
             return false;
         }
@@ -106,9 +115,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 return;
             }
 
-            // 2️⃣ Validation du Palier Technique (Cursus Conception)
+            // 2️⃣ Validation du Palier Technique
             if (isConceptionCursus && data.conceptionLevel < workshop.level - 1) {
-                alert(`Le membre ${data.firstName} n'a pas validé le palier précédent.`);
+                alert(`Le membre ${data.firstName} n'a pas validé le palier précédent au Registre.`);
                 return;
             }
 
@@ -128,27 +137,30 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         setParticipants(newParticipants);
     };
 
-    // Validation finale de l'étape 2
-    const isStep2Valid = isBookerInstitutional || isConceptionCursus
+    /**
+     * 🏺 Validation de l'étape 2 :
+     * - Conception : Tous doivent être certifiés via Code Client.
+     * - Découverte : Tous doivent avoir Nom, Prénom, Email et Téléphone.
+     */
+    const isStep2Valid = isConceptionCursus
         ? participants.every(p => p.isValidated)
-        : participants.every(p => p.firstName.trim() && p.lastName.trim() && p.email?.trim());
+        : participants.every(p => p.firstName.trim() && p.lastName.trim() && p.email?.trim() && p.phone?.trim());
 
     return createPortal(
         <div className="fixed inset-0 z-[9999] flex items-center justify-center overflow-hidden font-sans">
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/98 backdrop-blur-md" onClick={onClose} />
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] flex flex-col border border-white/5 shadow-2xl">
 
-                {/* Navigation par paliers */}
                 <div className="flex border-b border-white/5 bg-black/20">
                     <button onClick={() => setStep(1)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>1. Participant(s)</button>
-                    <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. Coordonnées</button>
+                    <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. Identification</button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     <AnimatePresence mode="wait">
                         {step === 1 ? (
                             <motion.div key="step1" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="h-full flex flex-col justify-center text-center">
-                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">Nombre de places</p>
+                                <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">Volume de places</p>
                                 <h5 className="text-3xl md:text-4xl font-serif text-white mb-12 uppercase tracking-tighter">{workshop.title}</h5>
                                 <div className="flex items-center justify-center gap-12 mb-16">
                                     <button onClick={() => handlePeopleChange(numPeople - 1)} className="text-rhum-gold text-5xl font-light">−</button>
@@ -167,17 +179,18 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                         <div key={i} className="border-l-2 border-rhum-gold/20 pl-6 space-y-6">
                                             <div className="flex justify-between items-center">
                                                 <p className="text-rhum-gold text-[9px] uppercase font-black tracking-[0.3em] opacity-50">Participant n°{i + 1}</p>
-                                                {isBookerInstitutional && (
-                                                    <span className="text-[7px] bg-rhum-gold/10 text-rhum-gold px-2 py-1 rounded-full font-black uppercase tracking-widest italic">Passeport Certifié Requis</span>
+                                                {isConceptionCursus && (
+                                                    <span className="text-[7px] bg-rhum-gold/10 text-rhum-gold px-2 py-1 rounded-full font-black uppercase tracking-widest italic">Code Client Obligatoire</span>
                                                 )}
                                             </div>
 
-                                            {/* 🏺 Force le Passeport pour la Conception OU pour les Membres Pro/CE */}
-                                            {isConceptionCursus || isBookerInstitutional ? (
+                                            {/* 🏺 Rendu Conditionnel : Conception vs Découverte */}
+                                            {isConceptionCursus ? (
+                                                /* MODE CONCEPTION : Passeport requis */
                                                 <div className="space-y-4">
                                                     <div className="relative">
                                                         <input
-                                                            placeholder="CODE PASSEPORT (RR-26-XXXX)"
+                                                            placeholder="CODE CLIENT (RR-26-XXXX)"
                                                             value={p.memberCode || ""}
                                                             className="w-full bg-white/5 border-b border-white/10 text-white p-3 outline-none text-xs focus:border-rhum-gold font-black tracking-[0.2em] uppercase"
                                                             onChange={(e) => handlePassportInput(i, e.target.value)}
@@ -187,18 +200,46 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                     </div>
                                                     {p.isValidated && (
                                                         <p className="text-[10px] text-green-500 font-black uppercase tracking-widest italic">
-                                                            ✓ Identité certifiée : {p.firstName} {p.lastName}
+                                                            ✓ Identité scellée : {p.firstName} {p.lastName}
                                                         </p>
                                                     )}
                                                 </div>
                                             ) : (
-                                                <>
+                                                /* MODE DÉCOUVERTE : Saisie manuelle (Particulier & CSE) */
+                                                <div className="space-y-4">
                                                     <div className="grid grid-cols-2 gap-4">
-                                                        <input placeholder="Prénom" value={p.firstName} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase" />
-                                                        <input placeholder="Nom" value={p.lastName} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase" />
+                                                        <input
+                                                            placeholder="PRÉNOM"
+                                                            value={p.firstName}
+                                                            readOnly={i === 0 && !!user}
+                                                            onChange={e => updateParticipant(i, 'firstName', e.target.value)}
+                                                            className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20"
+                                                        />
+                                                        <input
+                                                            placeholder="NOM"
+                                                            value={p.lastName}
+                                                            readOnly={i === 0 && !!user}
+                                                            onChange={e => updateParticipant(i, 'lastName', e.target.value)}
+                                                            className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20"
+                                                        />
                                                     </div>
-                                                    <input placeholder="Email" value={p.email} onChange={e => updateParticipant(i, 'email', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase" />
-                                                </>
+                                                    <input
+                                                        placeholder="EMAIL"
+                                                        type="email"
+                                                        value={p.email}
+                                                        readOnly={i === 0 && !!user}
+                                                        onChange={e => updateParticipant(i, 'email', e.target.value)}
+                                                        className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20"
+                                                    />
+                                                    <input
+                                                        placeholder="TÉLÉPHONE"
+                                                        type="tel"
+                                                        value={p.phone}
+                                                        readOnly={i === 0 && !!user}
+                                                        onChange={e => updateParticipant(i, 'phone', e.target.value)}
+                                                        className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20"
+                                                    />
+                                                </div>
                                             )}
                                         </div>
                                     ))}
@@ -211,7 +252,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                         onClick={() => onConfirm({ ...workshop, participants, quantity: numPeople })}
                                         className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
                                     >
-                                        Confirmer la réservation
+                                        Confirmer le Dossier
                                     </button>
                                 </div>
                             </motion.div>
