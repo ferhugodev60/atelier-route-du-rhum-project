@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import jwt from 'jsonwebtoken';
 import { getShopProducts, createProduct } from '../controllers/productController';
 import { getWorkshops, createWorkshop } from '../controllers/workshopController';
 import { getMe } from '../controllers/userController';
@@ -7,24 +8,39 @@ import { upload } from '../config/cloudinary';
 
 const router = Router();
 
-// --- 🛍️ CATALOGUE PRODUITS ---
-// Accessible via GET /api/products
-router.get('/', getShopProducts);
+/**
+ * 🏺 MIDDLEWARE D'IDENTIFICATION OPTIONNELLE
+ * Permet au Registre de reconnaître le membre (PRO/CE) pour appliquer
+ * les tarifs préférentiels, sans bloquer l'accès au public.
+ */
+const optionalAuth = (req: any, res: any, next: any) => {
+    const token = req.headers['authorization']?.split(' ')[1];
 
-// Accessible via POST /api/products
+    if (token) {
+        try {
+            req.user = jwt.verify(token, process.env.JWT_SECRET!) as any;
+        } catch {
+        }
+    }
+    next();
+};
+
+// --- 🛍️ CATALOGUE PRODUITS ---
+// 🏺 MODIFICATION : Identification du membre pour activer les -10%
+router.get('/', optionalAuth, getShopProducts);
+
 router.post(
     '/',
     authenticateToken,
     isAdmin,
-    upload.single('image'), // Gestion du fichier via Cloudinary
+    upload.single('image'),
     createProduct
 );
 
-// --- 🎓 FORMATIONS PROFESSIONNELLES ---
-// Accessible via GET /api/products/workshops
-router.get('/workshops', getWorkshops);
+// --- 🎓 CURSUS PROFESSIONNELS ---
+// 🏺 MODIFICATION : Identification du membre pour les tarifs Cursus institutionnels
+router.get('/workshops', optionalAuth, getWorkshops);
 
-// Accessible via POST /api/products/workshops
 router.post(
     '/workshops',
     authenticateToken,
@@ -34,7 +50,6 @@ router.post(
 );
 
 // --- 👤 ESPACE PERSONNEL ---
-// Accessible via GET /api/products/me
 router.get('/me', authenticateToken, getMe);
 
 export default router;

@@ -2,8 +2,10 @@ export interface ProductVolume {
     id: string;
     size: number;
     unit: string;
-    price: number;
+    price: number; // 🏺 Prix final (remisé si isDiscounted est vrai)
     stock: number;
+    originalPrice?: number; // Prix public d'origine pour l'affichage barré
+    isDiscounted?: boolean; // Indicateur de remise certifiée par le Passeport
 }
 
 export interface Category {

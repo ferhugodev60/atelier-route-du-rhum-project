@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 
 interface RequestWithFile extends Request {
     file?: Express.Multer.File;
+    user?: { userId: string; role: string };
 }
 
 /**
@@ -41,8 +42,18 @@ export const createProduct = async (req: RequestWithFile, res: Response) => {
  * 🏺 Lecture intégrale du Catalogue de l'Établissement
  * [DYNAMIQUE] : Inclut désormais toutes les collections certifiées
  */
-export const getShopProducts = async (req: Request, res: Response) => {
+export const getShopProducts = async (req: RequestWithFile, res: Response) => {
+    const userId = req.user?.userId;
+
     try {
+        // 1. Identification du statut institutionnel au sein du Registre
+        let isInstitutional = false;
+        if (userId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            // 🏺 Scellage de l'éligibilité : PRO ou Particulier via CE
+            isInstitutional = user?.role === 'PRO' || user?.isEmployee === true;
+        }
+
         const products = await prisma.product.findMany({
             include: {
                 volumes: true,
@@ -50,7 +61,25 @@ export const getShopProducts = async (req: Request, res: Response) => {
             },
             orderBy: { createdAt: 'desc' }
         });
-        res.json(products);
+
+        // 2. Application dynamique du protocole de tarification
+        const productsWithScsealedPrices = products.map(product => ({
+            ...product,
+            volumes: product.volumes.map(vol => {
+                const basePrice = vol.price;
+                // 🏺 Formule de remise institutionnelle : -10%
+                const finalPrice = isInstitutional ? basePrice * 0.9 : basePrice;
+
+                return {
+                    ...vol,
+                    originalPrice: basePrice, // Pour affichage "barré" côté Front
+                    price: finalPrice,
+                    isDiscounted: isInstitutional
+                };
+            })
+        }));
+
+        res.json(productsWithScsealedPrices);
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de la lecture du catalogue des flacons." });
     }

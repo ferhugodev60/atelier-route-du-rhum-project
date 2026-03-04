@@ -29,7 +29,7 @@ export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
             try {
                 // 🏺 Synchronisation simultanée du Registre des produits et des catégories
                 const [productsRes, categoriesRes] = await Promise.all([
-                    api.get('/shop/products'),
+                    api.get('/products'),
                     api.get('/categories')
                 ]);
                 setProducts(productsRes.data);

@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import helmet from "helmet";
+import path from "path"; // 🏺 AJOUT : Pour la gestion des chemins système
 import router from "./routes";
 
 const app = express();
@@ -11,7 +12,7 @@ app.use(helmet({
     crossOriginResourcePolicy: false,
 }));
 
-// 2. CONFIGURATION CORS (Stabilité Production)
+// 2. CONFIGURATION CORS
 app.use(cors({
     origin: process.env.FRONTEND_URL || "http://localhost:5173",
     credentials: true,
@@ -21,18 +22,20 @@ app.use(cors({
 
 /**
  * 🏺 WEBHOOK STRIPE
- * Intercepte les signaux bruts avant tout parsing JSON.
+ * Doit impérativement rester AVANT express.json()
  */
 app.use('/api/checkout/webhook', express.raw({ type: 'application/json' }));
 
 // --- MIDDLEWARES DE PARSING ---
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 /**
- * 🏺 RÉCEPTION FORMULAIRE PDF (Option A)
- * Crucial : Permet de lire les données envoyées par le bouton "Valider" du PDF.
+ * 🏺 ACCÈS AUX RÉSOURCES STATIQUES
+ * Permet au serveur de servir les images locales si Cloudinary fait défaut
+ * ou pour les justificatifs PDF temporaires.
  */
-app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static(path.join(__dirname, "../uploads")));
 
 // 3. LOGGER DE MAINTENANCE
 app.use((req, res, next) => {
@@ -45,7 +48,7 @@ app.use("/api", router);
 
 // Route de diagnostic
 app.get("/api/health", (req, res) => {
-    res.json({ status: "success", message: "Le serveur opérationnel." });
+    res.json({ status: "success", message: "Le serveur est opérationnel." });
 });
 
 // 5. GESTION DES ERREURS CRITIQUES

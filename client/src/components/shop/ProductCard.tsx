@@ -7,7 +7,7 @@ interface ProductCardProps {
     isSelected: boolean;
     onToggleSelect: () => void;
     onAddToCart: (product: Product, volume: ProductVolume, qty: number) => void;
-    currentCart?: any[]; // 🏺 Rendu optionnel pour la sécurité
+    currentCart?: any[];
 }
 
 export default function ProductCard({
@@ -15,7 +15,7 @@ export default function ProductCard({
                                         isSelected,
                                         onToggleSelect,
                                         onAddToCart,
-                                        currentCart = [] // 🏺 Valeur par défaut pour éviter le crash "undefined"
+                                        currentCart = []
                                     }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
     const hasVolumes = product?.volumes && product.volumes.length > 0;
@@ -30,11 +30,16 @@ export default function ProductCard({
 
     const currentVolume = product.volumes.find(v => v.id === selectedVolumeId) || product.volumes[0];
     const showDescription = isHovered || isSelected;
-    const totalPrice = currentVolume.price * localQuantity;
 
-    // 🏺 CALCUL DU STOCK DISPONIBLE RÉEL SÉCURISÉ
+    /**
+     * 🏺 SCELLAGE DU TARIF ADAPTÉ
+     * Le prix affiché correspond au montant final calculé par le Registre.
+     */
+    const totalPrice = currentVolume.price * localQuantity;
+    const isDiscounted = currentVolume.isDiscounted; // État certifié par le Registre
+
+    // 🏺 CALCUL DU STOCK DISPONIBLE RÉEL
     const availableStock = useMemo(() => {
-        // Sécurité supplémentaire avec le chaînage optionnel ?.
         const itemInCart = currentCart?.find(item => item.volumeId === currentVolume.id);
         const qtyInCart = itemInCart ? itemInCart.quantity : 0;
         return currentVolume.stock - qtyInCart;
@@ -55,8 +60,18 @@ export default function ProductCard({
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
+                {/* 🏺 BADGE DE CERTIFICATION : OFFRE ENTREPRISE */}
+                {isDiscounted && (
+                    <div className="absolute top-4 left-4 z-40">
+                        <span className="bg-rhum-gold text-rhum-green text-[7px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-sm shadow-xl flex items-center gap-2">
+                            <span className="w-1 h-1 bg-rhum-green rounded-full animate-pulse" />
+                            OFFRE ENTREPRISE
+                        </span>
+                    </div>
+                )}
+
                 <button type="button" onClick={onToggleSelect} className="absolute inset-0 w-full h-full block z-0">
-                    <img src={product.image || ''} alt={product.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
+                    <img src={product.image || ''} alt={product.name} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 opacity-80" />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#0a1a14]/90 via-transparent to-transparent z-10" />
                 </button>
 
@@ -70,11 +85,17 @@ export default function ProductCard({
                 </AnimatePresence>
             </div>
 
-            <div className="flex justify-between items-baseline mb-6 px-1">
-                <h3 className="text-2xl font-serif text-white uppercase tracking-tight truncate mr-4">{product.name}</h3>
-                <span className="text-xl font-serif text-rhum-gold shrink-0">
-                    {totalPrice.toLocaleString('fr-FR')} €
-                </span>
+            <div className="flex flex-col mb-6 px-1">
+                <div className="flex justify-between items-baseline gap-4 mb-2">
+                    <h3 className="text-2xl font-serif text-white uppercase tracking-tight truncate">{product.name}</h3>
+
+                    <div className="flex flex-col items-end shrink-0">
+                        {/* 🏺 AFFICHAGE UNIQUE DU PRIX ADAPTÉ */}
+                        <span className={`font-serif text-xl ${isDiscounted ? 'text-rhum-gold' : 'text-white'}`}>
+                            {totalPrice.toLocaleString('fr-FR')} €
+                        </span>
+                    </div>
+                </div>
             </div>
 
             <div className="flex flex-col md:flex-row items-center gap-3 mb-6">
