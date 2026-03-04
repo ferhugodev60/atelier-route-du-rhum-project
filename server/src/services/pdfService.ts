@@ -4,98 +4,244 @@ import path from 'path';
 import fs from 'fs';
 
 /**
- * 🏺 MOTEUR DE GÉNÉRATION DU REGISTRE PDF
- * Gère le rendu groupé : Résumé (Particulier) ou QR Codes (Entreprise).
+ * 📜 GÉNÉRATEUR DE REGISTRE PDF INSTITUTIONNEL
+ * Gère le rendu hybride : Certificats nominatifs ou QR Codes d'activation.
  */
 export const generateOrderPDF = async (order: any) => {
     const pdfDoc = await PDFDocument.create();
-    const helveticaFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+    const fontRegular = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
+    // Couleurs Institutionnelles
+    const gold = rgb(0.83, 0.69, 0.22);
+    const darkGreen = rgb(0.04, 0.1, 0.08);
+    const softRed = rgb(0.8, 0, 0);
+    const black = rgb(0, 0, 0);
+
+    // 🏺 Chargement certifié du Logo de l'Établissement
     const logoPath = path.join(process.cwd(), 'public', 'assets', 'logo.jpg');
     const logoBytes = fs.existsSync(logoPath) ? fs.readFileSync(logoPath) : null;
     const logoImage = logoBytes ? await pdfDoc.embedJpg(logoBytes) : null;
 
     for (const item of order.items) {
         if (!item.workshop) continue;
+        const participants = item.participants || [];
 
-        const participantsToDraw = item.participants || [];
+        for (const p of participants) {
+            const isConfigured = (p.firstName && p.lastName);
 
-        for (const p of participantsToDraw) {
-            const page = pdfDoc.addPage([595.28, 842.89]);
-            const width = 595.28;
-            const height = 842.89;
-
-            if (logoImage) {
-                page.drawImage(logoImage, { x: (width - 140) / 2, y: height - 120, width: 140, height: 60 });
+            // 🏺 LOGIQUE DE FILTRAGE DYNAMIQUE (PRO UNIQUEMENT)
+            // Si la commande est PRO et que l'identité est déjà scellée, on ignore la page.
+            if (order.isBusiness && isConfigured) {
+                continue;
             }
 
-            page.drawText(`REF : ${order.reference}`, {
-                x: 50, y: height - 40, size: 7, color: rgb(0.6, 0.6, 0.6), font: helveticaFont
+            const page = pdfDoc.addPage([595.28, 842.89]);
+            const { width, height } = page.getSize();
+
+            // Bordure Institutionnelle Or
+            page.drawRectangle({
+                x: 20, y: 20, width: width - 40, height: height - 40,
+                borderColor: gold, borderWidth: 0.5
             });
 
-            // 🏺 LOGIQUE DE DIFFÉRENCIATION (Particulier vs Entreprise)
-            const isPreFilled = (p.firstName && p.lastName) || p.isValidated;
+            // Entête et Logo
+            page.drawText(`RÉFÉRENCE DOSSIER : ${order.reference}`, {
+                x: 50, y: height - 50, size: 8, font: fontBold, color: black
+            });
 
-            if (isPreFilled) {
-                // --- 🏺 MODE RÉSUMÉ (Particuliers / CSE) ---
-                page.drawText("CONFIRMATION DE RÉSERVATION", {
-                    x: 50, y: height - 250, size: 22, color: rgb(0.83, 0.68, 0.21), font: helveticaFont
+            if (logoImage) {
+                const logoHeight = 60;
+                const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
+                page.drawImage(logoImage, {
+                    x: (width - logoWidth) / 2, y: height - 140, width: logoWidth, height: logoHeight
+                });
+            }
+
+            // --- 🏺 CONDITION DE RENDU : CERTIFICAT vs ACTIVATION ---
+            const isIndividual = isConfigured || p.isValidated;
+
+            if (isIndividual) {
+                // --- MODE CERTIFICAT D'ADMISSION (Particulier / CE) ---
+                const workshopTitle = item.workshop.title.toUpperCase();
+                page.drawText("BON POUR UNE SÉANCE", {
+                    x: (width - fontRegular.widthOfTextAtSize("BON POUR UNE SÉANCE", 10)) / 2,
+                    y: height - 180, size: 10, font: fontRegular, color: gold
+                });
+                page.drawText(workshopTitle, {
+                    x: (width - fontBold.widthOfTextAtSize(workshopTitle, 24)) / 2,
+                    y: height - 215, size: 24, font: fontBold, color: darkGreen
                 });
 
-                page.drawText(`SÉANCE : ${item.workshop.title.toUpperCase()}`, {
-                    x: 50, y: height - 280, size: 12, font: helveticaFont, color: rgb(1, 1, 1)
+                // Identité et Coordonnées
+                const nameText = `${p.firstName} ${p.lastName}`.toUpperCase();
+                page.drawText(nameText, {
+                    x: (width - fontBold.widthOfTextAtSize(nameText, 28)) / 2,
+                    y: height - 340, size: 28, font: fontBold, color: black
                 });
 
-                const participantName = `${p.firstName || ''} ${p.lastName || ''}`.toUpperCase();
-                page.drawText(`PARTICIPANT : ${participantName}`, {
-                    x: 50, y: height - 320, size: 16, font: helveticaFont, color: rgb(1, 1, 1)
+                const contactInfo = `${p.email}  •  ${p.phone || 'SANS TÉLÉPHONE'}`;
+                page.drawText(contactInfo, {
+                    x: (width - fontRegular.widthOfTextAtSize(contactInfo, 10)) / 2,
+                    y: height - 365, size: 10, font: fontRegular, color: rgb(0.4, 0.4, 0.4)
                 });
 
-                page.drawText("DOCUMENT CERTIFIÉ PAR L'ÉTABLISSEMENT", {
-                    x: 50, y: height - 350, size: 9, color: rgb(0.1, 0.6, 0.2), font: helveticaFont
+                // Spécificité Cursus Conception
+                if (item.workshop.level > 0 && p.memberCode) {
+                    const codeText = `CODE PASSEPORT : ${p.memberCode.toUpperCase()}`;
+                    page.drawText(codeText, {
+                        x: (width - fontBold.widthOfTextAtSize(codeText, 11)) / 2,
+                        y: height - 390, size: 11, font: fontBold, color: gold
+                    });
+                }
+
+                // Période de Validité
+                const isConception = item.workshop.level > 0;
+                const dateFin = new Date(order.createdAt);
+                isConception ? dateFin.setMonth(dateFin.getMonth() + 6) : dateFin.setDate(dateFin.getDate() + 30);
+
+                const validityLabel = `VALIDITÉ : ${isConception ? "6 MOIS" : "30 JOURS"}`;
+                page.drawText(validityLabel, {
+                    x: (width - fontBold.widthOfTextAtSize(validityLabel, 12)) / 2,
+                    y: height - 480, size: 12, font: fontBold, color: black
                 });
+                page.drawText(`ÉCHÉANCE AU ${dateFin.toLocaleDateString('fr-FR')}`, {
+                    x: (width - fontRegular.widthOfTextAtSize(`ÉCHÉANCE AU ${dateFin.toLocaleDateString('fr-FR')}`, 11)) / 2,
+                    y: height - 500, size: 11, font: fontRegular, color: black
+                });
+
+                // Bloc de réservation
+                page.drawRectangle({
+                    x: (width - 440) / 2, y: height - 600, width: 440, height: 50,
+                    borderColor: softRed, borderWidth: 1.5, color: rgb(1, 0.98, 0.98)
+                });
+                const actionT = "RÉSERVEZ VOTRE SÉANCE AU 06 41 42 00 28";
+                page.drawText(actionT, {
+                    x: (width - fontBold.widthOfTextAtSize(actionT, 11)) / 2,
+                    y: height - 580, size: 11, font: fontBold, color: softRed
+                });
+
+                const warning = "TOUTE SÉANCE NON RÉSERVÉE AVANT ÉCHÉANCE SERA DÉFINITIVEMENT CADUC";
+                page.drawText(warning, {
+                    x: (width - fontRegular.widthOfTextAtSize(warning, 7)) / 2,
+                    y: 50, size: 7, font: fontRegular, color: rgb(0.7, 0.7, 0.7)
+                });
+
             } else {
-                // --- 🏺 MODE VALIDATION (Entreprises - QR Codes) ---
-                page.drawText("JUSTIFICATIF DE SÉANCE À VALIDER", {
-                    x: 50, y: height - 250, size: 22, color: rgb(0.83, 0.68, 0.21), font: helveticaFont
+                // --- MODE VALIDATION PRO (QR Codes) ---
+                const workshopTitle = item.workshop.title.toUpperCase();
+                page.drawText("JUSTIFICATIF À ACTIVER", {
+                    x: (width - fontRegular.widthOfTextAtSize("JUSTIFICATIF À ACTIVER", 10)) / 2,
+                    y: height - 180, size: 10, font: fontRegular, color: gold
                 });
-                page.drawText("À SCANNER POUR ENREGISTRER LE PARTICIPANT", {
-                    x: 50, y: height - 280, size: 10, color: rgb(0.4, 0.4, 0.4), font: helveticaFont
+                page.drawText(workshopTitle, {
+                    x: (width - fontBold.widthOfTextAtSize(workshopTitle, 22)) / 2,
+                    y: height - 215, size: 22, font: fontBold, color: darkGreen
                 });
 
-                const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
-                const validationUrl = `${frontendUrl}/validate/${p.id}`;
-
+                const validationUrl = `${process.env.FRONTEND_URL}/validate/${p.id}`;
                 const qrDataUrl = await QRCode.toDataURL(validationUrl, {
-                    margin: 1,
-                    width: 200,
-                    color: { dark: '#0a1a14', light: '#ffffff' }
+                    margin: 1, width: 200, color: { dark: '#0a1a14', light: '#ffffff' }
                 });
-                const qrImageBytes = Buffer.from(qrDataUrl.split(',')[1], 'base64');
-                const qrImage = await pdfDoc.embedPng(qrImageBytes);
+                const qrImage = await pdfDoc.embedPng(Buffer.from(qrDataUrl.split(',')[1], 'base64'));
 
-                page.drawImage(qrImage, { x: (width - 150) / 2, y: 350, width: 150, height: 150 });
+                page.drawImage(qrImage, { x: (width - 160) / 2, y: 340, width: 160, height: 160 });
 
-                page.drawText("Scannez ce code pour enregistrer vos informations", {
-                    x: (width - 200) / 2, y: 330, size: 8, color: rgb(0.5, 0.5, 0.5), font: helveticaFont
+                const instructions = "PROTOCOLE : SCANNEZ CE CODE POUR VOUS ENREGISTRER";
+                page.drawRectangle({
+                    x: (width - 440) / 2, y: 150, width: 440, height: 50,
+                    borderColor: softRed, borderWidth: 1.5, color: rgb(1, 0.98, 0.98)
+                });
+                page.drawText(instructions, {
+                    x: (width - fontBold.widthOfTextAtSize(instructions, 11)) / 2,
+                    y: 172, size: 11, font: fontBold, color: softRed
+                });
+
+                const footer = "TOUTE SÉANCE NON RÉSERVÉE AVANT ÉCHÉANCE SERA DÉFINITIVEMENT CADUC";
+                page.drawText(footer, {
+                    x: (width - fontRegular.widthOfTextAtSize(footer, 7)) / 2,
+                    y: 50, size: 7, font: fontRegular, color: rgb(0.6, 0.6, 0.6)
                 });
             }
         }
     }
 
-    // SECTION PRODUITS BOUTIQUE
-    const bottleItems = order.items.filter((i: any) => i.volumeId);
-    if (bottleItems.length > 0) {
-        const page = pdfDoc.addPage([595.28, 842.89]);
-        if (logoImage) page.drawImage(logoImage, { x: (595.28 - 140) / 2, y: 722.89, width: 140, height: 60 });
-        page.drawText("BON DE RETRAIT DE PRODUITS", {
-            x: 50, y: 592.89, size: 22, color: rgb(0.83, 0.68, 0.21), font: helveticaFont
+    // --- 🏺 BLOC DE RETRAIT BOUTIQUE (Design Certifié) ---
+    const bottles = order.items.filter((i: any) => i.volumeId);
+
+    if (bottles.length > 0) {
+        const bPage = pdfDoc.addPage([595.28, 842.89]);
+        const { width, height } = bPage.getSize();
+
+        bPage.drawRectangle({
+            x: 20, y: 20, width: width - 40, height: height - 40,
+            borderColor: gold, borderWidth: 0.5
         });
-        bottleItems.forEach((p: any, idx: number) => {
-            const productName = p.volume?.product?.name || "Produit Boutique";
-            page.drawText(`- ${productName} x ${p.quantity}`, {
-                x: 70, y: 542.89 - (idx * 25), size: 10, font: helveticaFont, color: rgb(1, 1, 1)
+
+        bPage.drawText(`RÉFÉRENCE COMMANDE : ${order.reference}`, {
+            x: 50, y: height - 50, size: 8, font: fontBold, color: black
+        });
+
+        if (logoImage) {
+            const logoHeight = 60;
+            const logoWidth = (logoImage.width / logoImage.height) * logoHeight;
+            bPage.drawImage(logoImage, {
+                x: (width - logoWidth) / 2, y: height - 140, width: logoWidth, height: logoHeight
             });
+        }
+
+        const docTitle = "BON DE RETRAIT BOUTIQUE";
+        bPage.drawText("ACHAT DE BOUTEILLES", {
+            x: (width - fontRegular.widthOfTextAtSize("ACHAT DE BOUTEILLES", 10)) / 2,
+            y: height - 180, size: 10, font: fontRegular, color: gold
+        });
+        bPage.drawText(docTitle, {
+            x: (width - fontBold.widthOfTextAtSize(docTitle, 24)) / 2,
+            y: height - 215, size: 24, font: fontBold, color: darkGreen
+        });
+
+        const ownerName = `${order.user.firstName} ${order.user.lastName}`.toUpperCase();
+        bPage.drawText(ownerName, {
+            x: (width - fontBold.widthOfTextAtSize(ownerName, 22)) / 2,
+            y: height - 320, size: 22, font: fontBold, color: black
+        });
+
+        const ownerContact = `${order.user.email}  •  ${order.user.phone || 'SANS TÉLÉPHONE'}`;
+        bPage.drawText(ownerContact, {
+            x: (width - fontRegular.widthOfTextAtSize(ownerContact, 10)) / 2,
+            y: height - 345, size: 10, font: fontRegular, color: rgb(0.4, 0.4, 0.4)
+        });
+
+        let productY = height - 420;
+        bPage.drawText("RÉFÉRENCES À RETIRER :", {
+            x: 70, y: productY, size: 9, font: fontBold, color: gold
+        });
+
+        productY -= 30;
+        bottles.forEach((item: any) => {
+            const productLabel = `- ${item.volume?.product?.name || "Flacon"} (${item.volume?.size}${item.volume?.unit})`;
+            const qtyLabel = `x ${item.quantity}`;
+            bPage.drawText(productLabel, { x: 70, y: productY, size: 11, font: fontBold });
+            bPage.drawText(qtyLabel, { x: 450, y: productY, size: 11, font: fontBold, color: darkGreen });
+            productY -= 25;
+        });
+
+        const boxW = 440; const boxH = 50;
+        bPage.drawRectangle({
+            x: (width - boxW) / 2, y: 120, width: boxW, height: boxH,
+            borderColor: gold, borderWidth: 1, color: rgb(0.98, 0.98, 0.96)
+        });
+
+        const instructions = "RETRAIT DISPONIBLE À L'ÉTABLISSEMENT";
+        bPage.drawText(instructions, {
+            x: (width - fontBold.widthOfTextAtSize(instructions, 10)) / 2,
+            y: 140, size: 10, font: fontBold, color: black
+        });
+
+        const disclaimer = "PRÉSENTATION DE CE BON ET D'UNE PIÈCE D'IDENTITÉ OBLIGATOIRE";
+        bPage.drawText(disclaimer, {
+            x: (width - fontRegular.widthOfTextAtSize(disclaimer, 7)) / 2,
+            y: 50, size: 7, font: fontRegular, color: rgb(0.6, 0.6, 0.6)
         });
     }
 
