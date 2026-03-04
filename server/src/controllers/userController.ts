@@ -136,11 +136,10 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
 export const validateUserLevel = async (req: Request, res: Response) => {
     const userId = req.params.userId as string;
-    const { newLevel } = req.body;
+    const { level } = req.body;
 
     try {
-        // 🏺 Correction : On force la conversion et on valide que c'est un nombre
-        const level = parseInt(String(newLevel));
+        const targetLevel = parseInt(String(level));
 
         if (isNaN(level)) {
             return res.status(400).json({ error: "Le palier technique doit être une valeur numérique." });
@@ -148,7 +147,7 @@ export const validateUserLevel = async (req: Request, res: Response) => {
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
-            data: { conceptionLevel: level }
+            data: { conceptionLevel: targetLevel }
         });
 
         res.json({
