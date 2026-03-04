@@ -119,3 +119,40 @@ export const changePassword = async (req: any, res: Response) => {
         return res.status(500).json({ error: "Échec technique du changement de secret." });
     }
 };
+
+export const setupFinalPassword = async (req: Request, res: Response) => {
+    const { token, password } = req.body;
+
+    if (!token || !password) {
+        return res.status(400).json({ error: "Données de scellage incomplètes." });
+    }
+
+    try {
+        // 🏺 On cherche l'utilisateur qui a ce token (envoyé par mail)
+        // Note: Vous devrez ajouter 'resetToken' et 'resetTokenExpires' à votre modèle User
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetTokenExpires: { gt: new Date() }
+            }
+        });
+
+        if (!user) return res.status(400).json({ error: "Le lien est expiré ou invalide." });
+
+        // 🏺 Scellage du nouveau mot de passe (Hashage)
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpires: null
+            }
+        });
+
+        res.status(200).json({ message: "Votre secret est désormais scellé." });
+    } catch (error) {
+        res.status(500).json({ error: "Échec technique du Registre." });
+    }
+};

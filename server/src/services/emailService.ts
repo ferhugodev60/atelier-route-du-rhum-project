@@ -68,10 +68,10 @@ export const sendOrderConfirmationEmail = async (userEmail: string, orderData: a
  * 📜 PROTOCOLE B : INVITATION NOUVEAU MEMBRE
  * Permet au participant de définir son mot de passe après un scan QR Code.
  */
-export const sendWelcomeAndSetupPasswordEmail = async (userEmail: string, firstName: string) => {
+export const sendWelcomeAndSetupPasswordEmail = async (userEmail: string, firstName: string, token: string) => {
     try {
         await resend.emails.send({
-            from: 'Établissement - Membres <onboarding@resend.dev>',
+            from: 'Atelier de la Route du Rhum <onboarding@resend.dev>',
             to: userEmail,
             subject: `Bienvenue dans l'Établissement - Votre accès membre`,
             html: `
@@ -82,7 +82,7 @@ export const sendWelcomeAndSetupPasswordEmail = async (userEmail: string, firstN
                     <p>Pour accéder à votre espace, suivre votre progression et bénéficier de <strong>-10% sur la boutique</strong>, vous devez définir votre mot de passe personnel.</p>
                     
                     <div style="text-align: center; margin: 40px 0;">
-                        <a href="${process.env.FRONTEND_URL}/reset-password?email=${encodeURIComponent(userEmail)}" 
+                        <a href="${process.env.FRONTEND_URL}/reset-password?token=${token}" 
                            style="background-color: #0a1a14; color: #D4AF37; padding: 15px 25px; text-decoration: none; font-weight: bold; text-transform: uppercase; font-size: 13px; border-radius: 4px;">
                             Définir mon mot de passe
                         </a>

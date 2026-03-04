@@ -68,8 +68,8 @@ export default function ConceptionCard({ workshops, onOpenDetail }: ConceptionCa
             </div>
 
             <div className="mt-12 bg-rhum-gold/10 p-5 border border-rhum-gold/30 rounded-sm">
-                <p className="text-[9px] text-rhum-gold font-black uppercase tracking-[0.2em] leading-relaxed text-center">
-                    Validation obligatoire du niveau précédent pour progresser
+                <p className="text-[9px] text-rhum-gold font-black uppercase tracking-[0.2em] leading-relaxed">
+                    Pour tout niveau validé avant l'arrivée du site, merci de contacter l'Établissement afin de synchroniser votre progression.
                 </p>
             </div>
         </article>

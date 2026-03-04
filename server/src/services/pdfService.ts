@@ -102,6 +102,10 @@ export const generateOrderPDF = async (order: any) => {
     return await pdfDoc.save();
 };
 
+/**
+ * 📜 GÉNÉRATION DU CERTIFICAT INDIVIDUEL (Format A4 Épuré)
+ * Version "Zéro Friction" sans Code Client pour éviter la surcharge mentale.
+ */
 export const generateCertificationPDF = async (participant: any) => {
     const pdfDoc = await PDFDocument.create();
     const page = pdfDoc.addPage([595.28, 842.89]);
@@ -119,7 +123,7 @@ export const generateCertificationPDF = async (participant: any) => {
     const workshop = participant.orderItem?.workshop;
     const workshopTitle = (workshop?.title || "SÉANCE INDIVIDUELLE").toUpperCase();
 
-    // 🏺 Extraction des données scellées (Deep Nesting)
+    // 🏺 Extraction des données de commande
     const orderRef = participant.orderItem?.order?.reference || "REF-INCONNUE";
     const companyName = participant.orderItem?.order?.user?.companyName || "ÉTABLISSEMENT";
 
@@ -128,9 +132,9 @@ export const generateCertificationPDF = async (participant: any) => {
     const dateGeneration = new Date();
     const dateFin = new Date();
     if (isConception) {
-        dateFin.setMonth(dateFin.getMonth() + 6);
+        dateFin.setMonth(dateFin.getMonth() + 6); // 6 mois pour Conception
     } else {
-        dateFin.setDate(dateFin.getDate() + 30);
+        dateFin.setDate(dateFin.getDate() + 30); // 30 jours pour Découverte
     }
 
     const formatDate = (date: Date) => date.toLocaleDateString('fr-FR');
@@ -138,7 +142,6 @@ export const generateCertificationPDF = async (participant: any) => {
 
     // 🏺 DESIGN GLOBAL
     page.drawRectangle({ x: 0, y: 0, width, height, color: rgb(1, 1, 1) });
-    // Bordure fine Or
     page.drawRectangle({ x: 20, y: 20, width: width - 40, height: height - 40, borderColor: gold, borderWidth: 0.5 });
 
     // 🏺 1. BLOC ADMINISTRATIF (En haut à gauche)
@@ -187,34 +190,17 @@ export const generateCertificationPDF = async (participant: any) => {
     const rangeWidth = fontRegular.widthOfTextAtSize(rangeText, 12);
     page.drawText(rangeText, { x: (width - rangeWidth) / 2, y: validityY - 25, size: 12, font: fontRegular, color: black });
 
-    // 🏺 6. APPEL À L'ACTION (Encadré décalé pour éviter la superposition)
+    // 🏺 6. APPEL À L'ACTION (Encadré de réservation)
     const boxW = 460; const boxH = 55;
     const boxX = (width - boxW) / 2;
-    const boxY = validityY - 100; // Position de sécurité
+    const boxY = validityY - 110;
     page.drawRectangle({ x: boxX, y: boxY, width: boxW, height: boxH, borderColor: softRed, borderWidth: 1.5, color: rgb(1, 0.98, 0.98) });
 
     const actionT = "PROCHAINE ÉTAPE : RÉSERVEZ VOTRE SÉANCE AU 06 41 42 00 28";
     const actionW = fontBold.widthOfTextAtSize(actionT, 11);
     page.drawText(actionT, { x: (width - actionW) / 2, y: boxY + 22, size: 11, font: fontBold, color: softRed });
 
-    // 🏺 7. BLOC CODE CLIENT (Position abaissée pour le confort visuel)
-    const codeBoxY = 140; const codeBoxW = 420;
-    page.drawRectangle({ x: (width - codeBoxW) / 2, y: codeBoxY, width: codeBoxW, height: 115, color: gold, opacity: 0.03 });
-    page.drawRectangle({ x: (width - codeBoxW) / 2, y: codeBoxY, width: codeBoxW, height: 115, borderColor: gold, borderWidth: 0.2, opacity: 0.2 });
-
-    const helpT = "Ce code sert à vous connecter à votre compte personnel";
-    const helpW = fontRegular.widthOfTextAtSize(helpT, 9);
-    page.drawText(helpT, { x: (width - helpW) / 2, y: codeBoxY + 92, size: 9, font: fontRegular, color: rgb(0.5, 0.5, 0.5) });
-
-    const labelT = "VOTRE CODE CLIENT UNIQUE";
-    const labelW = fontBold.widthOfTextAtSize(labelT, 10);
-    page.drawText(labelT, { x: (width - labelW) / 2, y: codeBoxY + 74, size: 10, font: fontBold, color: black });
-
-    const codeV = participant.memberCode || "EN ATTENTE";
-    const codeW = fontBold.widthOfTextAtSize(codeV, 42);
-    page.drawText(codeV, { x: (width - codeW) / 2, y: codeBoxY + 25, size: 42, font: fontBold, color: darkGreen });
-
-    // 🏺 8. MENTION DE CADUCITÉ (Pied de page)
+    // 🏺 7. MENTION DE CADUCITÉ (Pied de page)
     const warning = "POUR TOUTE DATE DE VALIDITÉ DÉPASSÉE OU D'ABSENCE, LA CARTE CADEAU SERA CADUC";
     const warnW = fontRegular.widthOfTextAtSize(warning, 8);
     page.drawText(warning, { x: (width - warnW) / 2, y: 50, size: 8, font: fontRegular, color: rgb(0.7, 0.7, 0.7) });

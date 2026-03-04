@@ -18,7 +18,8 @@ import AdminOrders from "./pages/admin/AdminOrders.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 // --- Imports (Lazy Loading) ---
-const ValidationPage = lazy(() => import('./pages/ValidationPage.tsx')); // 🏺 Nouveauté pour le scellage QR Code
+const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx')); // 🏺 Nouveau : Scellage du secret personnel
+const ValidationPage = lazy(() => import('./pages/ValidationPage.tsx'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -41,7 +42,6 @@ function HomePage() {
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
             <section id="workshops">
                 <ScrollReveal>
-                    {/* Remplacement du terme atelier pour plus de professionnalisme [cite: 2026-02-12] */}
                     <Sections.Workshops onAddToCart={(ws: any, q: number) => addItem(null, ws, q)} />
                 </ScrollReveal>
             </section>
@@ -58,10 +58,11 @@ export default function App() {
         <BrowserRouter>
             <div className="min-h-screen bg-[#0a1a14] font-sans text-rhum-cream">
 
-                {/* --- 🏺 GESTION DE LA NAVBAR (Exclue sur Admin et Validation) --- */}
+                {/* --- 🏺 GESTION DES EXCLUSIONS (Navbar) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
+                    <Route path="/reset-password/*" element={null} />
                     <Route
                         path="*"
                         element={
@@ -81,6 +82,9 @@ export default function App() {
 
                         {/* 🏺 ROUTE PUBLIQUE DE SCELLAGE PAR QR CODE */}
                         <Route path="/validate/:participantId" element={<ValidationPage />} />
+
+                        {/* 🏺 ROUTE DE DÉFINITION DU SECRET PERSONNEL */}
+                        <Route path="/reset-password" element={<ResetPassword />} />
 
                         {/* --- ROUTES ADMIN --- */}
                         <Route path="/admin" element={<AdminLogin />} />
@@ -102,10 +106,11 @@ export default function App() {
                 <PaymentSuccess />
                 <PaymentError />
 
-                {/* --- 🏺 GESTION DU PANIER (Exclu sur Admin et Validation) --- */}
+                {/* --- 🏺 GESTION DES EXCLUSIONS (Panier) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
+                    <Route path="/reset-password/*" element={null} />
                     <Route
                         path="*"
                         element={
@@ -119,10 +124,11 @@ export default function App() {
                     />
                 </Routes>
 
-                {/* --- 🏺 GESTION DU FOOTER (Exclu sur Admin et Validation) --- */}
+                {/* --- 🏺 GESTION DES EXCLUSIONS (Footer) --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
+                    <Route path="/reset-password/*" element={null} />
                     <Route path="*" element={<Footer />} />
                 </Routes>
             </div>

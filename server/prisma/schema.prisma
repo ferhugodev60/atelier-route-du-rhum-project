@@ -32,6 +32,9 @@ model User {
   orders       Order[]
   ownedGroups  CompanyGroup[] // Groupes gérés par ce compte pro (PRO uniquement)
   participants Participant[]
+
+  resetToken        String?
+  resetTokenExpires DateTime?
 }
 
 model Category {

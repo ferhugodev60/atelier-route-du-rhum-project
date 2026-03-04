@@ -5,7 +5,7 @@ import api from '../api/axiosInstance';
 
 /**
  * 🏺 INTERFACE DE CERTIFICATION "ZÉRO FRICTION"
- * Scelle la présence et permet l'extraction du certificat officiel.
+ * Scelle la présence et oriente l'utilisateur vers la finalisation de son compte.
  */
 export default function ValidationPage() {
     const { participantId } = useParams<{ participantId: string }>();
@@ -20,12 +20,10 @@ export default function ValidationPage() {
 
     // Pilotage de la transaction
     const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
-    const [memberCode, setMemberCode] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
 
     /** 🏺 DÉCLENCHEUR DU TÉLÉCHARGEMENT DU CERTIFICAT OFFICIEL */
     const handleDownloadCertification = () => {
-        // Redirection vers la route de scellage PDF du backend
         const downloadUrl = `${api.defaults.baseURL}/public/participants/certification-pdf/${participantId}`;
         window.open(downloadUrl, '_blank');
     };
@@ -36,9 +34,7 @@ export default function ValidationPage() {
 
         try {
             // Communication avec le Registre pour sceller les informations
-            const { data } = await api.post(`/public/participants/validate/${participantId}`, formData);
-
-            setMemberCode(data.user?.memberCode || "");
+            await api.post(`/public/participants/validate/${participantId}`, formData);
             setStatus('success');
         } catch (err: any) {
             setStatus('error');
@@ -50,33 +46,35 @@ export default function ValidationPage() {
         <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center p-4">
             <AnimatePresence mode="wait">
                 {status === 'success' ? (
-                    /* 🏺 ÉCRAN DE RÉUSSITE (Extraction du Certificat) */
+                    /* 🏺 ÉCRAN DE RÉUSSITE ÉPURÉ */
                     <motion.div
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="text-center space-y-8 max-w-lg w-full bg-white/[0.02] border border-rhum-gold/30 p-10 md:p-16 shadow-2xl"
+                        className="text-center space-y-10 max-w-lg w-full bg-white/[0.02] border border-rhum-gold/30 p-10 md:p-16 shadow-2xl"
                     >
                         <div className="w-20 h-20 border-2 border-rhum-gold rounded-full flex items-center justify-center mx-auto mb-6">
                             <span className="text-rhum-gold text-3xl font-serif">✓</span>
                         </div>
 
-                        <div className="space-y-2">
+                        <div className="space-y-3">
                             <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Certification Scellée</h2>
                             <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] font-black">
-                                Bienvenue {formData.firstName.toUpperCase()}
+                                Bienvenue dans l'Établissement
                             </p>
                         </div>
 
-                        <div className="bg-white/5 p-8 border border-rhum-gold/20 space-y-3">
-                            <p className="text-[10px] text-white/40 uppercase tracking-[0.3em]">Votre Code client officiel</p>
-                            <span className="text-3xl md:text-4xl font-bold text-rhum-gold font-mono tracking-[0.2em]">
-                                {memberCode || "GÉNÉRATION..."}
-                            </span>
+                        {/* 🏺 Message sur les avantages Entreprise */}
+                        <div className="py-6 border-y border-white/5">
+                            <p className="text-white/80 text-[13px] leading-relaxed uppercase tracking-wider font-medium">
+                                Grâce à votre entreprise, ce code vous offre <br/>
+                                <span className="text-rhum-gold font-bold">10% sur toute la boutique</span> <br/>
+                                et des réductions sur nos ateliers.
+                            </p>
                         </div>
 
-                        <p className="text-white/50 text-[11px] leading-loose uppercase tracking-[0.1em]">
-                            Grâce à votre entreprise, ce code vous offre <strong className="text-rhum-gold">-10% sur toute la boutique</strong>.<br/>
-                            Un email vous a été envoyé pour finaliser votre accès personnel.
+                        <p className="text-white/40 text-[11px] leading-loose uppercase tracking-[0.15em]">
+                            Un email vient de vous être envoyé <br/>
+                            pour la <strong className="text-white/70">finalisation de votre compte</strong>.
                         </p>
 
                         <div className="pt-4 flex flex-col gap-4">
@@ -88,12 +86,12 @@ export default function ValidationPage() {
                             </button>
 
                             <p className="text-[9px] text-white/20 uppercase tracking-widest italic">
-                                Ce document contient vos informations de Séance et votre Code Client.
+                                Ce document contient vos informations de Séance.
                             </p>
                         </div>
                     </motion.div>
                 ) : (
-                    /* 🏺 FORMULAIRE D'IDENTIFICATION SIMPLIFIÉ (Zéro Friction) */
+                    /* 🏺 FORMULAIRE D'IDENTIFICATION SIMPLIFIÉ */
                     <motion.div
                         exit={{ opacity: 0, y: -20 }}
                         className="w-full max-w-lg"
@@ -102,7 +100,7 @@ export default function ValidationPage() {
                             <p className="text-rhum-gold text-[10px] uppercase tracking-[0.5em] mb-3 font-black">Infrastructure</p>
                             <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Enregistrement</h2>
                             <p className="text-white/40 text-[11px] mt-4 uppercase tracking-widest italic leading-relaxed">
-                                Scellez votre présence à la séance pour recevoir <br/>votre certificat et votre code membre.
+                                Scellez votre présence à la séance pour recevoir <br/>votre certificat et vos avantages membres.
                             </p>
                         </header>
 
