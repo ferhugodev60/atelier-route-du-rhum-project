@@ -83,8 +83,11 @@ export const login = async (req: Request, res: Response) => {
                     firstName: user.firstName,
                     lastName: user.lastName,
                     email: user.email,
+                    phone: user.phone,
                     role: user.role,
                     isEmployee: user.isEmployee,
+                    companyName: user.companyName,
+                    siret: user.siret,
                     conceptionLevel: user.conceptionLevel
                 }
             });

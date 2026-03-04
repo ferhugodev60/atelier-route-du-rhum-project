@@ -22,7 +22,9 @@ export const getMe = async (req: Request, res: Response) => {
                 phone: true,
                 conceptionLevel: true,
                 role: true,
-                createdAt: true
+                createdAt: true,
+                companyName: true,
+                siret: true
             }
         });
         if (!user) return res.status(404).json({ error: "Profil introuvable." });
@@ -48,7 +50,9 @@ export const updateMe = async (req: Request, res: Response) => {
                 lastName: true,
                 email: true,
                 phone: true,
-                conceptionLevel: true
+                conceptionLevel: true,
+                companyName: true,
+                siret: true
             }
         });
         return res.json(updatedUser);
@@ -141,7 +145,7 @@ export const validateUserLevel = async (req: Request, res: Response) => {
     try {
         const targetLevel = parseInt(String(level));
 
-        if (isNaN(level)) {
+        if (isNaN(targetLevel)) {
             return res.status(400).json({ error: "Le palier technique doit être une valeur numérique." });
         }
 

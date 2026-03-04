@@ -18,23 +18,28 @@ export default function ProfileInfo() {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState<{ type: 'success' | 'error', msg: string } | null>(null);
 
-    // 🏺 Initialisation des données incluant le volet institutionnel
+    // 🏺 Identification du type de compte
+    const isPro = user?.role === 'PRO';
+    const hasInstitutionalProfile = isPro || user?.isEmployee;
+
+    // 🏺 Initialisation des données avec correction pour le téléphone
     const [formData, setFormData] = useState({
         firstName: user?.firstName || "",
         lastName: user?.lastName || "",
         email: user?.email || "",
-        phone: user?.phone || "",
+        phone: user?.phone || "", // Récupération directe du champ téléphone
         companyName: user?.companyName || "",
         siret: user?.siret || ""
     });
 
+    // 🏺 Synchronisation lors du rafraîchissement du membre
     useEffect(() => {
         if (user) {
             setFormData({
-                firstName: user.firstName,
-                lastName: user.lastName,
-                email: user.email,
-                phone: user.phone || "",
+                firstName: user.firstName || "",
+                lastName: user.lastName || "",
+                email: user.email || "",
+                phone: user.phone || "", // Correction : Assure la récupération après chargement
                 companyName: user.companyName || "",
                 siret: user.siret || ""
             });
@@ -48,22 +53,20 @@ export default function ProfileInfo() {
             // Mise à jour du registre central
             const response = await api.patch('/users/me', formData);
             if (user && token) {
+                // Mise à jour du store local avec les nouvelles données scellées
                 setAuth(response.data, token);
             }
-            setStatus({ type: 'success', msg: "Le dossier de membre a été mis à jour avec succès dans le registre." });
+            setStatus({ type: 'success', msg: "Le dossier de membre a été mis à jour avec succès." });
             setIsEditing(false);
         } catch (err: any) {
             setStatus({
                 type: 'error',
-                msg: err.response?.data?.error || "Une erreur est survenue lors de la synchronisation avec le registre central."
+                msg: err.response?.data?.error || "Erreur de synchronisation avec le registre."
             });
         } finally {
             setLoading(false);
         }
     };
-
-    // 🏺 Identification du type de compte pour l'affichage conditionnel
-    const hasInstitutionalProfile = user?.role === 'PRO' || user?.isEmployee;
 
     return (
         <div className="max-w-3xl font-sans">
@@ -71,7 +74,7 @@ export default function ProfileInfo() {
                 <div>
                     <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Dossier de membre</h2>
                     <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] font-black mt-3 opacity-60">
-                        {user?.isEmployee ? "Bénéficiaire de Comité d'Entreprise" : "Identité certifiée au sein de l'établissement"}
+                        {isPro ? "Identité Institutionnelle" : user?.isEmployee ? "Bénéficiaire de Comité d'Entreprise" : "Identité certifiée"}
                     </p>
                 </div>
 
@@ -105,18 +108,25 @@ export default function ProfileInfo() {
                     readOnly={true}
                     onChange={() => {}}
                 />
-                <ProfileField
-                    label="Prénom"
-                    value={formData.firstName}
-                    isEditing={isEditing}
-                    onChange={(v) => setFormData({...formData, firstName: v})}
-                />
-                <ProfileField
-                    label="Nom"
-                    value={formData.lastName}
-                    isEditing={isEditing}
-                    onChange={(v) => setFormData({...formData, lastName: v})}
-                />
+
+                {/* 🏺 CONDITION : Masquer Nom/Prénom pour les PRO */}
+                {!isPro && (
+                    <>
+                        <ProfileField
+                            label="Prénom"
+                            value={formData.firstName}
+                            isEditing={isEditing}
+                            onChange={(v) => setFormData({...formData, firstName: v})}
+                        />
+                        <ProfileField
+                            label="Nom"
+                            value={formData.lastName}
+                            isEditing={isEditing}
+                            onChange={(v) => setFormData({...formData, lastName: v})}
+                        />
+                    </>
+                )}
+
                 <ProfileField
                     label="Téléphone"
                     value={formData.phone}
@@ -125,7 +135,7 @@ export default function ProfileInfo() {
                     placeholder="Ex: 06 00 00 00 00"
                 />
 
-                {/* 🏺 Volet Institutionnel : Affiché si PRO ou Salarié CE */}
+                {/* 🏺 Volet Institutionnel */}
                 {hasInstitutionalProfile && (
                     <>
                         <ProfileField

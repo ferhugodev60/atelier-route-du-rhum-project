@@ -24,11 +24,14 @@ export default function CustomerDashboard() {
 
     if (!user) return null;
 
+    // 🏺 Détermination du type de profil pour l'affichage sélectif
+    const isPro = user.role === 'PRO';
+
     return (
         <div className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-12 flex flex-col selection:bg-rhum-gold/30 font-sans">
             <div className="max-w-7xl mx-auto w-full flex-1">
 
-                {/* --- EN-TÊTE INSTITUTIONNEL --- */}
+                {/* --- 🏺 EN-TÊTE INSTITUTIONNEL --- */}
                 <header className="mb-12 lg:mb-20 border-l-4 border-rhum-gold pl-10">
                     <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                         <h1 className="text-5xl lg:text-7xl font-serif text-white uppercase tracking-tighter leading-none">
@@ -36,12 +39,13 @@ export default function CustomerDashboard() {
                         </h1>
 
                         <div className="mt-8 flex flex-col gap-6">
+                            {/* 🏺 LOGIQUE D'IDENTITÉ : Compagnie (PRO) vs Individuel (USER) */}
                             <p className="text-rhum-gold text-xs uppercase tracking-[0.4em] font-black">
-                                {user.firstName} {user.lastName}
+                                {isPro ? (user.companyName || "ÉTABLISSEMENT") : `${user.firstName} ${user.lastName}`}
                             </p>
 
                             <div className="flex flex-wrap items-center gap-8">
-                                {/* 🏺 1. AFFICHAGE DU CODE UNIQUE */}
+                                {/* 🏺 1. IDENTIFIANT DU REGISTRE (Commun à tous) */}
                                 <div className="flex flex-col gap-2">
                                     <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Code client</span>
                                     <span className="bg-rhum-gold text-rhum-green px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.2em] rounded-sm shadow-xl">
@@ -49,23 +53,25 @@ export default function CustomerDashboard() {
                                     </span>
                                 </div>
 
-                                {/* 🏺 2. VALIDATION DU CURSUS */}
-                                <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
-                                    <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Atelier Conception</span>
-                                    <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
-                                        Niveau {user.conceptionLevel}
-                                    </span>
-                                </div>
+                                {/* 🏺 2. VALIDATION DU CURSUS (Masqué pour les comptes PRO) */}
+                                {!isPro && (
+                                    <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
+                                        <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">Atelier Conception</span>
+                                        <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
+                                            Niveau {user.conceptionLevel}
+                                        </span>
+                                    </div>
+                                )}
 
-                                {/* 🏺 3. RATTACHEMENT INSTITUTIONNEL (Nouveau) */}
-                                {(user.companyName || user.siret) && (
+                                {/* 🏺 3. AFFILIATION (Uniquement pour les bénéficiaires individuels) */}
+                                {!isPro && user.companyName && (
                                     <div className="flex flex-col gap-2 border-l border-white/10 pl-8">
                                         <span className="text-[9px] text-white/40 uppercase tracking-[0.3em] font-bold">
-                                            {user.role === 'PRO' ? 'Gestionnaire CE' : 'Bénéficiaire Entreprise'}
+                                            Bénéficiaire Entreprise
                                         </span>
                                         <div className="flex items-center gap-3">
                                             <span className="text-white text-[11px] font-black uppercase tracking-[0.2em] leading-none">
-                                                {user.companyName || "Établissement Partenaire"}
+                                                {user.companyName}
                                             </span>
                                         </div>
                                     </div>
@@ -107,7 +113,7 @@ export default function CustomerDashboard() {
                         className="w-full flex items-center justify-center gap-4 py-6 text-[10px] uppercase tracking-[0.3em] font-black text-red-500 bg-red-500/5 border border-red-500/10 rounded-sm hover:bg-red-500/10 transition-colors"
                     >
                         <LogoutIcon className="w-5 h-5" />
-                        <span>Déconnexion de la session</span>
+                        <span>Déconnexion</span>
                     </button>
                 </div>
             </div>

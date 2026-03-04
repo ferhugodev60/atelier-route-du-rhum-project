@@ -90,7 +90,7 @@ export const useAuthStore = create<AuthState>()(
             },
         }),
         {
-            name: 'rhum-atlier-auth',
+            name: 'rhum-member-session',
             version: 3 // 🏺 Version 3 : Intégration du statut bénéficiaire CE (isEmployee)
         }
     )
