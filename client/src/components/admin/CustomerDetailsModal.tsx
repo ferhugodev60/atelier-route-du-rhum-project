@@ -24,24 +24,27 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                     setLoading(false);
                 })
                 .catch(() => {
-                    addToast("Échec de l'extraction du dossier client.", "error");
+                    addToast("Échec de l'extraction du dossier membre.", "error");
                     setLoading(false);
                 });
         }
     }, [isOpen, customerId, addToast]);
 
     /**
-     * 🏺 Scellage du Palier Technique
+     * 🏺 SCELLAGE DU PALIER TECHNIQUE
+     * Correction du bug : Envoi de la clé 'level' reconnue par le Registre
      */
     const handleLevelUpdate = async (newLevel: number) => {
         setIsUpdating(true);
         try {
-            await api.patch(`/users/${fullData.id}/level`, { newLevel });
-            addToast(`Certification mise à jour : Niveau technique ${newLevel} scellé.`);
+            // 🏺 Alignement sur le protocole du Registre
+            await api.patch(`/users/${fullData.id}/level`, { level: newLevel });
+
+            addToast(`Certification mise à jour : Palier technique ${newLevel} scellé.`);
             onRefresh();
             onClose();
         } catch (error) {
-            addToast("Échec de la validation technique.", "error");
+            addToast("Échec de la validation technique au sein du Registre.", "error");
         } finally {
             setIsUpdating(false);
         }
@@ -53,7 +56,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md font-sans">
             <div className="bg-white border-4 border-slate-200 w-full max-w-4xl h-[85vh] flex flex-col rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.3)] relative overflow-hidden">
 
-                {/* Fermeture */}
+                {/* Fermeture du Dossier */}
                 <button onClick={onClose} className="absolute top-8 right-8 text-black hover:text-emerald-600 z-20 transition-colors">
                     <X size={32} strokeWidth={3} />
                 </button>
@@ -61,7 +64,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                 {loading ? (
                     <div className="flex-1 flex flex-col items-center justify-center">
                         <Loader2 className="animate-spin text-emerald-600 mb-6" size={48} strokeWidth={3} />
-                        <p className="text-black font-black uppercase tracking-widest text-xs">Extraction du dossier certifié</p>
+                        <p className="text-black font-black uppercase tracking-widest text-xs">Extraction du dossier certifié...</p>
                     </div>
                 ) : (
                     <>
@@ -76,7 +79,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                         {fullData.lastName} <span className="text-emerald-600">{fullData.firstName}</span>
                                     </h2>
 
-                                    {/* 🏺 Identification Professionnelle & Institutionnelle */}
+                                    {/* Identification Institutionnelle */}
                                     <div className="flex flex-wrap items-center gap-3 mt-4">
                                         {fullData.role === 'PRO' && (
                                             <div className="flex items-center gap-3 bg-slate-900 border-2 border-slate-800 px-4 py-2 w-fit rounded-xl">
@@ -92,7 +95,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             <span className="text-[11px] text-emerald-800 font-black uppercase tracking-widest">
                                                 {fullData.role === 'PRO'
                                                     ? `SIRET : ${fullData.siret || "NON RENSEIGNÉ"}`
-                                                    : (fullData.memberCode || "IDENTITÉ NON CERTIFIÉE")}
+                                                    : (fullData.memberCode || "PASSEPORT NON CERTIFIÉ")}
                                             </span>
                                         </div>
                                     </div>
@@ -102,13 +105,13 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             <Mail size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.email}
                                         </div>
                                         <div className="text-[11px] text-slate-900 uppercase tracking-widest font-black flex items-center gap-2">
-                                            <Phone size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.phone || 'NON RENSEIGNÉ'}
+                                            <Phone size={14} className="text-emerald-600" strokeWidth={3} /> {fullData.phone || 'SANS TÉLÉPHONE'}
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Navigation des sections */}
+                            {/* Navigation des sections du Cursus */}
                             <nav className="flex gap-12 mt-12">
                                 {[
                                     { id: 'cursus', label: 'Certification Cursus', icon: GraduationCap },
@@ -132,12 +135,12 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                         {/* --- CONTENU --- */}
                         <div className="flex-1 overflow-y-auto p-10 md:p-14 bg-white relative z-10">
 
-                            {/* Onglet Certification */}
+                            {/* Section Certification Technique */}
                             {activeTab === 'cursus' && (
                                 <div className="space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-400">
                                     <div className="bg-slate-50 border-2 border-slate-100 p-10 rounded-3xl space-y-10">
                                         <div className="flex justify-between items-center border-b-2 border-white pb-6">
-                                            <p className="text-xs text-black font-black uppercase tracking-widest">Maîtrise Technique Actuelle</p>
+                                            <p className="text-xs text-black font-black uppercase tracking-widest">Palier de Maîtrise Actuel</p>
                                             <span className="text-lg text-emerald-700 font-black uppercase tracking-tighter">
                                                 {fullData.conceptionLevel === 0 ? "Initié" : `Niveau ${fullData.conceptionLevel} / 4 certifié`}
                                             </span>
@@ -165,13 +168,13 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                     <div className="flex items-start gap-4 bg-emerald-50 p-6 rounded-2xl border-2 border-emerald-100">
                                         <ShieldCheck className="text-emerald-700 flex-shrink-0" size={20} strokeWidth={3} />
                                         <p className="text-[11px] text-emerald-900 font-bold uppercase tracking-widest leading-relaxed">
-                                            L'ajustement du palier technique modifie instantanément les privilèges d'accès du membre au sein du Registre.
+                                            La certification d'un nouveau palier technique ajuste instantanément les privilèges d'accès au catalogue au sein du Registre.
                                         </p>
                                     </div>
                                 </div>
                             )}
 
-                            {/* Onglet Historique des Flux */}
+                            {/* Section Historique des Flux Transactionnels */}
                             {activeTab === 'orders' && (
                                 <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-400">
                                     {fullData.orders?.map((order: any) => (
@@ -194,7 +197,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                             <div className="text-right">
                                                 <p className="text-black font-black text-2xl tracking-tighter">{order.total.toFixed(2)}€</p>
                                                 <span className={`inline-block text-[9px] px-3 py-1 border-2 font-black uppercase tracking-widest rounded-lg mt-2 ${
-                                                    order.status === 'FINALISÉ' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'
+                                                    order.status === 'PAYÉ' || order.status === 'FINALISÉ' ? 'bg-emerald-50 border-emerald-100 text-emerald-700' : 'bg-red-50 border-red-100 text-red-700'
                                                 }`}>
                                                     {order.status}
                                                 </span>
@@ -203,7 +206,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                                     ))}
                                     {(!fullData.orders || fullData.orders.length === 0) && (
                                         <div className="py-24 text-center text-slate-300 uppercase tracking-widest text-xs font-black">
-                                            AUCUN FLUX TRANSACTIONNEL RÉPERTORIÉ AU REGISTRE.
+                                            AUCUN FLUX RÉPERTORIÉ AU REGISTRE POUR CE MEMBRE.
                                         </div>
                                     )}
                                 </div>
@@ -213,7 +216,7 @@ export default function CustomerDetailsModal({ isOpen, customerId, onClose, onRe
                 )}
             </div>
 
-            {/* Modal de détails de commande lié au Registre */}
+            {/* Détails du dossier de vente lié au Registre */}
             <OrderDetailsModal
                 isOpen={!!selectedOrderId}
                 orderId={selectedOrderId}

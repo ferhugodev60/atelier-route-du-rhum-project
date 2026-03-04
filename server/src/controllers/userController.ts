@@ -140,13 +140,21 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 
 export const validateUserLevel = async (req: Request, res: Response) => {
     const userId = req.params.userId as string;
-    const { level } = req.body;
+
+    // 🏺 On récupère les deux variantes pour être compatible avec le Front
+    const { level, conceptionLevel } = req.body;
+
+    // On choisit la valeur qui n'est pas undefined
+    const rawValue = level !== undefined ? level : conceptionLevel;
 
     try {
-        const targetLevel = parseInt(String(level));
+        const targetLevel = parseInt(String(rawValue));
 
+        // Si la valeur est toujours invalide, on renvoie l'erreur 400
         if (isNaN(targetLevel)) {
-            return res.status(400).json({ error: "Le palier technique doit être une valeur numérique." });
+            return res.status(400).json({
+                error: "Le palier technique transmis est invalide ou manquant au Registre."
+            });
         }
 
         const updatedUser = await prisma.user.update({
@@ -159,7 +167,8 @@ export const validateUserLevel = async (req: Request, res: Response) => {
             userLevel: updatedUser.conceptionLevel
         });
     } catch (error) {
-        res.status(404).json({ error: "Impossible de valider le palier technique." });
+        console.error("🔥 [ERREUR_REGISTRE]:", error);
+        res.status(500).json({ error: "Échec technique lors du scellage du niveau." });
     }
 };
 
@@ -172,7 +181,7 @@ export const verifyMemberCode = async (req: Request, res: Response) => {
 
     try {
         const user = await prisma.user.findUnique({
-            where: { memberCode: code },
+            where: { memberCode: code.toUpperCase() },
             select: {
                 firstName: true,
                 lastName: true,
