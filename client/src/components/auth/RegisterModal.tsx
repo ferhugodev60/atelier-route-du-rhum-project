@@ -5,7 +5,7 @@ import { useAuthStore } from '../../store/authStore';
 
 /**
  * 🏺 PORTAIL D'INSCRIPTION AU REGISTRE
- * Gère les profils Particuliers, Bénéficiaires CE et Professionnels.
+ * Version épurée : Suppression de l'identité individuelle pour les comptes CE/PRO.
  */
 export default function RegisterModal() {
     const { isRegisterOpen, setRegisterOpen, setAuth } = useAuthStore();
@@ -25,10 +25,12 @@ export default function RegisterModal() {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        // 🏺 Construction du payload conforme au protocole Serveur
-        // isEmployee: true si Particulier + Toggle activé
+        // 🏺 Construction du payload conforme au protocole
+        // Si PRO, on envoie des chaînes vides pour le prénom/nom pour éviter les erreurs serveurs
         const payload = {
             ...data,
+            firstName: isPro ? "CE" : data.firstName,
+            lastName: isPro ? (data.companyName as string).toUpperCase() : data.lastName,
             isEmployee: !isPro && isEmployee
         };
 
@@ -36,7 +38,6 @@ export default function RegisterModal() {
             const response = await api.post('/auth/register', payload);
             setSuccess(true);
 
-            // Scellage de la session après succès
             setTimeout(() => {
                 setAuth(response.data.user, response.data.token);
                 setSuccess(false);
@@ -53,7 +54,6 @@ export default function RegisterModal() {
         <AnimatePresence>
             {isRegisterOpen && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
-                    {/* Overlay de protection */}
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
@@ -74,7 +74,6 @@ export default function RegisterModal() {
                             <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] mt-3 font-black">Registre</p>
                             <h2 className="text-2xl md:text-3xl font-serif text-white uppercase tracking-tight">Création de Dossier</h2>
 
-                            {/* 🏺 Sélecteur de type de compte : Particulier vs CE */}
                             <div className="flex items-center justify-center gap-4 mt-6">
                                 <button
                                     type="button"
@@ -88,7 +87,7 @@ export default function RegisterModal() {
                                     onClick={() => { setIsPro(true); setIsEmployee(false); }}
                                     className={`text-[9px] uppercase tracking-widest px-4 py-2 border transition-all ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40'}`}
                                 >
-                                    Comité d'Entreprise
+                                    Établissement / Pro
                                 </button>
                             </div>
                         </header>
@@ -103,12 +102,16 @@ export default function RegisterModal() {
                             </div>
                         ) : (
                             <form onSubmit={handleRegister} className="space-y-5">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <input name="firstName" required placeholder="PRÉNOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
-                                    <input name="lastName" required placeholder="NOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
-                                </div>
 
-                                {/* 🏺 Levier de rattachement Salarié (Visible uniquement pour les particuliers) */}
+                                {/* 🏺 CONDITION : Identité individuelle (Masquée pour les CE) */}
+                                {!isPro && (
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <input name="firstName" required placeholder="PRÉNOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
+                                        <input name="lastName" required placeholder="NOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
+                                    </div>
+                                )}
+
+                                {/* Levier Salarié (Visible uniquement Individuels) */}
                                 {!isPro && (
                                     <div className="py-2">
                                         <label className="flex items-center gap-3 cursor-pointer group">
@@ -125,13 +128,13 @@ export default function RegisterModal() {
                                     </div>
                                 )}
 
-                                {/* 🏢 Champs institutionnels (Si PRO ou Si Particulier rattaché) */}
+                                {/* Champs institutionnels (Si PRO ou Si Salarié CE) */}
                                 {(isPro || (!isPro && isEmployee)) && (
                                     <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
                                         <input
                                             name="companyName"
                                             required
-                                            placeholder={isPro ? "RAISON SOCIALE DU CE" : "NOM DE VOTRE ENTREPRISE"}
+                                            placeholder="NOM DE VOTRE ENTREPRISE"
                                             className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase"
                                         />
                                         <input
@@ -160,7 +163,7 @@ export default function RegisterModal() {
                                     disabled={isPending}
                                     className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-xl rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    {isPending ? 'SCELLAGE...' : (isPro ? "Enregistrer le Comité" : (isEmployee ? "Valider mon rattachement" : "Créer mon dossier"))}
+                                    {isPending ? 'SCELLAGE...' : (isPro ? "Enregistrer" : (isEmployee ? "Valider mon rattachement" : "Créer mon dossier"))}
                                 </button>
                             </form>
                         )}

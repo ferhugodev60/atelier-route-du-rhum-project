@@ -17,8 +17,8 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     const { user, token, setLoginOpen } = useAuthStore();
     const isAuthenticated = !!user && !!token;
 
-    // 🏺 Logique de redirection dynamique selon le rôle
     const isAdmin = user?.role === 'ADMIN';
+    const isPro = user?.role === 'PRO';
     const profilePath = isAdmin ? '/admin/dashboard' : '/mon-compte';
 
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
         <nav className={`fixed w-full top-0 left-0 z-50 transition-all duration-500 border-b ${
             isScrolled ? 'bg-[#0a1a14]/95 backdrop-blur-md py-4 shadow-2xl border-white/10' : 'bg-transparent py-8 border-transparent'
         }`}>
-            <div className="max-w-7xl mx-auto px-8 md:px-16 flex justify-between items-center">
+            <div className="max-w-7xl mx-auto px-8 md:px-16 flex justify-between items-center text-black">
 
                 {/* LANGUE */}
                 <button onClick={() => setCurrentLang(prev => prev === 'FR' ? 'EN' : 'FR')} className="text-rhum-cream text-[10px] font-black tracking-widest hover:text-rhum-gold uppercase">
@@ -79,8 +79,13 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
                             onClick={() => navigate(profilePath)}
                             className="hidden lg:flex items-center px-6 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold/30 hover:border-rhum-gold text-rhum-gold hover:text-white transition-all"
                         >
-                            {/* Texte adaptatif selon le rôle */}
-                            {isAdmin ? '🔧 GESTION' : `Bonjour ${user?.firstName} !`}
+                            {/* 🏺 Logique adaptative selon le rang institutionnel */}
+                            {isAdmin
+                                ? '🔧 GESTION'
+                                : isPro
+                                    ? `${user?.companyName}`
+                                    : `Bonjour ${user?.firstName}`
+                            }
                         </button>
                     ) : (
                         <button onClick={handleOpenLogin} className="hidden lg:block px-8 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-[#0a1a14] transition-all">
@@ -138,7 +143,12 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
                                     onClick={() => { navigate(profilePath); setIsMobileMenuOpen(false); }}
                                     className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-black"
                                 >
-                                    {isAdmin ? 'Console Administration' : `Mon Profil (${user?.firstName})`}
+                                    {isAdmin
+                                        ? 'Console Administration'
+                                        : isPro
+                                            ? `Mon Profil (${user?.companyName})`
+                                            : `Mon Profil (${user?.firstName})`
+                                    }
                                 </button>
                             ) : (
                                 <button

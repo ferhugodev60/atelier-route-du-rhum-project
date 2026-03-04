@@ -139,7 +139,7 @@ export default function ProfileInfo() {
                 {hasInstitutionalProfile && (
                     <>
                         <ProfileField
-                            label="Entreprise / CE"
+                            label="Entreprise"
                             value={formData.companyName}
                             isEditing={isEditing}
                             onChange={(v) => setFormData({...formData, companyName: v})}
