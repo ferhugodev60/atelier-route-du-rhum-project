@@ -7,7 +7,7 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 /**
  * 📜 PROTOCOLE DE SCELLAGE DE SESSION DE PAIEMENT
- * Gère l'hybridation des flux : Packs Entreprise vs Réservations nominatives.
+ * Gère l'hybridation des flux : Packs Institutionnels vs Réservations nominatives.
  */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
@@ -19,7 +19,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
-        // 🏺 Identification des membres éligibles aux avantages (PRO ou Bénéficiaire CE)
+        // 🏺 Identification des membres éligibles (PRO ou Bénéficiaire CE)
         const isInstitutional = user.role === 'PRO' || user.isEmployee;
 
         for (const item of items) {
@@ -31,16 +31,30 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 const isReservation = item.participants && item.participants.length > 0;
 
                 if (user.role === 'PRO' && !isReservation) {
-                    // MODE PACK : Quotas institutionnels pour slots anonymes
-                    const previousOrders = await prisma.order.count({
-                        where: { userId, status: 'PAYÉ', isBusiness: true }
+                    // 🏺 LOGIQUE DE QUOTAS PAR PALIER TECHNIQUE
+                    const workshopLevel = ws.level;
+
+                    const previousOrdersForLevel = await prisma.order.count({
+                        where: {
+                            userId,
+                            status: 'PAYÉ',
+                            isBusiness: true,
+                            items: {
+                                some: { workshop: { level: workshopLevel } }
+                            }
+                        }
                     });
 
-                    if (previousOrders === 0 && item.quantity !== 25) {
-                        return res.status(400).json({ error: "Le premier pack Entreprise doit contenir 25 places." });
+                    // Règle : 25 places pour la première fois, puis par 10
+                    if (previousOrdersForLevel === 0 && item.quantity !== 25) {
+                        return res.status(400).json({
+                            error: `La première acquisition pour le Niveau ${workshopLevel} doit être de 25 places exactement.`
+                        });
                     }
-                    if (previousOrders > 0 && item.quantity % 10 !== 0) {
-                        return res.status(400).json({ error: "Les recharges institutionnelles se font par packs de 10 places." });
+                    if (previousOrdersForLevel > 0 && item.quantity % 10 !== 0) {
+                        return res.status(400).json({
+                            error: `Les recharges pour le Niveau ${workshopLevel} se font par packs de 10 places.`
+                        });
                     }
                     item.isBusiness = true;
                 } else {
@@ -50,43 +64,33 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 // 2. VÉRIFICATION DES PARTICIPANTS (SÉCURITÉ DU CURSUS)
                 if (isReservation) {
                     const isConceptionCursus = ws.level > 0;
-
                     for (const p of item.participants) {
                         if (isConceptionCursus) {
-                            // Cursus Conception : Le Passeport est impératif
                             if (!p.memberCode) return res.status(400).json({ error: "Passeport obligatoire pour le Cursus de Conception." });
                             const guest = await prisma.user.findUnique({ where: { memberCode: p.memberCode.toUpperCase() } });
                             if (!guest) return res.status(400).json({ error: `Le code ${p.memberCode} est inconnu au Registre.` });
-                        } else {
-                            // Séance Découverte : Informations d'identité
-                            if (!p.firstName || !p.lastName || !p.email) {
-                                return res.status(400).json({ error: "Identité complète requise pour la séance Découverte." });
-                            }
+                        } else if (!p.firstName || !p.lastName || !p.email) {
+                            return res.status(400).json({ error: "Identité complète requise pour la séance Découverte." });
                         }
                     }
                 }
 
-                // Application du tarif institutionnel spécifique pour les séances
                 item.price = isInstitutional ? ws.priceInstitutional : ws.price;
                 item.name = ws.title;
                 item.description = ws.description;
                 item.image = ws.image;
 
             } else if (item.volumeId) {
-                // 🏺 3. LOGIQUE BOUTIQUE : REMISE SYSTÉMATIQUE DE 10%
+                // 🏺 3. LOGIQUE BOUTIQUE : REMISE DE 10%
                 const vol = await prisma.productVolume.findUnique({
                     where: { id: item.volumeId },
                     include: { product: true }
                 });
 
-                if (!vol || vol.stock < item.quantity) {
-                    return res.status(400).json({ error: "Disponibilité insuffisante au Registre Boutique." });
-                }
+                if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Disponibilité insuffisante." });
 
-                // Application de la remise de 10% pour PRO et Bénéficiaires CE
-                const basePrice = vol.price;
-                item.price = isInstitutional ? basePrice * 0.9 : basePrice;
-
+                // Formule : $price = basePrice \times 0.9$
+                item.price = isInstitutional ? vol.price * 0.9 : vol.price;
                 item.name = `${vol.product.name} (${vol.size}${vol.unit})`;
                 item.description = vol.product.description;
                 item.image = vol.product.image;
@@ -113,12 +117,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         volumeId: item.volumeId || null,
                         participants: (!item.isBusiness && item.participants) ? {
                             create: item.participants.map((p: any) => ({
-                                firstName: p.firstName,
-                                lastName: p.lastName,
-                                email: p.email,
-                                phone: p.phone || "",
-                                memberCode: p.memberCode?.toUpperCase(),
-                                isValidated: true
+                                firstName: p.firstName, lastName: p.lastName, email: p.email,
+                                phone: p.phone || "", memberCode: p.memberCode?.toUpperCase(), isValidated: true
                             }))
                         } : undefined
                     }))
@@ -134,7 +134,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                     unit_amount: Math.round(item.price * 100),
                     product_data: {
                         name: item.name,
-                        description: isInstitutional ? `${item.description} (Offre entreprise)` : item.description,
+                        description: isInstitutional ? `${item.description} (Tarif préférentiel scellé)` : item.description,
                         images: item.image ? [item.image] : []
                     },
                 },
@@ -149,8 +149,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        console.error("❌ Erreur de scellage Checkout :", error.message);
-        res.status(500).json({ error: "Échec technique lors de la génération du dossier de vente." });
+        console.error("❌ Erreur Checkout :", error.message);
+        res.status(500).json({ error: "Échec technique du Registre." });
     }
 };
 
@@ -163,9 +163,7 @@ export const handleWebhook = async (req: Request, res: Response) => {
 
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET as string);
-    } catch (err: any) {
-        return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+    } catch (err: any) { return res.status(400).send(`Webhook Error: ${err.message}`); }
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -186,8 +184,6 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         });
                     }
 
-                    // 🏺 CRÉATION DES PLACES VIDES POUR LES ENTREPRISES (PRO)
-                    // Déclenchera l'affichage des QR codes dans le PDF
                     if (item.workshop && item.participants.length === 0) {
                         let companyGroupId = null;
                         if (updatedOrder.isBusiness) {
@@ -202,11 +198,8 @@ export const handleWebhook = async (req: Request, res: Response) => {
                         }
 
                         const participantsData = Array.from({ length: item.quantity }).map(() => ({
-                            orderItemId: item.id,
-                            companyGroupId: companyGroupId,
-                            isValidated: false // Force le mode QR Code
+                            orderItemId: item.id, companyGroupId, isValidated: false
                         }));
-
                         await tx.participant.createMany({ data: participantsData });
                     }
                 }
@@ -216,13 +209,9 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     include: { user: true, items: { include: { workshop: true, participants: true } } }
                 });
 
-                if (finalOrder?.user) {
-                    await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
-                }
+                if (finalOrder?.user) await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
             });
-        } catch (error: any) {
-            console.error("❌ Incident Webhook :", error.message);
-        }
+        } catch (error: any) { console.error("❌ Incident Webhook :", error.message); }
     }
     res.json({ received: true });
 };

@@ -98,7 +98,6 @@ export const updateParticipantStatus = async (req: AuthRequest, res: Response) =
         const validatedCount = orderItem.participants.filter((p: any) => p.isValidated).length;
         const isCohortComplete = validatedCount === orderItem.quantity;
 
-        // 🏺 Mise à jour des niveaux si la cohorte est complète
         if (isCohortComplete && orderItem.workshop) {
             const levelTarget = orderItem.workshop.level;
             await prisma.$transaction([
@@ -132,14 +131,10 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
             include: { items: { include: { workshop: true, participants: true } }, user: true }
         });
 
-        // 🏺 PROTOCOLE DE CRÉATION DES PLACES (Entreprises / Particuliers)
         if (status === 'PAYÉ' || status === 'FINALISÉ') {
             for (const item of updatedOrder.items) {
-                // Création des slots uniquement si le registre est vide pour cet item
                 if (item.workshop && item.participants.length === 0) {
-
                     let companyGroupId = null;
-                    // Pour les entreprises, on crée le groupe institutionnel s'il n'existe pas
                     if (updatedOrder.isBusiness) {
                         const group = await prisma.companyGroup.create({
                             data: {
@@ -151,7 +146,6 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
                         companyGroupId = group.id;
                     }
 
-                    // Gravure massive des places (Cas PRO : isValidated à false pour forcer le QR)
                     const participantsData = Array.from({ length: item.quantity }).map(() => ({
                         orderItemId: item.id,
                         companyGroupId: companyGroupId,
@@ -161,7 +155,6 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
                     await prisma.participant.createMany({ data: participantsData });
                 }
 
-                // Promotion de niveau pour les particuliers
                 if (!updatedOrder.isBusiness && item.workshop && item.workshop.level > updatedOrder.user.conceptionLevel) {
                     await prisma.user.update({
                         where: { id: updatedOrder.userId },
@@ -177,25 +170,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
 };
 
 /**
- * 📜 CRÉATION MANUELLE D'UN SLOT D'ÉMARGEMENT
- */
-export const addManualParticipant = async (req: AuthRequest, res: Response) => {
-    const { orderItemId } = req.body;
-    try {
-        const orderItem = await prisma.orderItem.findUnique({ where: { id: orderItemId as string } });
-        if (!orderItem) return res.status(404).json({ error: "Ligne de dossier introuvable." });
-
-        const newParticipant = await prisma.participant.create({
-            data: { orderItemId: orderItem.id, companyGroupId: orderItem.companyGroupId, isValidated: false }
-        });
-        res.status(201).json(newParticipant);
-    } catch (error) {
-        res.status(400).json({ error: "Échec de l'ajout manuel." });
-    }
-};
-
-/**
- * 📜 GÉNÉRATION DU JUSTIFICATIF PDF (HYBRIDE : RÉSUMÉ OU QR CODES)
+ * 📜 GÉNÉRATION DU JUSTIFICATIF PDF
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
@@ -218,7 +193,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
 
         if (!order) return res.status(404).json({ error: "Dossier introuvable au Registre." });
 
-        // Appel au moteur hybride (Texte si noms présents, sinon QR Code)
         const pdfBytes = await pdfService.generateOrderPDF(order);
 
         res.setHeader('Content-Type', 'application/pdf');
@@ -227,6 +201,54 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error("❌ Incident de scellage PDF :", error);
         res.status(500).json({ error: "Échec technique du registre PDF." });
+    }
+};
+
+/**
+ * 🏺 VÉRIFICATION DE L'HISTORIQUE PAR PALIER TECHNIQUE
+ */
+export const getOrderCountByLevel = async (req: AuthRequest, res: Response) => {
+    const userId = req.user?.userId;
+    // 🏺 Correction TS2345 : Cast explicite en string pour le palier
+    const level = req.params.level as string;
+
+    if (!userId) return res.status(401).json({ error: "Identification requise." });
+
+    try {
+        const count = await prisma.order.count({
+            where: {
+                userId,
+                status: 'PAYÉ',
+                isBusiness: true,
+                items: {
+                    some: {
+                        workshop: {
+                            level: parseInt(level)
+                        }
+                    }
+                }
+            }
+        });
+
+        res.json({ count });
+    } catch (error) {
+        console.error("🔥 [REGISTRE_ERREUR]:", error);
+        res.status(500).json({ error: "Échec de consultation du Registre d'historique." });
+    }
+};
+
+export const addManualParticipant = async (req: AuthRequest, res: Response) => {
+    const { orderItemId } = req.body;
+    try {
+        const orderItem = await prisma.orderItem.findUnique({ where: { id: orderItemId as string } });
+        if (!orderItem) return res.status(404).json({ error: "Ligne de dossier introuvable." });
+
+        const newParticipant = await prisma.participant.create({
+            data: { orderItemId: orderItem.id, companyGroupId: orderItem.companyGroupId, isValidated: false }
+        });
+        res.status(201).json(newParticipant);
+    } catch (error) {
+        res.status(400).json({ error: "Échec de l'ajout manuel." });
     }
 };
 

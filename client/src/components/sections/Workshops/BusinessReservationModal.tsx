@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion } from 'framer-motion';
+import api from "../../../api/axiosInstance.ts";
 
 interface ReservationModalProps {
     workshop: any;
@@ -9,18 +10,47 @@ interface ReservationModalProps {
 }
 
 export default function BusinessReservationModal({ workshop, onClose, onConfirm }: ReservationModalProps) {
-    // 🏺 Configuration : Base de 25 places, incrémentation par 10
+    // 🏺 Configuration adaptative selon l'historique du palier technique
     const [numPeople, setNumPeople] = useState(25);
+    const [isFirstTimeForLevel, setIsFirstTimeForLevel] = useState(true);
+    const [isLoading, setIsLoading] = useState(true);
 
+    /**
+     * 🏺 SÉCURISATION DU QUOTA PAR NIVEAU
+     * Interroge le Registre pour déterminer s'il s'agit d'un pack initial (25)
+     * ou d'une recharge institutionnelle (10 par 10).
+     */
     useEffect(() => {
         document.body.style.overflow = 'hidden';
+
+        const checkLevelHistory = async () => {
+            try {
+                const { data } = await api.get(`/orders/check-level/${workshop.level}`);
+                const firstTime = data.count === 0;
+                setIsFirstTimeForLevel(firstTime);
+
+                // 🏺 Scellage du volume initial : 25 pour le pack, 10 pour la recharge
+                setNumPeople(firstTime ? 25 : 10);
+            } catch (error) {
+                // Par défaut, le système sécurise sur le pack initial de 25
+                setIsFirstTimeForLevel(true);
+                setNumPeople(25);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkLevelHistory();
         return () => { document.body.style.overflow = 'unset'; };
-    }, []);
+    }, [workshop.level]);
 
     const handlePeopleChange = (increment: boolean) => {
+        // 🏺 Si c'est la première fois, le volume est scellé à 25
+        if (isFirstTimeForLevel) return;
+
         setNumPeople(prev => {
-            if (increment) return prev + 10; // 🏺 Ajout 10 par 10
-            return Math.max(25, prev - 10); // 🏺 Minimum 25 places
+            if (increment) return prev + 10; // 🏺 Recharge par 10
+            return Math.max(10, prev - 10); // Minimum 10 pour une recharge
         });
     };
 
@@ -41,7 +71,7 @@ export default function BusinessReservationModal({ workshop, onClose, onConfirm 
                 {/* Header Institutionnel */}
                 <div className="p-8 border-b border-white/5 bg-black/20 text-center">
                     <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">
-                        Offre entreprise
+                        {isLoading ? "Consultation du Registre..." : "Offre entreprise"}
                     </p>
                     <h5 className="text-3xl font-serif text-white uppercase tracking-tighter">
                         {workshop.title}
@@ -49,16 +79,17 @@ export default function BusinessReservationModal({ workshop, onClose, onConfirm 
                 </div>
 
                 <div className="p-12 space-y-12">
-                    {/* Sélecteur de Volume par paliers de 10 */}
+                    {/* Sélecteur de Volume Adaptatif */}
                     <div className="text-center">
                         <p className="text-[10px] text-white/30 uppercase tracking-[0.2em] mb-8 font-bold">
-                            Nombre de participants (Minimum 25)
+                            Nombre de participants
                         </p>
 
                         <div className="flex items-center justify-center gap-12">
                             <button
                                 onClick={() => handlePeopleChange(false)}
-                                className={`text-rhum-gold text-5xl font-light transition-opacity ${numPeople <= 25 ? 'opacity-20 cursor-not-allowed' : 'hover:scale-110'}`}
+                                disabled={isFirstTimeForLevel || numPeople <= 10}
+                                className={`text-rhum-gold text-5xl font-light transition-opacity ${(isFirstTimeForLevel || numPeople <= 10) ? 'opacity-10 cursor-not-allowed' : 'hover:scale-110'}`}
                             >
                                 −
                             </button>
@@ -71,35 +102,42 @@ export default function BusinessReservationModal({ workshop, onClose, onConfirm 
 
                             <button
                                 onClick={() => handlePeopleChange(true)}
-                                className="text-rhum-gold text-5xl font-light hover:scale-110 transition-transform"
+                                disabled={isFirstTimeForLevel}
+                                className={`text-rhum-gold text-5xl font-light transition-opacity ${isFirstTimeForLevel ? 'opacity-10 cursor-not-allowed' : 'hover:scale-110'}`}
                             >
                                 +
                             </button>
                         </div>
+
+                        {isFirstTimeForLevel && !isLoading && (
+                            <p className="mt-8 text-[9px] text-rhum-gold/60 uppercase tracking-widest font-black">
+                                La première réservation requiert exactement 25 participants
+                            </p>
+                        )}
                     </div>
 
-                    {/* Note d'identification manuelle */}
+                    {/* Protocole d'organisation */}
                     <div className="bg-white/5 p-6 rounded-sm border border-white/5">
                         <p className="text-[10px] text-rhum-gold uppercase tracking-widest font-black mb-2">
                             Protocole :
                         </p>
                         <p className="text-[11px] text-white/60 leading-relaxed font-medium">
-                            Après avoir effectué l'achat, il est impératif de contacter <span className="text-white font-bold">l'Atelier de la Route du Rhum</span> pour réserver les dates des ateliers, car la capacité d'accueil est limitée à 15 places maximum par atelier.
+                            Après confirmation du dossier de vente, veuillez contacter <span className="text-white font-bold">l'Établissement de la Route du Rhum</span> pour sceller les dates de vos séances de Cursus, la capacité d'accueil étant limitée à 15 places par session.
                         </p>
                     </div>
 
                     <div className="space-y-4 pt-4">
                         <button
+                            disabled={isLoading}
                             onClick={() => onConfirm({
                                 ...workshop,
                                 quantity: numPeople,
                                 isBusiness: true,
-                                // 🏺 Pas de saisie de coordonnées
                                 participants: []
                             })}
-                            className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all shadow-xl"
+                            className={`w-full py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm transition-all shadow-xl ${isLoading ? 'bg-white/5 text-white/20' : 'bg-rhum-gold text-rhum-green hover:bg-white'}`}
                         >
-                            Confirmer
+                            {isLoading ? "Vérification..." : "Confirmer le Dossier"}
                         </button>
 
                         <button
