@@ -2,12 +2,19 @@ import { useEffect, useState } from 'react';
 import api from '../../api/axiosInstance';
 import { motion } from 'framer-motion';
 import { useToastStore } from '../../store/toastStore';
+import { useAuthStore } from '../../store/authStore'; // 🏺 Importation du store pour le rôle
+
+interface Participant {
+    id?: string;
+    firstName: string;
+    lastName: string;
+}
 
 interface OrderItem {
     name: string;
     quantity: number;
     price: number;
-    participants: string[];
+    participants: Participant[];
 }
 
 interface Order {
@@ -24,6 +31,8 @@ export default function OrderHistory() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
+    const { user } = useAuthStore(); // 🏺 Récupération de l'identité du membre
     const addToast = useToastStore(state => state.addToast);
 
     useEffect(() => {
@@ -132,11 +141,15 @@ export default function OrderHistory() {
                                             <p className="text-sm text-rhum-gold font-bold">{(item.price * item.quantity).toFixed(2)}€</p>
                                         </div>
 
-                                        {item.participants.length > 0 && (
+                                        {/* 🏺 LOGIQUE CONDITIONNELLE : PRO vs PARTICULIER/CE */}
+                                        {user?.role !== 'PRO' && item.participants && item.participants.length > 0 && (
                                             <div className="pl-6 border-l-2 border-rhum-gold/20 py-1">
                                                 <p className="text-[9px] uppercase tracking-widest text-rhum-gold font-black mb-2 opacity-60">Participants :</p>
                                                 <p className="text-[11px] text-white/60 font-bold uppercase tracking-tight">
-                                                    {item.participants.join(' • ')}
+                                                    {/* 🏺 Correction du bug [OBJECT OBJECT] */}
+                                                    {item.participants
+                                                        .map(p => p.firstName && p.lastName ? `${p.firstName} ${p.lastName}` : "Place non scellée")
+                                                        .join(' • ')}
                                                 </p>
                                             </div>
                                         )}

@@ -4,10 +4,13 @@ import crypto from 'crypto';
 import { sendWelcomeAndSetupPasswordEmail } from '../services/emailService';
 import * as pdfService from '../services/pdfService';
 
+/**
+ * 🏺 VALIDATION ET SCELLAGE TRANSVERSAL
+ * Permet la collaboration libre entre particuliers standards et membres CE.
+ */
 export const validateParticipantFromPDF = async (req: Request, res: Response) => {
     const id = req.params.id as string;
 
-    // 🏺 Extraction et normalisation des données pour le Registre
     const firstName = (req.body.firstName || "").trim().toUpperCase();
     const lastName = (req.body.lastName || "").trim().toUpperCase();
     const email = (req.body.email || "").trim().toLowerCase();
@@ -17,14 +20,14 @@ export const validateParticipantFromPDF = async (req: Request, res: Response) =>
 
     try {
         const result = await prisma.$transaction(async (tx) => {
-            // 1. Recherche de la place avec inclusion de l'acheteur (PRO)
+            // 1. Extraction de la place avec les informations de la commande parente
             const participant = await tx.participant.findUnique({
                 where: { id },
                 include: {
                     orderItem: {
                         include: {
                             order: {
-                                include: { user: true } // 🏺 Récupération de l'identité de l'entreprise parente
+                                include: { user: true }
                             }
                         }
                     }
@@ -35,23 +38,23 @@ export const validateParticipantFromPDF = async (req: Request, res: Response) =>
                 throw new Error("ALREADY_VALIDATED");
             }
 
-            // 🏺 EXTRACTION DES DONNÉES DE FILIATION INSTITUTIONNELLE
             const parentOrder = participant.orderItem.order;
-            const companyName = parentOrder.isBusiness ? parentOrder.user.companyName : null;
-            const siret = parentOrder.isBusiness ? parentOrder.user.siret : null;
 
-            // 2. Recherche du compte membre existant
+            // 🏺 Détermination de la provenance (Institutionnelle ou Privée)
+            const isInstitutionalOrder = parentOrder.isBusiness;
+            const orderCompanyName = isInstitutionalOrder ? parentOrder.user.companyName : null;
+            const orderSiret = isInstitutionalOrder ? parentOrder.user.siret : null;
+
             let user = await tx.user.findUnique({ where: { email } });
             let isNewUser = false;
 
-            // 🏺 GÉNÉRATION DES CRÉDENTIALS DE SÉCURITÉ
             const resetToken = crypto.randomBytes(32).toString('hex');
             const resetTokenExpires = new Date(Date.now() + 24 * 3600000);
             const randomSuffix = Math.random().toString(36).substring(2, 6).toUpperCase();
             const newMemberCode = `RR-26-${randomSuffix}`;
 
             if (!user) {
-                // SCÉNARIO A : Nouveau Membre
+                // SCÉNARIO A : Nouveau Membre (Inscrit via une séance CE ou Privée)
                 isNewUser = true;
                 user = await tx.user.create({
                     data: {
@@ -60,38 +63,40 @@ export const validateParticipantFromPDF = async (req: Request, res: Response) =>
                         lastName,
                         phone,
                         memberCode: newMemberCode,
-                        password: crypto.randomBytes(16).toString('hex'), // Verrou temporaire
+                        password: crypto.randomBytes(16).toString('hex'),
                         role: 'USER',
-                        isEmployee: true,
-                        companyName, // 🏺 Scellage du nom de l'entreprise
-                        siret,       // 🏺 Scellage du numéro SIRET
+                        // Uniquement employé si la séance actuelle est institutionnelle
+                        isEmployee: isInstitutionalOrder,
+                        companyName: orderCompanyName,
+                        siret: orderSiret,
                         resetToken,
                         resetTokenExpires
                     }
                 });
             } else {
-                // SCÉNARIO B : Membre existant (Mise à jour du statut et de l'entreprise)
+                // SCÉNARIO B : Membre Existant (Collaboration Mixte)
+                // 🏺 Ici, on ne remplace jamais une donnée existante par du vide.
+                // On additionne les statuts pour permettre la collaboration.
                 user = await tx.user.update({
                     where: { id: user.id },
                     data: {
                         memberCode: user.memberCode || newMemberCode,
-                        isEmployee: true,
-                        companyName, // 🏺 Mise à jour de l'entreprise actuelle
-                        siret,       // 🏺 Mise à jour du SIRET
+                        // Le membre devient/reste employé s'il participe à une séance CE
+                        isEmployee: user.isEmployee || isInstitutionalOrder,
+                        // On garde l'entreprise précédente si la séance actuelle est privée
+                        companyName: orderCompanyName || user.companyName,
+                        siret: orderSiret || user.siret,
                         resetToken,
                         resetTokenExpires
                     }
                 });
             }
 
-            // 3. Scellage définitif du Participant à la Séance
+            // 2. Scellage définitif au Registre
             const updatedParticipant = await tx.participant.update({
                 where: { id },
                 data: {
-                    firstName,
-                    lastName,
-                    email,
-                    phone,
+                    firstName, lastName, email, phone,
                     memberCode: user.memberCode,
                     isValidated: true,
                     validatedAt: new Date(),
@@ -102,35 +107,23 @@ export const validateParticipantFromPDF = async (req: Request, res: Response) =>
             return { user, participant: updatedParticipant, isNewUser, resetToken };
         });
 
-        // 🏺 TRANSMISSION DU COURRIER D'INVITATION AVEC LE JETON DE SÉCURITÉ
-        try {
-            await sendWelcomeAndSetupPasswordEmail(
-                result.user.email,
-                result.user.firstName,
-                result.resetToken
-            );
-        } catch (emailError) {
-            console.error("⚠️ Registre scellé mais échec technique de transmission du mail.", emailError);
-        }
+        await sendWelcomeAndSetupPasswordEmail(result.user.email, result.user.firstName, result.resetToken);
 
-        // 🏺 Renvoi JSON (Le code client est masqué à l'écran selon vos directives)
         res.status(200).json(result);
 
     } catch (error: any) {
         const errorMsg = error.message === "ALREADY_VALIDATED"
-            ? "Cette place a déjà été scellée au registre."
-            : "Erreur technique de scellage au registre.";
+            ? "Cette place a déjà été scellée."
+            : "Erreur technique de scellage.";
         res.status(400).json({ error: errorMsg });
     }
 };
 
 /**
- * 📜 EXTRACTION DU CERTIFICAT INDIVIDUEL (PDF)
- * Génère un titre de présence avec Code Client et informations scellées.
+ * 📜 EXTRACTION DU CERTIFICAT
  */
 export const downloadCertificationPDF = async (req: Request, res: Response) => {
     const id = req.params.id as string;
-
     try {
         const participant = await prisma.participant.findUnique({
             where: { id },
@@ -138,25 +131,21 @@ export const downloadCertificationPDF = async (req: Request, res: Response) => {
                 orderItem: {
                     include: {
                         workshop: true,
-                        order: {
-                            include: { user: true }
-                        }
+                        order: { include: { user: true } }
                     }
                 }
             }
         });
 
         if (!participant || !participant.isValidated) {
-            return res.status(404).json({ error: "Certification non trouvée ou non scellée au Registre." });
+            return res.status(404).json({ error: "Certification non scellée." });
         }
 
         const pdfBytes = await pdfService.generateCertificationPDF(participant);
-
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Certification_${participant.memberCode}.pdf`);
         res.send(Buffer.from(pdfBytes));
     } catch (error) {
-        console.error("❌ Erreur technique de génération PDF :", error);
-        res.status(500).json({ error: "Échec technique du scellage PDF." });
+        res.status(500).json({ error: "Échec du scellage PDF." });
     }
 };

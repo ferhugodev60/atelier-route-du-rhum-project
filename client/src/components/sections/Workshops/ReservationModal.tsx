@@ -5,10 +5,8 @@ import api from "../../../api/axiosInstance.ts";
 import { useAuthStore } from '../../../store/authStore';
 
 /**
- * 🏺 INTERFACE DE RÉSERVATION HYBRIDE
- * Gère la collecte de données selon le protocole :
- * - Découverte : Saisie manuelle (Nom, Prénom, Email, Tel)
- * - Conception : Certification via Code Client obligatoire
+ * 🏺 INTERFACE DE RÉSERVATION TRANSVERSALE
+ * Autorise la collaboration libre entre Particuliers, CSE et Professionnels.
  */
 
 interface Participant {
@@ -29,16 +27,13 @@ interface ReservationModalProps {
 export default function ReservationModal({ workshop, onClose, onConfirm }: ReservationModalProps) {
     const { user } = useAuthStore();
 
-    // 🏺 Détermination de la nature de la séance via le palier technique
+    // 🏺 Détermination du niveau cible pour le Cursus [cite: 2026-02-12]
     const isConceptionCursus = workshop.level > 0;
 
     const [step, setStep] = useState(1);
     const [verifyingIndex, setVerifyingIndex] = useState<number | null>(null);
     const [numPeople, setNumPeople] = useState(1);
     const [hasValidatedStep1, setHasValidatedStep1] = useState(false);
-
-    // Identifiant du rang de l'organisateur (Standard vs Institutionnel)
-    const isBookerInstitutional = user?.isEmployee || user?.role === 'PRO';
 
     const [participants, setParticipants] = useState<Participant[]>(() => {
         const initialArr: Participant[] = [{ firstName: '', lastName: '', phone: '', email: '', isValidated: false }];
@@ -49,7 +44,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 phone: user.phone || '',
                 email: user.email || '',
                 memberCode: user.memberCode,
-                isValidated: true // L'organisateur est scellé par sa session [cite: 2026-02-12]
+                isValidated: true // L'organisateur est scellé par sa session
             };
         }
         return initialArr;
@@ -75,22 +70,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     };
 
     /**
-     * 🏺 Verrou d'Homogénéité
-     * Interdiction de mixer Particuliers Standards et Membres Pro/CE.
+     * 🏺 SÉCURISATION DU PASSEPORT
+     * Le verrou d'homogénéité a été supprimé pour autoriser la collaboration.
      */
-    const checkHomogeneity = (guestData: any) => {
-        const isGuestInstitutional = guestData.isEmployee || guestData.role === 'PRO';
-
-        if (isBookerInstitutional !== isGuestInstitutional) {
-            const message = isBookerInstitutional
-                ? "Accès refusé : En tant que membre institutionnel (CSE/PRO), vous ne pouvez pas inscrire de particulier standard."
-                : "Accès refusé : Ce participant est un membre Pro/CE. La mixité des profils est interdite.";
-            alert(message);
-            return false;
-        }
-        return true;
-    };
-
     const handlePassportInput = (index: number, val: string) => {
         const code = val.toUpperCase();
         const newParticipants = [...participants];
@@ -107,17 +89,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         try {
             const { data } = await api.get(`/users/verify/${code}`);
 
-            // 1️⃣ Validation du Verrou d'Homogénéité
-            if (!checkHomogeneity(data)) {
-                const reset = [...participants];
-                reset[index] = { firstName: '', lastName: '', phone: '', email: '', isValidated: false };
-                setParticipants(reset);
-                return;
-            }
-
-            // 2️⃣ Validation du Palier Technique
+            // 1️⃣ Validation du Palier Technique uniquement
             if (isConceptionCursus && data.conceptionLevel < workshop.level - 1) {
-                alert(`Le membre ${data.firstName} n'a pas validé le palier précédent au Registre.`);
+                alert(`Le membre ${data.firstName} n'a pas encore validé le palier technique précédent au Registre.`);
                 return;
             }
 
@@ -137,11 +111,6 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         setParticipants(newParticipants);
     };
 
-    /**
-     * 🏺 Validation de l'étape 2 :
-     * - Conception : Tous doivent être certifiés via Code Client.
-     * - Découverte : Tous doivent avoir Nom, Prénom, Email et Téléphone.
-     */
     const isStep2Valid = isConceptionCursus
         ? participants.every(p => p.isValidated)
         : participants.every(p => p.firstName.trim() && p.lastName.trim() && p.email?.trim() && p.phone?.trim());
@@ -151,9 +120,9 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/98 backdrop-blur-md" onClick={onClose} />
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] flex flex-col border border-white/5 shadow-2xl">
 
-                <div className="flex border-b border-white/5 bg-black/20">
-                    <button onClick={() => setStep(1)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>1. Participant(s)</button>
-                    <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 uppercase text-[10px] tracking-[0.4em] font-black transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. Identification</button>
+                <div className="flex border-b border-white/5 bg-black/20 font-black uppercase tracking-[0.4em] text-[10px]">
+                    <button onClick={() => setStep(1)} className={`flex-1 py-5 transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>1. Participant(s)</button>
+                    <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. Identification</button>
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
@@ -180,13 +149,11 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                             <div className="flex justify-between items-center">
                                                 <p className="text-rhum-gold text-[9px] uppercase font-black tracking-[0.3em] opacity-50">Participant n°{i + 1}</p>
                                                 {isConceptionCursus && (
-                                                    <span className="text-[7px] bg-rhum-gold/10 text-rhum-gold px-2 py-1 rounded-full font-black uppercase tracking-widest italic">Code Client Obligatoire</span>
+                                                    <span className="text-[7px] bg-rhum-gold/10 text-rhum-gold px-2 py-1 rounded-full font-black uppercase tracking-widest italic">Passeport Obligatoire</span>
                                                 )}
                                             </div>
 
-                                            {/* 🏺 Rendu Conditionnel : Conception vs Découverte */}
                                             {isConceptionCursus ? (
-                                                /* MODE CONCEPTION : Passeport requis */
                                                 <div className="space-y-4">
                                                     <div className="relative">
                                                         <input
@@ -196,7 +163,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                             onChange={(e) => handlePassportInput(i, e.target.value)}
                                                             readOnly={i === 0 && !!user}
                                                         />
-                                                        {verifyingIndex === i && <span className="absolute right-0 bottom-3 text-[7px] text-rhum-gold animate-pulse uppercase font-black">Certification en cours...</span>}
+                                                        {verifyingIndex === i && <span className="absolute right-0 bottom-3 text-[7px] text-rhum-gold animate-pulse uppercase font-black">Certification...</span>}
                                                     </div>
                                                     {p.isValidated && (
                                                         <p className="text-[10px] text-green-500 font-black uppercase tracking-widest italic">
@@ -205,40 +172,13 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                     )}
                                                 </div>
                                             ) : (
-                                                /* MODE DÉCOUVERTE : Saisie manuelle (Particulier & CSE) */
                                                 <div className="space-y-4">
                                                     <div className="grid grid-cols-2 gap-4">
-                                                        <input
-                                                            placeholder="PRÉNOM"
-                                                            value={p.firstName}
-                                                            readOnly={i === 0 && !!user}
-                                                            onChange={e => updateParticipant(i, 'firstName', e.target.value)}
-                                                            className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20"
-                                                        />
-                                                        <input
-                                                            placeholder="NOM"
-                                                            value={p.lastName}
-                                                            readOnly={i === 0 && !!user}
-                                                            onChange={e => updateParticipant(i, 'lastName', e.target.value)}
-                                                            className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20"
-                                                        />
+                                                        <input placeholder="PRÉNOM" value={p.firstName} readOnly={i === 0 && !!user} onChange={e => updateParticipant(i, 'firstName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20" />
+                                                        <input placeholder="NOM" value={p.lastName} readOnly={i === 0 && !!user} onChange={e => updateParticipant(i, 'lastName', e.target.value)} className="bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold w-full font-bold uppercase placeholder:text-white/20" />
                                                     </div>
-                                                    <input
-                                                        placeholder="EMAIL"
-                                                        type="email"
-                                                        value={p.email}
-                                                        readOnly={i === 0 && !!user}
-                                                        onChange={e => updateParticipant(i, 'email', e.target.value)}
-                                                        className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20"
-                                                    />
-                                                    <input
-                                                        placeholder="TÉLÉPHONE"
-                                                        type="tel"
-                                                        value={p.phone}
-                                                        readOnly={i === 0 && !!user}
-                                                        onChange={e => updateParticipant(i, 'phone', e.target.value)}
-                                                        className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20"
-                                                    />
+                                                    <input placeholder="EMAIL" type="email" value={p.email} readOnly={i === 0 && !!user} onChange={e => updateParticipant(i, 'email', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20" />
+                                                    <input placeholder="TÉLÉPHONE" type="tel" value={p.phone} readOnly={i === 0 && !!user} onChange={e => updateParticipant(i, 'phone', e.target.value)} className="w-full bg-transparent border-b border-white/10 text-white p-2 outline-none text-sm focus:border-rhum-gold font-bold uppercase placeholder:text-white/20" />
                                                 </div>
                                             )}
                                         </div>

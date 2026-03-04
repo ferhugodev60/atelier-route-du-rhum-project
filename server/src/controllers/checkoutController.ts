@@ -5,74 +5,84 @@ import { sendOrderConfirmationEmail } from '../services/emailService';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
+/**
+ * 📜 PROTOCOLE DE SCELLAGE DE SESSION DE PAIEMENT
+ * Gère l'hybridation des flux : Packs Entreprise vs Réservations nominatives.
+ */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
     const { items } = req.body;
 
-    if (!userId) return res.status(401).json({ error: "Identification requise." });
+    if (!userId) return res.status(401).json({ error: "Identification requise. Accès au Registre refusé." });
 
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
-        // Détermination des profils bénéficiant des avantages (CSE / PRO)
+        // Détermination de l'éligibilité aux tarifs préférentiels
         const isInstitutional = user.role === 'PRO' || user.isEmployee;
 
         for (const item of items) {
             if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
-                if (!ws) throw new Error("Séance introuvable.");
+                if (!ws) throw new Error("Séance technique introuvable.");
 
-                // 🏺 1. RÈGLE DES QUOTAS ENTREPRISE (PRO)
-                if (user.role === 'PRO') {
+                // 🏺 1. DÉTERMINATION DU MODE : RÉSERVATION vs PACK
+                // Si des participants sont listés, on bascule en mode Réservation (pas de quota bloquant)
+                const isReservation = item.participants && item.participants.length > 0;
+
+                if (user.role === 'PRO' && !isReservation) {
+                    // MODE PACK : Appliqué seulement pour l'achat de slots anonymes
                     const previousOrders = await prisma.order.count({
-                        where: { userId, status: 'PAYÉ' }
+                        where: { userId, status: 'PAYÉ', isBusiness: true }
                     });
 
                     if (previousOrders === 0 && item.quantity !== 25) {
-                        return res.status(400).json({ error: "La première réservation Entreprise doit être de 25 places exactement." });
+                        return res.status(400).json({ error: "Le premier pack Entreprise doit contenir 25 places." });
                     }
                     if (previousOrders > 0 && item.quantity % 10 !== 0) {
-                        return res.status(400).json({ error: "Les recharges pour Entreprise se font par packs de 10 places." });
+                        return res.status(400).json({ error: "Les recharges institutionnelles se font par packs de 10 places." });
                     }
                     item.isBusiness = true;
                 } else {
+                    // MODE RÉSERVATION : Standard, mixte ou bénéficiaire
                     item.isBusiness = false;
                 }
 
-                // 🏺 2. VÉRIFICATION DES PARTICIPANTS (CONCEPTION VS DÉCOUVERTE)
-                if (!item.isBusiness) {
-                    const isConception = ws.title.toLowerCase().includes('conception');
+                // 🏺 2. VÉRIFICATION DES PARTICIPANTS (SÉCURITÉ DU CURSUS)
+                if (isReservation) {
+                    // On vérifie si la séance appartient au Cursus de Conception (Level > 0)
+                    const isConceptionCursus = ws.level > 0;
 
                     for (const p of item.participants) {
-                        if (isConception) {
-                            // Atelier Conception : Code client obligatoire
-                            if (!p.memberCode) return res.status(400).json({ error: "Code client obligatoire pour l'atelier Conception." });
+                        if (isConceptionCursus) {
+                            // Cursus Conception : Le Passeport (Code client) est impératif
+                            if (!p.memberCode) return res.status(400).json({ error: "Passeport obligatoire pour le Cursus de Conception." });
                             const guest = await prisma.user.findUnique({ where: { memberCode: p.memberCode.toUpperCase() } });
                             if (!guest) return res.status(400).json({ error: `Le code ${p.memberCode} est inconnu au Registre.` });
                         } else {
-                            // Atelier Découverte : Infos basiques obligatoires
+                            // Séance Découverte : Informations d'identité basiques
                             if (!p.firstName || !p.lastName || !p.email) {
-                                return res.status(400).json({ error: "Informations complètes requises pour l'atelier Découverte." });
+                                return res.status(400).json({ error: "Identité complète requise pour la séance Découverte." });
                             }
                         }
                     }
                 }
 
+                // Attribution du tarif selon le rang du membre
                 item.price = isInstitutional ? ws.priceInstitutional : ws.price;
                 item.name = ws.title;
                 item.description = ws.description;
                 item.image = ws.image;
 
             } else if (item.volumeId) {
-                // 🏺 3. LOGIQUE BOUTIQUE (-10% pour CSE et PRO)
+                // 🏺 3. LOGIQUE BOUTIQUE (Remise institutionnelle de 10%)
                 const vol = await prisma.productVolume.findUnique({
                     where: { id: item.volumeId },
                     include: { product: true }
                 });
-                if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Stock insuffisant." });
+                if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Disponibilité insuffisante au Registre." });
 
-                // Application de la remise boutique
                 const basePrice = vol.price;
                 item.price = isInstitutional ? basePrice * 0.9 : basePrice;
 
@@ -99,15 +109,15 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        // Pour les particuliers, on scelle les infos immédiatement
-                        participants: (!item.isBusiness) ? {
+                        // Scellage immédiat pour les réservations nominatives
+                        participants: (!item.isBusiness && item.participants) ? {
                             create: item.participants.map((p: any) => ({
                                 firstName: p.firstName,
                                 lastName: p.lastName,
                                 email: p.email,
-                                phone: p.phone || "",
+                                phone: p.phone || "", // Protection contre les valeurs nulles
                                 memberCode: p.memberCode?.toUpperCase(),
-                                isValidated: true // Prêt pour impression sans QR code
+                                isValidated: true
                             }))
                         } : undefined
                     }))
@@ -123,7 +133,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                     unit_amount: Math.round(item.price * 100),
                     product_data: {
                         name: item.name,
-                        description: isInstitutional ? `${item.description} (Tarif préférentiel)` : item.description,
+                        description: isInstitutional ? `${item.description} (Tarif préférentiel certifié)` : item.description,
                         images: item.image ? [item.image] : []
                     },
                 },
@@ -138,8 +148,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
-        console.error("❌ Erreur Checkout :", error.message);
-        res.status(500).json({ error: "Échec technique du registre de vente." });
+        console.error("❌ Erreur de scellage Checkout :", error.message);
+        res.status(500).json({ error: "Échec technique lors de la génération du dossier de vente." });
     }
 };
 

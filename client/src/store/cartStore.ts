@@ -66,7 +66,7 @@ export const useCartStore = create<CartState>()(
             clearCart: () => set({ items: [] }),
         }),
         {
-            name: 'atelier_cart', // 🏺 Garde la même clé que votre localStorage actuel
+            name: 'rhum-session-cart', // 🏺 Garde la même clé que votre localStorage actuel
         }
     )
 );
