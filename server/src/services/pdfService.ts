@@ -166,18 +166,20 @@ export const generateOrderPDF = async (order: any) => {
         }
     }
 
-    // --- 🏺 BLOC DE RETRAIT BOUTIQUE (Design Certifié) ---
+    // --- 🏺 BLOC DE RETRAIT BOUTIQUE (Priorité Institutionnelle Absolue) ---
     const bottles = order.items.filter((i: any) => i.volumeId);
 
     if (bottles.length > 0) {
         const bPage = pdfDoc.addPage([595.28, 842.89]);
         const { width, height } = bPage.getSize();
 
+        // Bordure Institutionnelle Or
         bPage.drawRectangle({
             x: 20, y: 20, width: width - 40, height: height - 40,
             borderColor: gold, borderWidth: 0.5
         });
 
+        // Entête et Logo
         bPage.drawText(`RÉFÉRENCE COMMANDE : ${order.reference}`, {
             x: 50, y: height - 50, size: 8, font: fontBold, color: black
         });
@@ -200,7 +202,14 @@ export const generateOrderPDF = async (order: any) => {
             y: height - 215, size: 24, font: fontBold, color: darkGreen
         });
 
-        const ownerName = `${order.user.firstName} ${order.user.lastName}`.toUpperCase();
+        /** * 🏺 RÉSOLUTION DÉFINITIVE DU BUG "CE" :
+         * On vérifie d'abord si un nom d'entreprise existe au Registre.
+         * Si oui, on affiche UNIQUEMENT le companyName pour court-circuiter le firstName ("CE").
+         */
+        const ownerName = order.user.companyName
+            ? order.user.companyName.toUpperCase()
+            : `${order.user.firstName} ${order.user.lastName}`.toUpperCase();
+
         bPage.drawText(ownerName, {
             x: (width - fontBold.widthOfTextAtSize(ownerName, 22)) / 2,
             y: height - 320, size: 22, font: fontBold, color: black
@@ -212,6 +221,7 @@ export const generateOrderPDF = async (order: any) => {
             y: height - 345, size: 10, font: fontRegular, color: rgb(0.4, 0.4, 0.4)
         });
 
+        // Liste des Produits Boutique
         let productY = height - 420;
         bPage.drawText("RÉFÉRENCES À RETIRER :", {
             x: 70, y: productY, size: 9, font: fontBold, color: gold
@@ -219,13 +229,17 @@ export const generateOrderPDF = async (order: any) => {
 
         productY -= 30;
         bottles.forEach((item: any) => {
-            const productLabel = `- ${item.volume?.product?.name || "Flacon"} (${item.volume?.size}${item.volume?.unit})`;
+            const productName = item.volume?.product?.name || "Flacon";
+            const productSize = item.volume ? ` (${item.volume.size}${item.volume.unit})` : "";
+            const productLabel = `- ${productName}${productSize}`;
             const qtyLabel = `x ${item.quantity}`;
+
             bPage.drawText(productLabel, { x: 70, y: productY, size: 11, font: fontBold });
             bPage.drawText(qtyLabel, { x: 450, y: productY, size: 11, font: fontBold, color: darkGreen });
             productY -= 25;
         });
 
+        // Bloc Protocole de Retrait
         const boxW = 440; const boxH = 50;
         bPage.drawRectangle({
             x: (width - boxW) / 2, y: 120, width: boxW, height: boxH,
