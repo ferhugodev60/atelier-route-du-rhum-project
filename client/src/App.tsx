@@ -42,7 +42,11 @@ function HomePage() {
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
             <section id="workshops">
                 <ScrollReveal>
-                    <Sections.Workshops onAddToCart={(ws: any, q: number) => addItem(null, ws, q)} />
+                    <Sections.Workshops
+                        onAddToCart={(ws: any, q: number) => {
+                            addItem(null, ws, q);
+                        }}
+                    />
                 </ScrollReveal>
             </section>
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>

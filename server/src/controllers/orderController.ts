@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
-import * as pdfService from '../services/pdfService';
+import * as pdfService from '../services/pdf';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string; };
@@ -16,6 +16,7 @@ type OrderWithRelations = Prisma.OrderGetPayload<{
 
 /**
  * 📜 EXTRACTION DU REGISTRE DES COMMANDES
+ * Résout le bug "undefined" en transmettant les métadonnées scellées.
  */
 export const getOrders = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
@@ -40,17 +41,28 @@ export const getOrders = async (req: AuthRequest, res: Response) => {
             status: order.status,
             user: order.user,
             isBusiness: order.isBusiness,
-            items: order.items.map(item => ({
-                id: item.id,
-                name: item.workshop ? `Séance : ${item.workshop.title}` : `${item.volume?.product.name} (${item.volume?.size}${item.volume?.unit})`,
-                quantity: item.quantity,
-                price: item.price,
-                groupName: item.companyGroup?.name || null,
-                participants: item.participants
-            }))
+            items: order.items.map(item => {
+                // 🏺 LOGIQUE DE NOMMAGE SCELLÉE : On utilise le nom stocké en base (qui contient le code RHUM-)
+                const displayName = item.name || (item.workshop
+                    ? `Séance : ${item.workshop.title}`
+                    : (item.volume ? `${item.volume.product.name} (${item.volume.size}${item.volume.unit})` : "Article technique"));
+
+                return {
+                    id: item.id,
+                    name: displayName,
+                    quantity: item.quantity,
+                    price: item.price,
+                    groupNames: item.groupNames,
+                    groupName: item.companyGroup?.name || null,
+                    workshop: item.workshop,
+                    volume: item.volume,
+                    participants: item.participants
+                };
+            })
         }));
         res.status(200).json(formattedOrders);
     } catch (error) {
+        console.error("❌ Erreur Registre Orders :", error);
         res.status(500).json({ error: "Erreur de lecture du registre." });
     }
 };
@@ -174,6 +186,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
  */
 export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
     const orderId = req.params.orderId as string;
+    console.log(`📡 [API_DOWNLOAD] Requête reçue pour OrderID : ${orderId}`);
 
     try {
         const order = await prisma.order.findUnique({
@@ -191,15 +204,26 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
             }
         }) as OrderWithRelations | null;
 
-        if (!order) return res.status(404).json({ error: "Dossier introuvable au Registre." });
+        if (!order) {
+            console.error(`📡 [API_DOWNLOAD] Commande ${orderId} introuvable.`);
+            return res.status(404).json({ error: "Dossier introuvable." });
+        }
 
+        console.log("📡 [API_DOWNLOAD] Lancement du service PDF...");
         const pdfBytes = await pdfService.generateOrderPDF(order);
+
+        if (!pdfBytes || pdfBytes.length === 0) {
+            console.error("📡 [API_DOWNLOAD] Le PDF retourné est VIDE !");
+            return res.status(500).json({ error: "Génération vide." });
+        }
 
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename=Justificatif_${order.reference}.pdf`);
+
+        console.log(`📡 [API_DOWNLOAD] Envoi du buffer (${pdfBytes.length} octets) au client.`);
         res.send(Buffer.from(pdfBytes));
-    } catch (error) {
-        console.error("❌ Incident de scellage PDF :", error);
+    } catch (error: any) {
+        console.error("❌ [API_DOWNLOAD_ERROR] :", error.message);
         res.status(500).json({ error: "Échec technique du registre PDF." });
     }
 };
@@ -209,7 +233,6 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
  */
 export const getOrderCountByLevel = async (req: AuthRequest, res: Response) => {
     const userId = req.user?.userId;
-    // 🏺 Correction TS2345 : Cast explicite en string pour le palier
     const level = req.params.level as string;
 
     if (!userId) return res.status(401).json({ error: "Identification requise." });

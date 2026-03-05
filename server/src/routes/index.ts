@@ -9,6 +9,7 @@ import checkoutRoutes from "./checkoutRoutes";
 import categoryRoutes from "./categoryRoutes";
 import workshopRoutes from "./workshopRoutes";
 import participantRoutes from "./participantRoutes";
+import giftRoutes from "./giftRoutes";
 
 const router = Router();
 
@@ -22,5 +23,6 @@ router.use('/users', userRoutes);
 router.use('/products', productRoutes);
 router.use('/categories', categoryRoutes);
 router.use("/workshops", workshopRoutes);
+router.use("/gift-cards", giftRoutes);
 
 export default router;

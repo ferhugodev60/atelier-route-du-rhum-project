@@ -43,13 +43,13 @@ export const useCartStore = create<CartState>()(
                 }
 
                 // 🏺 Création d'une nouvelle entrée certifiée
+                // 🏺 AJOUTEZ LES PROPRIÉTÉS MANQUANTES DANS newItem
                 const newItem: CartItem = {
                     cartId: uniqueId,
                     name: product
                         ? `${product.name} (${detail.size}${detail.unit})`
                         : (detail.name || detail.title),
 
-                    // 🏺 Scellage des prix (Final et Original pour affichage)
                     price: detail.price,
                     originalPrice: detail.originalPrice || detail.price,
                     isDiscounted: !!detail.isDiscounted,
@@ -57,15 +57,17 @@ export const useCartStore = create<CartState>()(
                     image: product?.image || detail.image,
                     quantity: qty,
 
-                    // 🏺 Distinction entre Session de Cursus et Flacon Boutique
+                    // 🏺 SCELLAGE DES TYPES (L'oubli était ici)
+                    type: detail.type,     // 🏺 INDISPENSABLE : Pour le titre cadeau
+                    amount: detail.amount, // 🏺 Valeur faciale
+                    isBusiness: !!detail.isBusiness,
+
                     workshopId: !product ? (detail.workshopId || detail.id) : undefined,
                     volumeId: product ? detail.id : undefined,
 
-                    // 🏺 Nomenclature de Cursus Conception [cite: 2026-02-12]
                     level: detail.level,
                     participants: detail.participants || []
                 };
-
                 return { items: [...state.items, newItem], isCartOpen: true };
             }),
 

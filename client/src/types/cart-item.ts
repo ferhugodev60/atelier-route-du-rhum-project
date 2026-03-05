@@ -1,17 +1,26 @@
+// src/types/cart-item.ts
+
 export interface CartItem {
     cartId: string;
+    id?: string; // 🏺 ID technique workshop ou produit
     name: string;
-    price: number; // 🏺 Prix final scellé (remisé si éligible)
-    image: string;
+    price: number;
+    image?: string;
     quantity: number;
+
+    // 🏺 SCELLAGE DU TITRE DE CURSUS
+    type?: string;   // "GIFT_CARD" ou null
+    amount?: number; // Valeur faciale du titre
+
     workshopId?: string;
     volumeId?: string;
+    level?: number;
 
-    // 🏺 Nomenclature institutionnelle [cite: 2026-02-12]
-    level?: number; // Niveau requis pour le Cursus Conception
+    // 🏺 ATTRIBUTS INSTITUTIONNELS
+    isBusiness?: boolean; // 🏺 AJOUT : Pour le scellage des contrats PRO / CE
 
     // 🏺 Données de tarification pour l'affichage
-    originalPrice?: number; // Prix public pour affichage barré dans le panier
+    originalPrice?: number; // Prix public pour affichage
     isDiscounted?: boolean; // Indicateur d'avantage membre -10%
 
     // 🏺 Typage complet des participants
@@ -20,6 +29,6 @@ export interface CartItem {
         lastName: string;
         phone: string;
         email?: string;
-        memberCode?: string; // Indispensable pour le scellage du Cursus Conception
+        memberCode?: string; // Indispensable pour le scellage du Cursus
     }[];
 }

@@ -1,161 +1,171 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
+import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
-import { sendOrderConfirmationEmail } from '../services/emailService';
+import { sendOrderConfirmationEmail, sendGiftCardEmail } from '../services/emailService';
+import { generateGiftCardPDF } from '../services/pdf';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 /**
  * 📜 PROTOCOLE DE SCELLAGE DE SESSION DE PAIEMENT
- * Gère l'hybridation des flux : Packs Institutionnels vs Réservations nominatives.
+ * Gère l'hybridation des flux et l'application des crédits (Cartes Cadeaux).
  */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
-    const { items } = req.body;
+    // 🏺 SCELLAGE : Récupération des articles ET du code de réduction éventuel
+    const { items, giftCardCode } = req.body;
 
-    if (!userId) return res.status(401).json({ error: "Identification requise. Accès au Registre refusé." });
+    if (!userId) return res.status(401).json({ error: "Identification requise au Registre." });
+
+    console.log("--------------------------------------------------");
+    console.log("🏺 [ENTRÉE] RÉCEPTION FLUX BRUT DU PANIER :");
+    console.dir({ items, giftCardCode }, { depth: null });
 
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
         if (!user) return res.status(404).json({ error: "Dossier utilisateur introuvable." });
 
-        // 🏺 Identification des membres éligibles (PRO ou Bénéficiaire CE)
         const isInstitutional = user.role === 'PRO' || user.isEmployee;
 
-        for (const item of items) {
-            if (item.workshopId) {
+        // 1. Traitement des articles et vérification des prix en base
+        const processedItems = await Promise.all(items.map(async (item: any, index: number) => {
+            let verifiedPrice = 0;
+            let itemName = item.name || "Article";
+            let itemDesc = "";
+            let itemImg = null;
+
+            const isGiftCardItem = item.type === 'GIFT_CARD' || (!item.workshopId && !item.volumeId && (item.amount > 0 || item.price > 0));
+
+            if (isGiftCardItem) {
+                const amount = parseFloat(item.amount || item.price);
+                if (isNaN(amount) || amount < 1) throw new Error("Le montant du Titre est invalide.");
+                verifiedPrice = amount;
+                itemName = "CARTE CADEAU ÉTABLISSEMENT";
+                itemDesc = `Titre au porteur - Crédit de ${amount}€ (Validité 12 mois).`;
+                item.type = 'GIFT_CARD';
+            }
+            else if (item.workshopId) {
                 const ws = await prisma.workshop.findUnique({ where: { id: item.workshopId } });
-                if (!ws) throw new Error("Séance technique introuvable.");
+                if (!ws) throw new Error(`Séance technique ${item.workshopId} introuvable.`);
+                verifiedPrice = isInstitutional ? ws.priceInstitutional : ws.price;
+                itemName = ws.title;
+                itemDesc = ws.description;
+                itemImg = ws.image;
+            }
+            else if (item.volumeId) {
+                const vol = await prisma.productVolume.findUnique({ where: { id: item.volumeId }, include: { product: true } });
+                if (!vol) throw new Error(`Référence boutique ${item.volumeId} introuvable.`);
+                verifiedPrice = isInstitutional ? vol.price * 0.9 : vol.price;
+                itemName = `${vol.product.name} (${vol.size}${vol.unit})`;
+                itemDesc = vol.product.description || "";
+                itemImg = vol.product.image;
+            }
 
-                // 1. DÉTERMINATION DU MODE : RÉSERVATION vs PACK
-                const isReservation = item.participants && item.participants.length > 0;
+            console.log(`🏺 [TRAITEMENT #${index}] Name: "${itemName}" | Price: ${verifiedPrice}`);
 
-                if (user.role === 'PRO' && !isReservation) {
-                    // 🏺 LOGIQUE DE QUOTAS PAR PALIER TECHNIQUE
-                    const workshopLevel = ws.level;
+            return {
+                ...item,
+                price: verifiedPrice,
+                name: itemName,
+                description: itemDesc,
+                image: itemImg,
+                quantity: Math.max(1, parseInt(item.quantity) || 1)
+            };
+        }));
 
-                    const previousOrdersForLevel = await prisma.order.count({
-                        where: {
-                            userId,
-                            status: 'PAYÉ',
-                            isBusiness: true,
-                            items: {
-                                some: { workshop: { level: workshopLevel } }
-                            }
-                        }
-                    });
+        const subTotal = processedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
-                    // Règle : 25 places pour la première fois, puis par 10
-                    if (previousOrdersForLevel === 0 && item.quantity !== 25) {
-                        return res.status(400).json({
-                            error: `La première acquisition pour le Niveau ${workshopLevel} doit être de 25 places exactement.`
-                        });
-                    }
-                    if (previousOrdersForLevel > 0 && item.quantity % 10 !== 0) {
-                        return res.status(400).json({
-                            error: `Les recharges pour le Niveau ${workshopLevel} se font par packs de 10 places.`
-                        });
-                    }
-                    item.isBusiness = true;
-                } else {
-                    item.isBusiness = false;
-                }
+        // 🏺 2. LOGIQUE DE RÉDUCTION (CARTE CADEAU)
+        let discountAmount = 0;
+        let giftCardIdUsed = null;
 
-                // 2. VÉRIFICATION DES PARTICIPANTS (SÉCURITÉ DU CURSUS)
-                if (isReservation) {
-                    const isConceptionCursus = ws.level > 0;
-                    for (const p of item.participants) {
-                        if (isConceptionCursus) {
-                            if (!p.memberCode) return res.status(400).json({ error: "Passeport obligatoire pour le Cursus de Conception." });
-                            const guest = await prisma.user.findUnique({ where: { memberCode: p.memberCode.toUpperCase() } });
-                            if (!guest) return res.status(400).json({ error: `Le code ${p.memberCode} est inconnu au Registre.` });
-                        } else if (!p.firstName || !p.lastName || !p.email) {
-                            return res.status(400).json({ error: "Identité complète requise pour la séance Découverte." });
-                        }
-                    }
-                }
+        if (giftCardCode) {
+            const giftCard = await prisma.giftCard.findUnique({ where: { code: giftCardCode } });
 
-                item.price = isInstitutional ? ws.priceInstitutional : ws.price;
-                item.name = ws.title;
-                item.description = ws.description;
-                item.image = ws.image;
-
-            } else if (item.volumeId) {
-                // 🏺 3. LOGIQUE BOUTIQUE : REMISE DE 10%
-                const vol = await prisma.productVolume.findUnique({
-                    where: { id: item.volumeId },
-                    include: { product: true }
-                });
-
-                if (!vol || vol.stock < item.quantity) return res.status(400).json({ error: "Disponibilité insuffisante." });
-
-                // Formule : $price = basePrice \times 0.9$
-                item.price = isInstitutional ? vol.price * 0.9 : vol.price;
-                item.name = `${vol.product.name} (${vol.size}${vol.unit})`;
-                item.description = vol.product.description;
-                item.image = vol.product.image;
-                item.isBusiness = false;
+            // Vérification de validité : active, solde > 0 et non expirée
+            if (giftCard && giftCard.status === 'ACTIF' && new Date(giftCard.expiresAt) > new Date()) {
+                discountAmount = Math.min(subTotal, giftCard.balance);
+                giftCardIdUsed = giftCard.id;
+                console.log(`🏺 [PROMO] Application du code ${giftCardCode} : -${discountAmount}€`);
             }
         }
 
-        const totalAmount = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
-        const isOrderBusiness = items.some((i: any) => i.isBusiness);
+        const finalTotal = subTotal - discountAmount;
 
-        // 4. CRÉATION DU DOSSIER DE VENTE
+        // Stripe refuse les paiements inférieurs à 0.50€
+        if (finalTotal > 0 && finalTotal < 0.5) {
+            throw new Error(`Le montant résiduel (${finalTotal}€) est inférieur au minimum autorisé.`);
+        }
+
+        const isOrderBusiness = processedItems.some(i => i.isBusiness);
+
+        // 3. Création de la commande avec le total RÉEL (déduit)
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
                 reference: isOrderBusiness ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
-                total: totalAmount,
+                total: finalTotal, // On scelle le montant net en base
                 status: 'EN_ATTENTE_PAIEMENT',
                 isBusiness: isOrderBusiness,
                 items: {
-                    create: items.map((item: any) => ({
+                    create: processedItems.map((item) => ({
+                        name: item.name,
                         quantity: item.quantity,
                         price: item.price,
                         workshopId: item.workshopId || null,
                         volumeId: item.volumeId || null,
-                        participants: (!item.isBusiness && item.participants) ? {
-                            create: item.participants.map((p: any) => ({
-                                firstName: p.firstName, lastName: p.lastName, email: p.email,
-                                phone: p.phone || "", memberCode: p.memberCode?.toUpperCase(), isValidated: true
-                            }))
-                        } : undefined
+                        groupNames: item.type === 'GIFT_CARD' ? 'GIFT_CARD' : null,
                     }))
                 }
             }
         });
 
+        // 🏺 4. ÉMISSION SESSION STRIPE AVEC PRIX AJUSTÉS
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: items.map((item: any) => ({
-                price_data: {
-                    currency: 'eur',
-                    unit_amount: Math.round(item.price * 100),
-                    product_data: {
-                        name: item.name,
-                        description: isInstitutional ? `${item.description} (Tarif préférentiel scellé)` : item.description,
-                        images: item.image ? [item.image] : []
+            line_items: processedItems.map((item) => {
+                // On applique la réduction proportionnellement sur chaque article pour Stripe
+                const itemTotal = item.price * item.quantity;
+                const ratio = subTotal > 0 ? itemTotal / subTotal : 0;
+                const itemDiscount = discountAmount * ratio;
+                const adjustedPrice = (itemTotal - itemDiscount) / item.quantity;
+
+                return {
+                    price_data: {
+                        currency: 'eur',
+                        unit_amount: Math.round(adjustedPrice * 100), // Conversion en centimes
+                        product_data: {
+                            name: item.name,
+                            description: discountAmount > 0 ? "Prix après déduction crédit" : (item.description || ""),
+                            images: (item.image && item.image.startsWith('http')) ? [item.image] : []
+                        },
                     },
-                },
-                quantity: item.quantity,
-            })),
+                    quantity: item.quantity,
+                };
+            }),
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true&orderId=${pendingOrder.id}`,
-            cancel_url: `${process.env.FRONTEND_URL}/boutique?payment_cancelled=true`,
+            cancel_url: `${process.env.FRONTEND_URL}/boutique`,
             customer_email: user.email,
-            metadata: { orderId: pendingOrder.id, userId: userId }
+            // 🏺 Métadonnées pour le Webhook
+            metadata: {
+                orderId: pendingOrder.id,
+                giftCardIdUsed: giftCardIdUsed,
+                discountApplied: discountAmount.toString()
+            }
         });
 
         res.status(200).json({ url: session.url });
+
     } catch (error: any) {
-        console.error("❌ Erreur Checkout :", error.message);
-        res.status(500).json({ error: "Échec technique du Registre." });
+        console.error("❌ [ERREUR FATALE REGISTRE] :", error.message);
+        res.status(500).json({ error: error.message || "Échec technique du Registre financier." });
     }
 };
 
 /**
- * 📜 WEBHOOK STRIPE : Confirmation et Scellage des Slots PRO
+ * 📜 WEBHOOK STRIPE : Confirmation et Débit du crédit
  */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
@@ -168,50 +178,78 @@ export const handleWebhook = async (req: Request, res: Response) => {
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
         const orderId = session.metadata?.orderId;
+        const giftCardIdUsed = session.metadata?.giftCardIdUsed;
+        const discountApplied = parseFloat(session.metadata?.discountApplied || "0");
 
         try {
             await prisma.$transaction(async (tx) => {
-                const updatedOrder = await tx.order.update({
+                // 🏺 1. DÉBIT DU SOLDE DE LA CARTE UTILISÉE
+                if (giftCardIdUsed && discountApplied > 0) {
+                    const card = await tx.giftCard.findUnique({ where: { id: giftCardIdUsed } });
+                    if (card) {
+                        const newBalance = Math.max(0, card.balance - discountApplied);
+                        await tx.giftCard.update({
+                            where: { id: giftCardIdUsed },
+                            data: {
+                                balance: newBalance,
+                                status: newBalance <= 0 ? 'ÉPUISÉ' : 'ACTIF'
+                            }
+                        });
+                        console.log(`🏺 [CREDIT] Débit de ${discountApplied}€ effectué sur la carte ${card.code}`);
+                    }
+                }
+
+                // 2. Mise à jour de la commande
+                const order = await tx.order.update({
                     where: { id: orderId },
                     data: { status: "PAYÉ" },
-                    include: { items: { include: { workshop: true, participants: true } } }
+                    include: { items: { include: { workshop: true, participants: true } }, user: true }
                 });
 
-                for (const item of updatedOrder.items) {
-                    if (item.volumeId) {
-                        await tx.productVolume.update({
-                            where: { id: item.volumeId }, data: { stock: { decrement: item.quantity } }
+                for (const item of order.items) {
+                    // Création de nouvelles Gift Cards si achetées
+                    if (item.groupNames === 'GIFT_CARD') {
+                        const expirationDate = new Date();
+                        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+
+                        const giftCard = await tx.giftCard.create({
+                            data: {
+                                code: `RHUM-${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
+                                amount: item.price, balance: item.price, expiresAt: expirationDate
+                            }
                         });
+
+                        await tx.orderItem.update({
+                            where: { id: item.id },
+                            data: { name: `CARTE CADEAU : ${giftCard.code}` }
+                        });
+
+                        const pdfUint8Array = await generateGiftCardPDF(giftCard);
+                        await sendGiftCardEmail(order.user.email, giftCard, Buffer.from(pdfUint8Array));
+                    }
+
+                    if (item.volumeId) {
+                        await tx.productVolume.update({ where: { id: item.volumeId }, data: { stock: { decrement: item.quantity } } });
                     }
 
                     if (item.workshop && item.participants.length === 0) {
                         let companyGroupId = null;
-                        if (updatedOrder.isBusiness) {
+                        if (order.isBusiness) {
                             const group = await tx.companyGroup.create({
-                                data: {
-                                    name: `Contrat ${updatedOrder.reference}`,
-                                    ownerId: updatedOrder.userId,
-                                    currentLevel: item.workshop.level,
-                                }
+                                data: { name: `Contrat ${order.reference}`, ownerId: order.userId, currentLevel: item.workshop.level }
                             });
                             companyGroupId = group.id;
                         }
-
-                        const participantsData = Array.from({ length: item.quantity }).map(() => ({
-                            orderItemId: item.id, companyGroupId, isValidated: false
-                        }));
-                        await tx.participant.createMany({ data: participantsData });
+                        const pData = Array.from({ length: item.quantity }).map(() => ({ orderItemId: item.id, companyGroupId, isValidated: false }));
+                        await tx.participant.createMany({ data: pData });
                     }
                 }
-
-                const finalOrder = await tx.order.findUnique({
-                    where: { id: orderId },
-                    include: { user: true, items: { include: { workshop: true, participants: true } } }
-                });
-
-                if (finalOrder?.user) await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
+                await sendOrderConfirmationEmail(order.user.email, order);
+                console.log(`✅ [WEBHOOK] Scellage terminé avec succès pour ${orderId}`);
             });
-        } catch (error: any) { console.error("❌ Incident Webhook :", error.message); }
+        } catch (error: any) {
+            console.error("❌ Incident Webhook :", error.message);
+        }
     }
     res.json({ received: true });
 };

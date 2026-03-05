@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import crypto from 'crypto';
 import { sendWelcomeAndSetupPasswordEmail } from '../services/emailService';
-import * as pdfService from '../services/pdfService';
+import * as pdfService from '../services/pdf';
 
 /**
  * 🏺 VALIDATION ET SCELLAGE TRANSVERSAL

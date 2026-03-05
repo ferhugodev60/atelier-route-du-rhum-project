@@ -113,11 +113,12 @@ model Order {
 }
 
 model OrderItem {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
+  name     String?
   quantity Int
   price    Float
   orderId  String
-  order    Order  @relation(fields: [orderId], references: [id])
+  order    Order   @relation(fields: [orderId], references: [id])
 
   participants Participant[]
 
@@ -151,4 +152,16 @@ model Participant {
 
   orderItemId String
   orderItem   OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+model GiftCard {
+  id      String @id @default(cuid())
+  code    String @unique // RHUM-XXXX
+  amount  Float // Montant initial
+  balance Float // Solde restant
+  status  String @default("ACTIF") // ACTIF, ÉPUISÉ, EXSPIRÉ
+
+  createdAt DateTime @default(now())
+  // 🏺 Date de caducité scellée à 12 mois
+  expiresAt DateTime
 }
