@@ -70,7 +70,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                     isBusiness: !!item.isBusiness,
                     participants: item.participants || []
                 })),
-                giftCode: appliedDiscount > 0 ? giftCode : null
+                giftCardCode: appliedDiscount > 0 ? giftCode : null
             };
 
             const response = await api.post('/checkout/create-session', payload);
