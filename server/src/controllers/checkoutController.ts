@@ -9,18 +9,13 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 /**
  * 📜 PROTOCOLE DE SCELLAGE DE SESSION DE PAIEMENT
- * Gère l'hybridation des flux et l'application des crédits (Cartes Cadeaux).
+ * Gère l'hybridation des flux et l'application des crédits (Titres de Cursus).
  */
 export const createCheckoutSession = async (req: any, res: Response) => {
     const userId = req.user?.userId;
-    // 🏺 SCELLAGE : Récupération des articles ET du code de réduction éventuel
     const { items, giftCardCode } = req.body;
 
     if (!userId) return res.status(401).json({ error: "Identification requise au Registre." });
-
-    console.log("--------------------------------------------------");
-    console.log("🏺 [ENTRÉE] RÉCEPTION FLUX BRUT DU PANIER :");
-    console.dir({ items, giftCardCode }, { depth: null });
 
     try {
         const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -28,8 +23,8 @@ export const createCheckoutSession = async (req: any, res: Response) => {
 
         const isInstitutional = user.role === 'PRO' || user.isEmployee;
 
-        // 1. Traitement des articles et vérification des prix en base
-        const processedItems = await Promise.all(items.map(async (item: any, index: number) => {
+        // 1. Traitement des articles et certification des prix en base
+        const processedItems = await Promise.all(items.map(async (item: any) => {
             let verifiedPrice = 0;
             let itemName = item.name || "Article";
             let itemDesc = "";
@@ -41,7 +36,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 const amount = parseFloat(item.amount || item.price);
                 if (isNaN(amount) || amount < 1) throw new Error("Le montant du Titre est invalide.");
                 verifiedPrice = amount;
-                itemName = "CARTE CADEAU ÉTABLISSEMENT";
+                itemName = "TITRE DE CURSUS"; // 🏺 Terme professionnel scellé
                 itemDesc = `Titre au porteur - Crédit de ${amount}€ (Validité 12 mois).`;
                 item.type = 'GIFT_CARD';
             }
@@ -62,8 +57,6 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 itemImg = vol.product.image;
             }
 
-            console.log(`🏺 [TRAITEMENT #${index}] Name: "${itemName}" | Price: ${verifiedPrice}`);
-
             return {
                 ...item,
                 price: verifiedPrice,
@@ -74,27 +67,24 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             };
         }));
 
+        // Sécurité Quota (Limite de 25 places pour les séances techniques)
         const workshopTotals: Record<string, number> = {};
         processedItems.forEach(item => {
-            if (item.workshopId) {
-                workshopTotals[item.workshopId] = (workshopTotals[item.workshopId] || 0) + item.quantity;
-            }
+            if (item.workshopId) workshopTotals[item.workshopId] = (workshopTotals[item.workshopId] || 0) + item.quantity;
         });
 
         if (isInstitutional) {
-            for (const [id, total] of Object.entries(workshopTotals)) {
-                if (total > 25) {
-                    console.error(`❌ [SÉCURITÉ] Tentative de cumul illégal : ${total} places pour workshop ${id}`);
-                    throw new Error("Le protocole institutionnel limite la réservation à 25 places par séance technique.");
-                }
+            for (const total of Object.values(workshopTotals)) {
+                if (total > 25) throw new Error("Le protocole institutionnel limite la réservation à 25 places par séance technique.");
             }
         }
 
         const subTotal = processedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
-        // 🏺 2. LOGIQUE DE RÉDUCTION (CARTE CADEAU)
+        // --- 🏺 2. LOGIQUE DE RÉDUCTION (CARTE CADEAU) ---
         let discountAmount = 0;
         let giftCardIdUsed = null;
+        let stripeCouponId: string | undefined = undefined;
 
         if (giftCardCode) {
             const giftCard = await prisma.giftCard.findUnique({ where: { code: giftCardCode } });
@@ -103,25 +93,29 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             if (giftCard && giftCard.status === 'ACTIF' && new Date(giftCard.expiresAt) > new Date()) {
                 discountAmount = Math.min(subTotal, giftCard.balance);
                 giftCardIdUsed = giftCard.id;
-                console.log(`🏺 [PROMO] Application du code ${giftCardCode} : -${discountAmount}€`);
+
+                // 🏺 CRÉATION DU COUPON VISUEL POUR STRIPE
+                const coupon = await stripe.coupons.create({
+                    amount_off: Math.round(discountAmount * 100), // Stripe utilise les centimes
+                    currency: 'eur',
+                    duration: 'once',
+                    name: `TITRE : ${giftCardCode}` // S'affichera dans le résumé Stripe à gauche
+                });
+                stripeCouponId = coupon.id;
             }
         }
 
         const finalTotal = subTotal - discountAmount;
-
-        // Stripe refuse les paiements inférieurs à 0.50€
-        if (finalTotal > 0 && finalTotal < 0.5) {
-            throw new Error(`Le montant résiduel (${finalTotal}€) est inférieur au minimum autorisé.`);
-        }
+        if (finalTotal > 0 && finalTotal < 0.5) throw new Error("Le montant résiduel est inférieur au minimum autorisé.");
 
         const isOrderBusiness = processedItems.some(i => i.isBusiness);
 
-        // 3. Création de la commande avec le total RÉEL (déduit)
+        // 3. Création de la commande en base (Total net scellé)
         const pendingOrder = await prisma.order.create({
             data: {
                 userId,
                 reference: isOrderBusiness ? `CORP-${Date.now()}` : `ORD-${Date.now()}`,
-                total: finalTotal, // On scelle le montant net en base
+                total: finalTotal,
                 status: 'EN_ATTENTE_PAIEMENT',
                 isBusiness: isOrderBusiness,
                 items: {
@@ -137,34 +131,27 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         });
 
-        // 🏺 4. ÉMISSION SESSION STRIPE AVEC PRIX AJUSTÉS
+        // --- 🏺 4. ÉMISSION SESSION STRIPE AVEC COUPON ---
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
-            line_items: processedItems.map((item) => {
-                // On applique la réduction proportionnellement sur chaque article pour Stripe
-                const itemTotal = item.price * item.quantity;
-                const ratio = subTotal > 0 ? itemTotal / subTotal : 0;
-                const itemDiscount = discountAmount * ratio;
-                const adjustedPrice = (itemTotal - itemDiscount) / item.quantity;
-
-                return {
-                    price_data: {
-                        currency: 'eur',
-                        unit_amount: Math.round(adjustedPrice * 100), // Conversion en centimes
-                        product_data: {
-                            name: item.name,
-                            description: discountAmount > 0 ? "Prix après déduction crédit" : (item.description || ""),
-                            images: (item.image && item.image.startsWith('http')) ? [item.image] : []
-                        },
+            line_items: processedItems.map((item) => ({
+                price_data: {
+                    currency: 'eur',
+                    unit_amount: Math.round(item.price * 100), // Prix plein unitaire
+                    product_data: {
+                        name: item.name,
+                        description: item.description || "",
+                        images: (item.image && item.image.startsWith('http')) ? [item.image] : []
                     },
-                    quantity: item.quantity,
-                };
-            }),
+                },
+                quantity: item.quantity,
+            })),
+            // On applique le coupon de réduction ici pour un affichage explicite
+            discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true&orderId=${pendingOrder.id}`,
             cancel_url: `${process.env.FRONTEND_URL}/boutique`,
             customer_email: user.email,
-            // 🏺 Métadonnées pour le Webhook
             metadata: {
                 orderId: pendingOrder.id,
                 giftCardIdUsed: giftCardIdUsed,
@@ -173,23 +160,27 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         });
 
         res.status(200).json({ url: session.url });
-
     } catch (error: any) {
-        console.error("❌ [ERREUR FATALE REGISTRE] :", error.message);
         res.status(500).json({ error: error.message || "Échec technique du Registre financier." });
     }
 };
 
 /**
- * 📜 WEBHOOK STRIPE : Confirmation et Débit du crédit
+ * 📜 WEBHOOK STRIPE : Confirmation et Scellage des Droits
  */
 export const handleWebhook = async (req: Request, res: Response) => {
     const sig = req.headers['stripe-signature'] as string;
     let event: Stripe.Event;
 
+    console.log("🏺 [DEBUG_START] --- RÉCEPTION WEBHOOK STRIPE ---");
+
     try {
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET as string);
-    } catch (err: any) { return res.status(400).send(`Webhook Error: ${err.message}`); }
+        console.log(`✅ [DEBUG_SIGNATURE] Signature Stripe certifiée : ${event.type}`);
+    } catch (err: any) {
+        console.error(`❌ [DEBUG_FATAL] Signature Stripe invalide : ${err.message}`);
+        return res.status(400).send(`Webhook Error: ${err.message}`);
+    }
 
     if (event.type === 'checkout.session.completed') {
         const session = event.data.object as Stripe.Checkout.Session;
@@ -197,75 +188,139 @@ export const handleWebhook = async (req: Request, res: Response) => {
         const giftCardIdUsed = session.metadata?.giftCardIdUsed;
         const discountApplied = parseFloat(session.metadata?.discountApplied || "0");
 
+        console.log(`🏺 [DEBUG_DATA] Session validée. ID Dossier : ${orderId}`);
+
+        if (!orderId) {
+            console.error("❌ [DEBUG_ERROR] Pas de 'orderId' dans les métadonnées Stripe !");
+            return res.status(400).json({ error: "Missing orderId" });
+        }
+
         try {
+            console.log("🏺 [DEBUG_DB] Ouverture de la transaction Prisma...");
+
             await prisma.$transaction(async (tx) => {
-                // 🏺 1. DÉBIT DU SOLDE DE LA CARTE UTILISÉE
+
+                // 1. DÉBIT DU CRÉDIT (Si applicable)
                 if (giftCardIdUsed && discountApplied > 0) {
                     const card = await tx.giftCard.findUnique({ where: { id: giftCardIdUsed } });
                     if (card) {
                         const newBalance = Math.max(0, card.balance - discountApplied);
                         await tx.giftCard.update({
                             where: { id: giftCardIdUsed },
-                            data: {
-                                balance: newBalance,
-                                status: newBalance <= 0 ? 'ÉPUISÉ' : 'ACTIF'
-                            }
+                            data: { balance: newBalance, status: newBalance <= 0 ? 'ÉPUISÉ' : 'ACTIF' }
                         });
-                        console.log(`🏺 [CREDIT] Débit de ${discountApplied}€ effectué sur la carte ${card.code}`);
+                        console.log(`   ✅ [DB_CREDIT] Solde mis à jour : ${newBalance}€`);
                     }
                 }
 
-                // 2. Mise à jour de la commande
+                // 2. MISE À JOUR DU STATUT DU DOSSIER
+                console.log(`   ➡️ [DB_STEP_1] Passage du dossier ${orderId} au statut PAYÉ...`);
                 const order = await tx.order.update({
                     where: { id: orderId },
                     data: { status: "PAYÉ" },
-                    include: { items: { include: { workshop: true, participants: true } }, user: true }
+                    include: { items: { include: { workshop: true } }, user: true }
                 });
+                console.log(`   ✅ [DB_SUCCESS] Statut scellé pour ${order.reference}`);
 
+                // 3. TRAITEMENT DES ARTICLES
                 for (const item of order.items) {
-                    // Création de nouvelles Gift Cards si achetées
+                    console.log(`      🔎 [ITEM_CHECK] Article: "${item.name}" (Qty: ${item.quantity})`);
+
+                    // --- 🏺 CAS A : TITRE DE CURSUS (Génération du Code) ---
                     if (item.groupNames === 'GIFT_CARD') {
-                        const expirationDate = new Date();
-                        expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+                        console.log("      🚀 [ACTION] Génération d'un Titre de Cursus...");
 
                         const giftCard = await tx.giftCard.create({
                             data: {
                                 code: `RHUM-${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
-                                amount: item.price, balance: item.price, expiresAt: expirationDate
+                                amount: item.price,
+                                balance: item.price,
+                                expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1))
                             }
                         });
 
+                        // 🏺 SCELLAGE DU NOM : On injecte le code RHUM- dans le nom de l'article en base
                         await tx.orderItem.update({
                             where: { id: item.id },
-                            data: { name: `CARTE CADEAU : ${giftCard.code}` }
+                            data: { name: `TITRE DE CURSUS : ${giftCard.code}` }
                         });
 
-                        const pdfUint8Array = await generateGiftCardPDF(giftCard);
-                        await sendGiftCardEmail(order.user.email, giftCard, Buffer.from(pdfUint8Array));
+                        console.log(`      ✅ [DB_SUCCESS] Code généré et scellé : ${giftCard.code}`);
+
+                        // Envoi immédiat du titre solo par email
+                        const pdfBytes = await generateGiftCardPDF(giftCard);
+                        await sendGiftCardEmail(order.user.email, giftCard, Buffer.from(pdfBytes));
                     }
 
-                    if (item.volumeId) {
-                        await tx.productVolume.update({ where: { id: item.volumeId }, data: { stock: { decrement: item.quantity } } });
-                    }
+                    // --- 🏺 CAS B : SÉANCE TECHNIQUE (Participants) ---
+                    if (item.workshopId) {
+                        console.log(`      🚀 [ACTION] Séance technique détectée. Création de ${item.quantity} participants...`);
 
-                    if (item.workshop && item.participants.length === 0) {
                         let companyGroupId = null;
                         if (order.isBusiness) {
                             const group = await tx.companyGroup.create({
-                                data: { name: `Contrat ${order.reference}`, ownerId: order.userId, currentLevel: item.workshop.level }
+                                data: {
+                                    name: `Contrat ${order.reference}`,
+                                    ownerId: order.userId,
+                                    currentLevel: item.workshop?.level || 0
+                                }
                             });
                             companyGroupId = group.id;
+                            console.log(`      ✅ [DB_SUCCESS] Groupe institutionnel créé : ${group.id}`);
                         }
-                        const pData = Array.from({ length: item.quantity }).map(() => ({ orderItemId: item.id, companyGroupId, isValidated: false }));
+
+                        const pData = Array.from({ length: item.quantity }).map(() => ({
+                            orderItemId: item.id,
+                            companyGroupId,
+                            isValidated: false
+                        }));
+
                         await tx.participant.createMany({ data: pData });
+                        console.log(`      ✅ [DB_SUCCESS] ${pData.length} participants inscrits.`);
+                    }
+
+                    // --- 🏺 CAS C : STOCKS BOUTIQUE ---
+                    if (item.volumeId) {
+                        await tx.productVolume.update({
+                            where: { id: item.volumeId },
+                            data: { stock: { decrement: item.quantity } }
+                        });
+                        console.log("      ✅ [DB_SUCCESS] Stock boutique décrémenté.");
                     }
                 }
-                await sendOrderConfirmationEmail(order.user.email, order);
-                console.log(`✅ [WEBHOOK] Scellage terminé avec succès pour ${orderId}`);
             });
+
+            console.log("🏺 [DEBUG_COMMIT] Transaction Prisma validée (COMMIT).");
+
+            // --- 🏺 PHASE B : ÉMISSION DU DOSSIER GLOBAL (Hors transaction) ---
+            console.log("🏺 [DEBUG_PDF] Rechargement du dossier final pour émission PDF...");
+            const finalOrder = await prisma.order.findUnique({
+                where: { id: orderId },
+                include: {
+                    user: true,
+                    items: {
+                        include: {
+                            workshop: true,
+                            participants: true,
+                            volume: { include: { product: true } }
+                        }
+                    }
+                }
+            });
+
+            if (finalOrder) {
+                // Ici, finalOrder.items[x].name contiendra désormais "TITRE DE CURSUS : RHUM-XXXX"
+                console.log(`🏺 [DEBUG_SEND] Lancement du moteur d'email global pour ${finalOrder.user.email}`);
+                await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
+                console.log("✅ [FINAL] Dossier global expédié.");
+            }
+
         } catch (error: any) {
-            console.error("❌ Incident Webhook :", error.message);
+            console.error("❌ [DEBUG_ROLLBACK] Échec critique détecté !");
+            console.error("❌ [ERREUR_DÉTAILLÉE] :", error.message);
         }
     }
+
+    console.log("🏺 [DEBUG_END] --- FIN DU PROTOCOLE ---");
     res.json({ received: true });
 };

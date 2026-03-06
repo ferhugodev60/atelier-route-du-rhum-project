@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
 import * as pdfService from '../services/pdf';
+import * as crypto from 'node:crypto';
 
 interface AuthRequest extends Request {
     user?: { userId: string; role: string; };
@@ -132,21 +133,56 @@ export const updateParticipantStatus = async (req: AuthRequest, res: Response) =
 /**
  * 📜 MISE À JOUR DU STATUT ET SCELLAGE DES PLACES
  */
+/**
+ * 📜 MISE À JOUR DU STATUT ET SCELLAGE DES DROITS
+ * Synchronise la validation manuelle avec la logique métier des Titres et Participants.
+ */
 export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     const id = req.params.id as string;
     const { status } = req.body;
 
     try {
+        // 🏺 1. Mise à jour du statut dans le Registre
         const updatedOrder = await prisma.order.update({
             where: { id },
             data: { status },
-            include: { items: { include: { workshop: true, participants: true } }, user: true }
+            include: {
+                items: { include: { workshop: true, participants: true } },
+                user: true
+            }
         });
 
+        // 🏺 2. Déclenchement de la logique métier si le paiement est confirmé
         if (status === 'PAYÉ' || status === 'FINALISÉ') {
             for (const item of updatedOrder.items) {
+
+                // --- A. SCELLAGE DES TITRES DE CURSUS (Cartes Cadeaux) ---
+                if (item.groupNames === 'GIFT_CARD') {
+                    const giftCard = await prisma.giftCard.create({
+                        data: {
+                            code: `RHUM-${crypto.randomBytes(4).toString('hex').toUpperCase()}`,
+                            amount: item.price,
+                            balance: item.price,
+                            expiresAt: new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+                            userId: updatedOrder.userId // 🏺 On lie enfin l'utilisateur !
+                        }
+                    });
+
+                    // 🏺 CRITIQUE : On met à jour le nom de l'article AVEC le code
+                    await prisma.orderItem.update({
+                        where: { id: item.id },
+                        data: { name: `TITRE DE CURSUS : ${giftCard.code}` }
+                    });
+
+                    // On synchronise l'objet en mémoire pour le PDF immédiat
+                    item.name = `TITRE DE CURSUS : ${giftCard.code}`;
+                }
+
+                // --- B. SCELLAGE DES SÉANCES TECHNIQUES (Participants) ---
                 if (item.workshop && item.participants.length === 0) {
                     let companyGroupId = null;
+
+                    // Création du groupe institutionnel si commande "Entreprise"
                     if (updatedOrder.isBusiness) {
                         const group = await prisma.companyGroup.create({
                             data: {
@@ -158,6 +194,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
                         companyGroupId = group.id;
                     }
 
+                    // Insertion massive des places stagiaires
                     const participantsData = Array.from({ length: item.quantity }).map(() => ({
                         orderItemId: item.id,
                         companyGroupId: companyGroupId,
@@ -167,6 +204,7 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
                     await prisma.participant.createMany({ data: participantsData });
                 }
 
+                // --- C. MISE À JOUR DU PALIER TECHNIQUE (Individuel) ---
                 if (!updatedOrder.isBusiness && item.workshop && item.workshop.level > updatedOrder.user.conceptionLevel) {
                     await prisma.user.update({
                         where: { id: updatedOrder.userId },
@@ -175,8 +213,10 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
                 }
             }
         }
+
         res.json(updatedOrder);
     } catch (error) {
+        console.error("❌ [REGISTRE_ERROR] Échec de la régularisation manuelle :", error);
         res.status(400).json({ error: "Échec de mise à jour du registre." });
     }
 };

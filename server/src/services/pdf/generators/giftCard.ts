@@ -1,15 +1,26 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import path from 'path';
-import fs from 'fs';
+import { rgb } from 'pdf-lib';
 import { COLORS, PAGE_SIZE } from '../constants';
 import { drawBaseFrame, getSharedAssets } from '../baseLayout';
+import { prisma } from '../../../lib/prisma'; // 🏺 Import indispensable pour le scellage de secours
+import { PDFDocument } from 'pdf-lib';
 
 /**
  * 🏺 RENDU D'UNE PAGE CARTE CADEAU (Registre Global)
- * Utilisé par generateOrderPDF pour imprimer le titre avec son code scellé.
+ * Procédure asynchrone pour garantir l'extraction du code RHUM-.
  */
-export const renderGiftCardPageContent = (page: any, item: any, orderRef: string, logoImage: any, fontBold: any, fontRegular: any) => {
+export const renderGiftCardPageContent = async (
+    page: any,
+    item: any,
+    orderRef: string,
+    logoImage: any,
+    fontBold: any,
+    fontRegular: any
+) => {
     const { width, height } = page.getSize();
+
+    console.log(`🏺 [PDF_EXTRACT] --- DÉBUT EXTRACTION CODE ---`);
+    console.log(`🏺 [PDF_EXTRACT] OrderRef (Fallback) : ${orderRef}`);
+    console.log(`🏺 [PDF_EXTRACT] Item Name reçu : "${item.name}"`);
 
     // 1. Sceau de base (Bordure et Logo)
     drawBaseFrame(page, orderRef, logoImage, fontBold);
@@ -34,11 +45,34 @@ export const renderGiftCardPageContent = (page: any, item: any, orderRef: string
         y: height - 380, size: 60, font: fontBold, color: rgb(0, 0, 0)
     });
 
-    // 🏺 4. IMPRESSION DU CODE DE RÉSERVATION (Le Scellage)
-    // On extrait le code "RHUM-XXXX" du nom "CARTE CADEAU : RHUM-XXXX" stocké en base
-    const extractedCode = (item.name && item.name.includes(':'))
-        ? item.name.split(':')[1].trim().toUpperCase()
-        : orderRef; // Fallback sur la référence commande si le scellage n'est pas encore fait
+    // 🏺 4. IMPRESSION DU CODE DE RÉSERVATION (Le Scellage Invincible)
+    let extractedCode = orderRef;
+
+    // Tentative 1 : Extraction via le nom (Regex)
+    const match = item.name?.match(/RHUM-[A-Z0-9]+/);
+
+    if (match) {
+        extractedCode = match[0];
+        console.log(`✅ [PDF_EXTRACT] Code identifié via Regex : ${extractedCode}`);
+    }
+    // Tentative 2 : Recherche directe en base de données (Sécurité ultime)
+    else {
+        console.log(`⚠️ [PDF_EXTRACT] Aucun code dans le nom. Interrogation du Registre GiftCard...`);
+        const dbCard = await prisma.giftCard.findFirst({
+            where: {
+                amount: item.price,
+                status: 'ACTIF'
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+
+        if (dbCard) {
+            extractedCode = dbCard.code;
+            console.log(`✅ [PDF_EXTRACT] Code récupéré en base : ${extractedCode}`);
+        } else {
+            console.warn(`⚠️ [PDF_EXTRACT] Échec total de détection. Usage du numéro de dossier.`);
+        }
+    }
 
     const codeLabel = "VOTRE CODE DE CARTE CADEAU :";
     page.drawText(codeLabel, {
@@ -92,10 +126,14 @@ export const generateGiftCardPDF = async (giftCard: any) => {
         const page = pdfDoc.addPage(PAGE_SIZE);
         const { fontBold, fontRegular, logoImage } = await getSharedAssets(pdfDoc);
 
-        // On utilise la fonction de rendu unifiée pour garantir que le code s'imprime
-        renderGiftCardPageContent(
+        // On utilise la fonction de rendu unifiée avec 'await'
+        await renderGiftCardPageContent(
             page,
-            { price: giftCard.amount, name: `CODE : ${giftCard.code}`, createdAt: giftCard.createdAt },
+            {
+                price: giftCard.amount,
+                name: `TITRE DE CURSUS : ${giftCard.code}`,
+                createdAt: giftCard.createdAt
+            },
             giftCard.code,
             logoImage,
             fontBold,

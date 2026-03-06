@@ -30,7 +30,7 @@ export const generateOrderPDF = async (order: any) => {
         else if (item.groupNames === 'GIFT_CARD') {
             console.log(`   ➡️ GIFT_CARD détectée. Création d'une page...`);
             const page = pdfDoc.addPage(PAGE_SIZE);
-            renderGiftCardPageContent(page, item, order.reference, logoImage, fontBold, fontRegular);
+            await renderGiftCardPageContent(page, item, order.reference, logoImage, fontBold, fontRegular);
         }
     }
 
