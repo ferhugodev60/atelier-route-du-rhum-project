@@ -74,6 +74,22 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             };
         }));
 
+        const workshopTotals: Record<string, number> = {};
+        processedItems.forEach(item => {
+            if (item.workshopId) {
+                workshopTotals[item.workshopId] = (workshopTotals[item.workshopId] || 0) + item.quantity;
+            }
+        });
+
+        if (isInstitutional) {
+            for (const [id, total] of Object.entries(workshopTotals)) {
+                if (total > 25) {
+                    console.error(`❌ [SÉCURITÉ] Tentative de cumul illégal : ${total} places pour workshop ${id}`);
+                    throw new Error("Le protocole institutionnel limite la réservation à 25 places par séance technique.");
+                }
+            }
+        }
+
         const subTotal = processedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
 
         // 🏺 2. LOGIQUE DE RÉDUCTION (CARTE CADEAU)
