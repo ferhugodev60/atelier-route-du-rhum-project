@@ -16,6 +16,7 @@ import AdminWorkshops from "./pages/admin/AdminWorkshops.tsx";
 import AdminCustomers from "./pages/admin/AdminCustomers.tsx";
 import AdminOrders from "./pages/admin/AdminOrders.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import AdminGiftCards from "./pages/admin/AdminGiftCards.tsx";
 
 // --- Imports (Lazy Loading) ---
 const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx')); // 🏺 Nouveau : Scellage du secret personnel
@@ -99,6 +100,7 @@ export default function App() {
                             <Route path="ateliers" element={<AdminWorkshops />} />
                             <Route path="customers" element={<AdminCustomers />} />
                             <Route path="orders" element={<AdminOrders />} />
+                            <Route path="gift-cards" element={<AdminGiftCards />} />
                         </Route>
                         <Route path="*" element={<NotFound />} />
                     </Routes>

@@ -35,6 +35,8 @@ model User {
 
   resetToken        String?
   resetTokenExpires DateTime?
+
+  giftCards GiftCard[]
 }
 
 model Category {
@@ -164,4 +166,6 @@ model GiftCard {
   createdAt DateTime @default(now())
   // 🏺 Date de caducité scellée à 12 mois
   expiresAt DateTime
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    String?
 }

@@ -7,7 +7,7 @@ import {
     Tag,
     Users,
     ClipboardList,
-    Home,
+    Home, Gift,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import Logo from '../../assets/logo/logo.png';
@@ -21,7 +21,8 @@ export default function Sidebar() {
         { name: 'Collections', path: '/admin/categories', icon: Tag },
         { name: 'Ateliers', path: '/admin/ateliers', icon: GraduationCap },
         { name: 'Commandes', path: '/admin/orders', icon: ClipboardList },
-        { name: 'Clientèle', path: '/admin/customers', icon: Users }
+        { name: 'Clientèle', path: '/admin/customers', icon: Users },
+        { name: 'Carte cadeaux', path: '/admin/gift-cards', icon: Gift }
     ];
 
     return (
