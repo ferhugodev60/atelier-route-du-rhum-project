@@ -11,7 +11,7 @@ export default function Testimonials() {
                         Avis Clients
                     </h2>
                     <h3 className="text-2xl md:text-5xl font-serif">
-                        Ils ont goûté à la magie du Druide
+                        Ils ont goûté à la magie de l'Atelier
                     </h3>
                 </header>
 

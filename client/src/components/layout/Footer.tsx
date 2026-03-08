@@ -21,8 +21,8 @@ export default function Footer() {
                         <h3 className="font-serif text-xl md:text-2xl text-rhum-gold uppercase tracking-wider">
                             L'Atelier de la Route du Rhum
                         </h3>
-                        <p className="text-xs md:text-sm leading-relaxed opacity-80 font-sans italic max-w-sm mx-auto md:mx-0">
-                            Votre cave spécialisée et espace de création de rhum arrangé au cœur du centre historique de Compiègne.
+                        <p className="text-xs md:text-sm leading-relaxed opacity-80 font-sans max-w-sm mx-auto md:mx-0">
+                            Votre Atelier spécialisé et espace de création de rhum arrangé au cœur du centre de Compiègne.
                         </p>
 
                         {/* RÉSEAUX SOCIAUX */}
@@ -57,7 +57,7 @@ export default function Footer() {
                         <address className="not-italic text-xs md:text-sm opacity-80 space-y-2 font-sans">
                             <p>12 rue des Cordeliers</p>
                             <p>60200 Compiègne</p>
-                            <p className="pt-2 font-bold text-rhum-gold/80 italic tracking-widest uppercase text-[10px]">
+                            <p className="pt-2 font-bold text-rhum-gold/80 tracking-widest uppercase text-[10px]">
                                 Fabrication Artisanale Française
                             </p>
                         </address>

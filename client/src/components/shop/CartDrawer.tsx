@@ -1,9 +1,8 @@
 import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance.ts';
-import { Trash2, Users, ShieldCheck, Gift, Ticket } from 'lucide-react';
-import { useAuthStore } from '../../store/authStore';
-import { CartItem } from '../../types/cart-item'; // 🏺 L'IMPORT UNIQUE ICI
+import { Trash2, Users, Gift, Ticket } from 'lucide-react';
+import { CartItem } from '../../types/cart-item';
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -13,7 +12,6 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDrawerProps) {
-    const { user } = useAuthStore();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderError, setOrderError] = useState<string | null>(null);
     const [hasAcceptedTerms, setHasAcceptedTerms] = useState(false);
@@ -22,8 +20,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
     const [appliedDiscount, setAppliedDiscount] = useState(0);
     const [isValidatingCode, setIsValidatingCode] = useState(false);
     const [codeMessage, setCodeMessage] = useState<{ text: string, type: 'success' | 'error' } | null>(null);
-
-    const isInstitutional = user?.isEmployee || user?.role === 'PRO';
 
     const subTotal = useMemo(() => {
         return items.reduce((sum, item) => {
@@ -44,7 +40,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
         try {
             const { data } = await api.post('/gift-cards/validate', { code: giftCode });
             setAppliedDiscount(data.balance);
-            setCodeMessage({ text: `Titre certifié : -${data.balance}€ appliqués.`, type: 'success' });
+            setCodeMessage({ text: `Carte cadeau certifiée : -${data.balance}€ appliqués.`, type: 'success' });
         } catch (error: any) {
             const msg = error.response?.data?.error || "Code inconnu ou caduc.";
             setCodeMessage({ text: msg, type: 'error' });
@@ -95,21 +91,15 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
                         <div className="p-8 border-b border-rhum-gold/10 flex justify-between items-center bg-black/20">
                             <div>
-                                <h2 className="text-xl font-serif text-white tracking-widest uppercase">Registre d'Achat</h2>
-                                {isInstitutional && (
-                                    <div className="flex items-center gap-2 mt-1">
-                                        <ShieldCheck size={10} className="text-rhum-gold" />
-                                        <p className="text-[8px] text-rhum-gold uppercase tracking-[0.3em] font-black italic">Avantages Institutionnels Actifs</p>
-                                    </div>
-                                )}
+                                <h2 className="text-xl font-serif text-white tracking-widest uppercase">Votre panier</h2>
                             </div>
-                            <button onClick={onClose} className="text-rhum-gold hover:text-white transition-colors uppercase text-[10px] tracking-widest font-black">Fermer ×</button>
+                            <button onClick={onClose} className="text-rhum-gold hover:text-white transition-colors uppercase text-[10px] tracking-widest font-black">Fermer</button>
                         </div>
 
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center opacity-20">
-                                    <p className="text-rhum-cream italic font-serif text-lg">Le registre est vide.</p>
+                                    <p className="text-rhum-cream font-serif text-lg">Votre panier est vide.</p>
                                 </div>
                             ) : (
                                 items.map((item) => (
@@ -118,7 +108,6 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                             {item.type === 'GIFT_CARD' ? (
                                                 <div className="flex flex-col items-center gap-2">
                                                     <Gift size={24} className="text-rhum-gold opacity-50" />
-                                                    <span className="text-[8px] text-rhum-gold font-black uppercase">Titre</span>
                                                 </div>
                                             ) : (
                                                 <img src={item.image} alt={item.name} className="w-full h-full object-cover opacity-60" />
@@ -127,8 +116,8 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         <div className="flex-1 flex flex-col justify-between py-1">
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
-                                                    <span className="text-[7px] uppercase tracking-[0.4em] text-rhum-gold/60 mb-1 block font-black italic">
-                                                        {item.type === 'GIFT_CARD' ? 'Générosité' : (item.isBusiness ? 'Contrat Pro' : 'Sélection Individuelle')}
+                                                    <span className="text-[7px] uppercase tracking-[0.4em] text-rhum-gold/60 mb-1 block font-black">
+                                                        {item.type === 'GIFT_CARD' ? 'Carte cadeau' : (item.isBusiness ? 'Offre entreprise' : 'Sélection Individuelle')}
                                                     </span>
                                                     <h4 className="text-white font-serif text-lg leading-tight uppercase tracking-tighter">{item.name}</h4>
                                                 </div>
@@ -136,9 +125,9 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                                     <Trash2 size={14} />
                                                 </button>
                                             </div>
-                                            <p className="text-rhum-gold/60 text-[9px] uppercase tracking-[0.2em] mt-2 font-bold italic flex items-center gap-2">
+                                            <p className="text-rhum-gold/60 text-[9px] uppercase tracking-[0.2em] mt-2 font-bold flex items-center gap-2">
                                                 {item.type === 'GIFT_CARD' ? <Ticket size={10}/> : <Users size={12} className="opacity-40" />}
-                                                {item.type === 'GIFT_CARD' ? `Valeur : ${item.price}€` : `${item.quantity} ${item.workshopId ? 'Places' : 'Unités'}`}
+                                                {item.type === 'GIFT_CARD' ? `Valeur : ${item.price}€` : `${item.quantity} ${item.workshopId ? 'Place(s)' : 'Unité(s)'}`}
                                             </p>
                                         </div>
                                     </div>
@@ -149,13 +138,13 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                         {items.length > 0 && (
                             <div className="p-8 border-t border-rhum-gold/10 bg-black/40 space-y-6">
                                 <div className="space-y-3">
-                                    <p className="text-[8px] text-white/40 uppercase tracking-[0.3em] font-black">Utiliser un Titre de Cursus</p>
+                                    <p className="text-[8px] text-white/40 uppercase tracking-[0.3em] font-black">Utiliser une carte cadeau</p>
                                     <div className="flex gap-2">
                                         <input
                                             type="text"
                                             value={giftCode}
                                             onChange={(e) => setGiftCode(e.target.value.toUpperCase())}
-                                            placeholder="CODE RHUM-XXXX"
+                                            placeholder="Votre code"
                                             className="flex-1 bg-white/5 border border-white/10 text-white px-4 py-3 text-[10px] tracking-widest font-black uppercase outline-none focus:border-rhum-gold transition-all"
                                         />
                                         <button onClick={handleApplyCode} disabled={isValidatingCode || !giftCode} className="px-6 bg-white/10 text-rhum-gold text-[9px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">
@@ -163,7 +152,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         </button>
                                     </div>
                                     {codeMessage && (
-                                        <p className={`text-[8px] uppercase font-black tracking-widest italic ${codeMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
+                                        <p className={`text-[8px] uppercase font-black tracking-widest ${codeMessage.type === 'success' ? 'text-green-500' : 'text-red-500'}`}>
                                             {codeMessage.text}
                                         </p>
                                     )}
@@ -176,12 +165,12 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                     </div>
                                     {appliedDiscount > 0 && (
                                         <div className="flex justify-between items-baseline text-green-500">
-                                            <span className="text-[9px] uppercase tracking-[0.4em]">Déduction Titre</span>
+                                            <span className="text-[9px] uppercase tracking-[0.4em]">Déduction Carte cadeau</span>
                                             <span className="text-lg font-serif">-{appliedDiscount.toLocaleString()} €</span>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-baseline">
-                                        <span className="text-rhum-gold text-[10px] uppercase tracking-[0.5em] font-black">Investissement Final</span>
+                                        <span className="text-rhum-gold text-[10px] uppercase tracking-[0.5em] font-black">Total</span>
                                         <span className="text-3xl font-serif text-rhum-gold">{finalTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</span>
                                     </div>
                                 </div>
@@ -197,7 +186,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         <div className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-all ${hasAcceptedTerms ? 'bg-rhum-gold border-rhum-gold' : 'border-white/20 bg-white/5'}`}>
                                             {hasAcceptedTerms && <span className="text-[10px] text-rhum-green font-black">✓</span>}
                                         </div>
-                                        <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-black italic group-hover:text-white/60 transition-colors">J'accepte les conditions du Registre</label>
+                                        <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-black group-hover:text-white/60 transition-colors">J'accepte les conditions générales de vente</label>
                                     </div>
 
                                     <button

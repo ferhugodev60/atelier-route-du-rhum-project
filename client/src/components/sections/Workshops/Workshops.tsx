@@ -88,10 +88,10 @@ export default function Workshops({ onAddToCart }: WorkshopsProps) {
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-12 md:mb-20">
                     <h2 className="text-rhum-gold tracking-[0.4em] uppercase text-xs mb-3 md:mb-4 font-black">
-                        Le Cursus & La Boutique
+                        Nos Prestations
                     </h2>
                     <h3 className="text-4xl md:text-6xl font-serif text-[#0a1a14] uppercase">
-                        Le Registre des Séances
+                        Le Registre des Ateliers
                     </h3>
                 </header>
 

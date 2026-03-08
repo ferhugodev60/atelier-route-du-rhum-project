@@ -98,7 +98,7 @@ export default function Contact() {
                     <div className="flex flex-col justify-between">
                         <address className="not-italic space-y-8 md:space-y-12">
                             <div>
-                                <h4 className="font-serif text-xl md:text-2xl mb-4 md:mb-6 italic text-rhum-gold">L'Atelier de la Route du Rhum</h4>
+                                <h4 className="font-serif text-xl md:text-2xl mb-4 md:mb-6 text-rhum-gold">L'Atelier de la Route du Rhum</h4>
                                 <div className="space-y-3 md:space-y-4 font-sans opacity-80 text-sm">
                                     <p className="flex items-start gap-4">
                                         <span aria-hidden="true">📍</span>
@@ -112,7 +112,7 @@ export default function Contact() {
                             </div>
 
                             <div>
-                                <h4 className="font-serif text-lg md:text-xl mb-4 md:mb-6">Horaires de la Cave</h4>
+                                <h4 className="font-serif text-lg md:text-xl mb-4 md:mb-6">Horaires</h4>
                                 <ul className="space-y-2 text-xs md:text-sm opacity-80">
                                     <li className="flex justify-between border-b border-rhum-gold/10 pb-2">
                                         <span>Mardi au Samedi</span>
