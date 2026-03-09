@@ -39,26 +39,12 @@ export default function GiftModal({ onClose, onConfirm }: GiftModalProps) {
                 animate={{ opacity: 1, y: 0 }}
                 className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] md:h-auto flex flex-col border border-white/5 shadow-2xl rounded-sm"
             >
-                {/* En-tête de Section */}
-                <div className="flex border-b border-white/5 bg-black/20 font-black uppercase tracking-[0.4em] text-[10px]">
-                    <div className="flex-1 py-6 text-rhum-gold border-b border-rhum-gold text-center">
-                        1. Montant du Titre
-                    </div>
-                </div>
-
-                <button
-                    onClick={onClose}
-                    className="absolute top-4 right-4 text-white/20 hover:text-rhum-gold transition-colors z-20"
-                >
-                    <X size={20} />
-                </button>
-
                 <div className="p-8 md:p-16 flex-1 flex flex-col justify-center text-center">
                     <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mb-4 font-black">
                         Valeur du Titre au Porteur
                     </p>
                     <h5 className="text-3xl md:text-4xl font-serif text-white mb-12 uppercase tracking-tighter">
-                        Carte Cadeau Établissement
+                        Carte Cadeau
                     </h5>
 
                     {/* Affichage du Montant (Style Volume) */}
@@ -104,7 +90,7 @@ export default function GiftModal({ onClose, onConfirm }: GiftModalProps) {
                             onClick={() => onConfirm(amount)}
                             className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all shadow-xl"
                         >
-                            Ajouter au Registre
+                            Ajouter au Panier
                         </button>
                         <button
                             onClick={onClose}
@@ -118,7 +104,7 @@ export default function GiftModal({ onClose, onConfirm }: GiftModalProps) {
                 {/* Note Institutionnelle de Bas de Page */}
                 <div className="p-6 border-t border-white/5 text-center">
                     <p className="text-[8px] text-white/20 font-bold uppercase tracking-[0.2em]">
-                        Validité : 12 mois à compter de l'émission
+                        Validité : 12 mois à après l'achat
                     </p>
                 </div>
             </motion.div>
