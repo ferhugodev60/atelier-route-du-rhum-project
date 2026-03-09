@@ -62,7 +62,7 @@ async function main() {
                 create: [
                     { size: 25, unit: " Centilitres", price: 20.0, stock: 10 },
                     { size: 50, unit: " Centilitres", price: 39.0, stock: 15 },
-                    { size: 1, unit: " Litre", price: 75.0, stock: 5 }
+                    { size: 1, unit: " Litre(s)", price: 75.0, stock: 5 }
                 ]
             }
         }
@@ -78,7 +78,7 @@ async function main() {
                 create: [
                     { size: 33, unit: " Centilitres", price: 25.0, stock: 10 },
                     { size: 70, unit: " Centilitres", price: 65.0, stock: 15 },
-                    { size: 1, unit: " Litre", price: 75.0, stock: 5 }
+                    { size: 1, unit: " Litre(s)", price: 75.0, stock: 5 }
                 ]
             }
         }
@@ -92,24 +92,21 @@ async function main() {
             categoryId: catDame.id,
             volumes: {
                 create: [
-                    { size: 3, unit: " Litre", price: 150.0, stock: 5 },
-                    { size: 6, unit: " Litre", price: 300.0, stock: 5 },
+                    { size: 3, unit: " Litre(s)", price: 150.0, stock: 5 },
+                    { size: 6, unit: " Litre(s)", price: 300.0, stock: 5 },
                 ]
             }
         }
     });
 
     console.log('--- 🎓 Déploiement du Cursus (Modèle de Tarification Duale) ---');
-    /**
-     * 🏺 Centralisation sur 5 séances.
-     * Le champ 'price' sert au public, 'priceInstitutional' au profil PRO/CE.
-     */
     const trainingModules = [
         {
             level: 0, title: "L'Atelier Découverte",
             price: 60.0, priceInst: 50.0,
             format: "1h30 d'analyse sensorielle guidée.",
-            quote: "Premiers pas dans l'univers technique du label.",
+            availability: "Du mardi au samedi, valable 30 jours après achat",
+            quote: "Premiers pas dans l'univers technique du label. Valable 30 jours après achat.",
             image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweo5UfygpC2S3i2AcaG73QxtyKrYrc4qGgUdGOTE0MDr6qCTw3Qw9xiZH95KWQOv4RWrSa_UrJgYAuEzFWEGGNxR7QhX0RX1l2Rn7pkhdxv0yBl2E1GdywRvYYE9y7cXyYv0q_Zw2yJJGak=s680-w680-h510-rw"
         },
         {
@@ -117,6 +114,7 @@ async function main() {
             price: 140.0, priceInst: 120.0,
             color: "#2f7700",
             format: "2h30 d'ingénierie aromatique, incluant une unité d'un litre.",
+            availability: "Du mardi au samedi, valable 6 mois après achat.",
             quote: "Maîtrise des équilibres et des acides de fruits.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         },
@@ -125,6 +123,7 @@ async function main() {
             price: 170.0, priceInst: 150.0,
             color: "#be5aff",
             format: "3h de formation avancée avec accès à l'épisothèque.",
+            availability: "Du mardi au samedi, valable 6 mois après achat.",
             quote: "Architecture et structure des nectars complexes.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         },
@@ -133,6 +132,7 @@ async function main() {
             price: 210.0, priceInst: 190.0,
             color: "#009bf3",
             format: "4h d'immersion botanique et florale.",
+            availability: "Du mardi au samedi, valable 6 mois après achat.",
             quote: "Exploration des notes de tête et des extraits végétaux.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         },
@@ -141,6 +141,7 @@ async function main() {
             price: 420.0, priceInst: 400.0,
             color: "#80070D",
             format: "8h de perfectionnement technique, incluant le déjeuner de travail.",
+            availability: "Du mardi au samedi, valable 6 mois après achat.",
             quote: "L'art ultime du service et de la composition complexe.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
@@ -156,6 +157,7 @@ async function main() {
                 image: mod.image,
                 quote: mod.quote,
                 format: mod.format,
+                availability: mod.availability, // 🏺 Champ désormais scellé en base
                 color: mod.color || null,
                 price: mod.price,
                 priceInstitutional: mod.priceInst // 🏺 Protection du flux Stripe

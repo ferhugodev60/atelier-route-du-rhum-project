@@ -6,7 +6,7 @@ import { useAuthStore } from '../../../store/authStore';
 
 /**
  * 🏺 INTERFACE DE RÉSERVATION TRANSVERSALE
- * Autorise la collaboration libre entre Particuliers, CSE et Professionnels.
+ * Distingue le flux Découverte (Masse) du flux Conception (Nominatif).
  */
 
 interface Participant {
@@ -44,7 +44,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                 phone: user.phone || '',
                 email: user.email || '',
                 memberCode: user.memberCode,
-                isValidated: true // L'organisateur est scellé par sa session
+                isValidated: true
             };
         }
         return initialArr;
@@ -70,8 +70,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
     };
 
     /**
-     * 🏺 SÉCURISATION DU PASSEPORT
-     * Le verrou d'homogénéité a été supprimé pour autoriser la collaboration.
+     * 🏺 SÉCURISATION DU PASSEPORT (Cursus uniquement)
      */
     const handlePassportInput = (index: number, val: string) => {
         const code = val.toUpperCase();
@@ -89,7 +88,6 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
         try {
             const { data } = await api.get(`/users/verify/${code}`);
 
-            // 1️⃣ Validation du Palier Technique uniquement
             if (isConceptionCursus && data.conceptionLevel < workshop.level - 1) {
                 alert(`Le membre ${data.firstName} n'a pas encore validé le palier technique précédent au Registre.`);
                 return;
@@ -120,10 +118,12 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="absolute inset-0 bg-black/98 backdrop-blur-md" onClick={onClose} />
             <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="relative bg-[#0a1a14] w-full max-w-xl h-[85vh] flex flex-col border border-white/5 shadow-2xl">
 
-                <div className="flex border-b border-white/5 bg-black/20 font-black uppercase tracking-[0.4em] text-[10px]">
-                    <button onClick={() => setStep(1)} className={`flex-1 py-5 transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>1. Participant(s)</button>
-                    <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. Identification</button>
-                </div>
+                {isConceptionCursus && (
+                    <div className="flex border-b border-white/5 bg-black/20 font-black uppercase tracking-[0.4em] text-[10px]">
+                        <button onClick={() => setStep(1)} className={`flex-1 py-5 transition-colors ${step === 1 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'}`}>1. PARTICIPANT(S)</button>
+                        <button disabled={!hasValidatedStep1} onClick={() => setStep(2)} className={`flex-1 py-5 transition-colors ${step === 2 ? 'text-rhum-gold border-b border-rhum-gold' : 'text-white/20'} ${!hasValidatedStep1 ? 'opacity-10' : ''}`}>2. IDENTIFICATION</button>
+                    </div>
+                )}
 
                 <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
                     <AnimatePresence mode="wait">
@@ -137,7 +137,19 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                     <button onClick={() => handlePeopleChange(numPeople + 1)} className="text-rhum-gold text-5xl font-light">+</button>
                                 </div>
                                 <div className="space-y-4">
-                                    <button onClick={() => { setHasValidatedStep1(true); setStep(2); }} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all shadow-xl">Suivant</button>
+                                    <button
+                                        onClick={() => {
+                                            if (isConceptionCursus) {
+                                                setHasValidatedStep1(true);
+                                                setStep(2);
+                                            } else {
+                                                onConfirm({ ...workshop, participants: [], quantity: numPeople });
+                                            }
+                                        }}
+                                        className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[11px] rounded-sm hover:bg-white transition-all shadow-xl"
+                                    >
+                                        {isConceptionCursus ? "Suivant" : "Confirmer"}
+                                    </button>
                                     <button onClick={onClose} className="w-full py-4 text-white/30 uppercase text-[9px] tracking-[0.3em] font-bold hover:text-white transition-colors">Annuler</button>
                                 </div>
                             </motion.div>
@@ -148,8 +160,21 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                         <div key={i} className="border-l-2 border-rhum-gold/20 pl-6 space-y-6">
                                             <div className="flex justify-between items-center">
                                                 <p className="text-rhum-gold text-[9px] uppercase font-black tracking-[0.3em] opacity-50">Participant n°{i + 1}</p>
+
+                                                {/* 🏺 INFO-BULLE : Nouvelle icône SVG stylisée */}
                                                 {isConceptionCursus && (
-                                                    <span className="text-[7px] bg-rhum-gold/10 text-rhum-gold px-2 py-1 rounded-full font-black uppercase tracking-widest italic">Passeport Obligatoire</span>
+                                                    <div className="relative group">
+                                                        <div className="w-6 h-6 text-rhum-gold cursor-help hover:text-white transition-colors">
+                                                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                                                <circle cx="12" cy="12" r="10" opacity="0.3"></circle>
+                                                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                                                            </svg>
+                                                        </div>
+                                                        <div className="absolute right-0 bottom-full mb-3 w-72 p-5 bg-[#0a1a14] border border-rhum-gold/20 text-white text-[10px] leading-relaxed font-light shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 rounded-sm">
+                                                            La participation à l'atelier conception nécessite un compte pour chaque participant. Si un participant n'a pas de compte, il doit créer son accès puis se munir de son Code Client disponible dans son espace Profil (en haut à droite).
+                                                        </div>
+                                                    </div>
                                                 )}
                                             </div>
 
@@ -166,8 +191,8 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                                         {verifyingIndex === i && <span className="absolute right-0 bottom-3 text-[7px] text-rhum-gold animate-pulse uppercase font-black">Certification...</span>}
                                                     </div>
                                                     {p.isValidated && (
-                                                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest italic">
-                                                            ✓ Identité scellée : {p.firstName} {p.lastName}
+                                                        <p className="text-[10px] text-green-500 font-black uppercase tracking-widest">
+                                                            ✓ Membre détecté : {p.firstName} {p.lastName}
                                                         </p>
                                                     )}
                                                 </div>
@@ -192,7 +217,7 @@ export default function ReservationModal({ workshop, onClose, onConfirm }: Reser
                                         onClick={() => onConfirm({ ...workshop, participants, quantity: numPeople })}
                                         className={`flex-[2] py-5 font-black uppercase text-[10px] tracking-[0.3em] transition-all rounded-sm ${isStep2Valid ? 'bg-rhum-gold text-rhum-green shadow-xl hover:bg-white' : 'bg-white/5 text-white/20 cursor-not-allowed'}`}
                                     >
-                                        Confirmer le Dossier
+                                        Confirmer
                                     </button>
                                 </div>
                             </motion.div>

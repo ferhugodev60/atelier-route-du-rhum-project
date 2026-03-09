@@ -14,7 +14,7 @@ interface OrderItem {
     name: string | null;
     quantity: number;
     price: number;
-    groupNames?: string | null; // 🏺 Détecteur de Titre de Cursus
+    groupNames?: string | null;
     workshop?: { title: string };
     volume?: {
         size: string;
@@ -89,7 +89,7 @@ export default function OrderHistory() {
      */
     const getItemDisplayName = (item: OrderItem) => {
             // 1. Priorité au type GIFT_CARD
-            if (item.groupNames === 'GIFT_CARD') return "TITRE DE CURSUS (CARTE CADEAU)";
+            if (item.groupNames === 'GIFT_CARD') return "CARTE CADEAU";
 
             // 2. Si le nom est scellé en base, on l'utilise
             if (item.name) return item.name;
@@ -122,7 +122,7 @@ export default function OrderHistory() {
     return (
         <div className="space-y-12">
             <header className="mb-10">
-                <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Registre d'achat</h2>
+                <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Historique des achats</h2>
                 <p className="text-rhum-gold text-[10px] uppercase tracking-[0.4em] mt-3 font-black opacity-70">Suivi des réservations</p>
             </header>
 
