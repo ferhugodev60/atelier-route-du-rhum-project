@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion';
-import { X } from 'lucide-react';
 
 interface CategoryInfoModalProps {
     category: any;
@@ -29,12 +28,6 @@ export default function CategoryInfoModal({ category, onClose }: CategoryInfoMod
                         className="w-full h-full object-cover hover:grayscale-0 transition-all duration-700"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050d0a] to-transparent" />
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-rhum-gold transition-colors"
-                    >
-                        <X size={20} />
-                    </button>
                 </div>
 
                 {/* Contenu textuel */}

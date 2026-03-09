@@ -8,7 +8,7 @@ export default function ShopReassurance() {
                     <span className="text-2xl mb-5">🇫🇷</span>
                     <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Savoir-Faire Français</h4>
                     <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Chaque flacon est une création artisanale conçue à la main au cœur de Compiègne.
+                        Chaque bouteille est une création artisanale conçue à la main dans notre Atelier au cœur de Compiègne.
                     </p>
                 </div>
 
@@ -21,7 +21,7 @@ export default function ShopReassurance() {
                     </svg>
                     <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Retrait à l'Atelier</h4>
                     <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Réservez vos bouteilles en ligne et récupérez-les exclusivement à notre atelier. Pas d'expédition postale.
+                        Réservez vos bouteilles en ligne et récupérez-les exclusivement à notre atelier. Expédition postale bientôt disponible.
                     </p>
                 </div>
 
@@ -30,7 +30,7 @@ export default function ShopReassurance() {
                     <span className="text-2xl mb-5">🔒</span>
                     <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Paiement Sécurisé</h4>
                     <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Transactions protégées par Stripe. Votre flacon est mis de côté dès validation du paiement.
+                        Transactions protégées par Stripe. Votre bouteille est mis de côté dès validation du paiement.
                     </p>
                 </div>
             </div>

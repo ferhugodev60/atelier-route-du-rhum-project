@@ -89,7 +89,7 @@ export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
                         La <span className="text-rhum-gold">Boutique</span>
                     </h1>
                     <p className="text-rhum-cream/40 max-w-xl mx-auto text-[10px] md:text-xs uppercase tracking-[0.4em] mt-10 leading-relaxed font-black">
-                        Chaque flacon est une promesse de voyage, distillée avec passion au sein de l'Établissement.
+                        Chaque bouteille est une promesse de voyage, distillée avec passion au sein de l'Atelier.
                     </p>
                 </header>
 
