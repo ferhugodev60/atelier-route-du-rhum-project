@@ -58,7 +58,7 @@ export default function Footer() {
                             <p>12 rue des Cordeliers</p>
                             <p>60200 Compiègne</p>
                             <p className="pt-2 font-bold text-rhum-gold/80 tracking-widest uppercase text-[10px]">
-                                Fabrication Artisanale Française
+                                Nous ne sommes pas un débit de boissons.
                             </p>
                         </address>
                     </div>

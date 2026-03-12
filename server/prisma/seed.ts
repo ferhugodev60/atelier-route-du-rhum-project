@@ -38,13 +38,13 @@ async function main() {
     console.log('--- 📦 Référencement des Produits ---');
     await prisma.product.create({
         data: {
-            name: "Café Gingembre Caramel",
-            description: "Rhum agricole",
+            name: "Café Gingembre",
+            description: "Café Gingembre Caramel, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 15 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -52,13 +52,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Citron Vert Gingembre Vanille menthe blanche canne à sucre",
-            description: "Rhum agricole",
+            name: "Citron Vert Gingembre",
+            description: "Citron Vert Gingembre Vanille menthe blanche canne à sucre, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -66,13 +66,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Piment de Guadeloupe Cardamome poivre timut kumquat vanille sucre de canne",
-            description: "Rhum agricole",
+            name: "PIMENT-TIMUT",
+            description: "Piment de Guadeloupe Cardamome poivre timut kumquat vanille sucre de canne, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -80,13 +80,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Carotte fruit du dragon rouge citron vert sucre de canne",
-            description: "Rhum agricole",
+            name: "Carotte fruit du dragon",
+            description: "Carotte fruit du dragon rouge citron vert sucre de canne, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -94,13 +94,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Fruit du dragon rouge ananas pains de sucre baie de goji sucre de canne",
-            description: "Rhum agricole",
+            name: "DRAGON-GOJI",
+            description: "Fruit du dragon rouge ananas pains de sucre baie de goji sucre de canne, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -108,13 +108,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Banane chocolat vanille caramel",
-            description: "Rhum agricole",
+            name: "Banane-choco",
+            description: "Banane chocolat vanille caramel, rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 5 },
                 ]
             }
         }
@@ -127,16 +127,16 @@ async function main() {
             price: 60.0, priceInst: 50.0,
             format: "1h30 d'analyse sensorielle guidée.",
             availability: "Du mardi au samedi, valable 30 jours après achat",
-            quote: "Premiers pas dans l'univers technique du label. Valable 30 jours après achat.",
+            quote: "Découverte du label avec un forum question/réponse et la mise à disposition d'une demie palette de rhum. Valable 30 jours après achat.",
             image: "https://lh3.googleusercontent.com/gps-cs-s/AHVAweo5UfygpC2S3i2AcaG73QxtyKrYrc4qGgUdGOTE0MDr6qCTw3Qw9xiZH95KWQOv4RWrSa_UrJgYAuEzFWEGGNxR7QhX0RX1l2Rn7pkhdxv0yBl2E1GdywRvYYE9y7cXyYv0q_Zw2yJJGak=s680-w680-h510-rw"
         },
         {
             level: 1, title: "L'Atelier Fruits",
             price: 140.0, priceInst: 120.0,
             color: "#2f7700",
-            format: "2h30 d'ingénierie aromatique, incluant une unité d'un litre.",
+            format: "2h30 d'ingénierie aromatique, incluant une bouteille d'un litre.",
             availability: "Du mardi au samedi, valable 6 mois après achat.",
-            quote: "Maîtrise des équilibres et des acides de fruits.",
+            quote: "Maîtrise des acides de fruits.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         },
         {
@@ -158,11 +158,11 @@ async function main() {
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         },
         {
-            level: 4, title: "L'Atelier Mixologie",
+            level: 4, title: "L'Atelier XXL Mixologie",
             price: 420.0, priceInst: 400.0,
             color: "#80070D",
-            format: "8h de perfectionnement technique, incluant le déjeuner de travail.",
-            availability: "Du mardi au samedi, valable 6 mois après achat.",
+            format: "8h de perfectionnement technique, incluant le déjeuner.",
+            availability: "Du mardi au jeudi, valable 6 mois après achat.",
             quote: "L'art ultime du service et de la composition complexe.",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
         }
@@ -174,7 +174,7 @@ async function main() {
                 level: mod.level,
                 type: "PARTICULIER",
                 title: mod.title,
-                description: "Module de formation technique certifié par l'Établissement.",
+                description: "Atelier technique certifié par l'Établissement.",
                 image: mod.image,
                 quote: mod.quote,
                 format: mod.format,
@@ -194,6 +194,7 @@ async function main() {
     await prisma.user.create({
         data: {
             email: "hugo@atelier.com",
+            phone: "0768976012",
             memberCode: generateMemberCode(),
             password: defaultPassword,
             firstName: "Hugo",

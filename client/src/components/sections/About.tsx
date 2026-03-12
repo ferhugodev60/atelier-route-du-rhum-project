@@ -32,7 +32,7 @@ export default function About() {
                             L'Excellence Institutionnelle
                         </h2>
                         <h3 className="text-2xl md:text-5xl font-serif leading-tight text-rhum-green">
-                            Rhum Agricole et Créations Artisanales
+                            Rhum 100% Agricole et Créations Artisanales
                         </h3>
                     </header>
 
