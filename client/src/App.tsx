@@ -17,8 +17,10 @@ import AdminCustomers from "./pages/admin/AdminCustomers.tsx";
 import AdminOrders from "./pages/admin/AdminOrders.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import AdminGiftCards from "./pages/admin/AdminGiftCards.tsx";
+import TermsAndConditions from "./pages/TermsAndConditions.tsx";
 
 // --- Imports (Lazy Loading) ---
+const LegalMentions = lazy(() => import('./pages/LegalMentions.tsx'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx')); // 🏺 Nouveau : Scellage du secret personnel
 const ValidationPage = lazy(() => import('./pages/ValidationPage.tsx'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -84,6 +86,12 @@ export default function App() {
                         <Route path="/" element={<HomePage />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addItem} cart={items} />} />
                         <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+
+                        {/* 🏺 ROUTE DES MENTIONS LÉGALES */}
+                        <Route path="/mentions-legales" element={<LegalMentions />} />
+
+                        {/* 🏺 ROUTE DES MENTIONS LÉGALES */}
+                        <Route path="/cgv" element={<TermsAndConditions />} />
 
                         {/* 🏺 ROUTE PUBLIQUE DE SCELLAGE PAR QR CODE */}
                         <Route path="/validate/:participantId" element={<ValidationPage />} />

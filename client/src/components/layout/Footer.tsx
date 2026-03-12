@@ -101,8 +101,8 @@ export default function Footer() {
                 <div className="pt-10 md:pt-12 flex flex-col md:flex-row justify-between items-center text-[9px] md:text-[10px] uppercase tracking-widest opacity-40 gap-4">
                     <p>© {currentYear} L'Atelier de la Route du Rhum — Tous droits réservés</p>
                     <nav className="flex gap-4 md:gap-8 font-sans">
-                        <a href="#" className="hover:text-rhum-gold transition-colors">Mentions Légales</a>
-                        <a href="#" className="hover:text-rhum-gold transition-colors">CGV</a>
+                        <a href="/mentions-legales" className="hover:text-rhum-gold transition-colors">Mentions Légales</a>
+                        <a href="/cgv" className="hover:text-rhum-gold transition-colors">CGV</a>
                     </nav>
                 </div>
             </div>

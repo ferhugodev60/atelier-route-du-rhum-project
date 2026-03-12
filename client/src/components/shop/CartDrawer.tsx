@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance.ts';
 import { Trash2, Users, Gift, Ticket } from 'lucide-react';
 import { CartItem } from '../../types/cart-item';
+import {Link} from "react-router-dom";
 
 interface CartDrawerProps {
     isOpen: boolean;
@@ -186,7 +187,17 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                                         <div className={`w-4 h-4 border flex-shrink-0 flex items-center justify-center transition-all ${hasAcceptedTerms ? 'bg-rhum-gold border-rhum-gold' : 'border-white/20 bg-white/5'}`}>
                                             {hasAcceptedTerms && <span className="text-[10px] text-rhum-green font-black">✓</span>}
                                         </div>
-                                        <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-black group-hover:text-white/60 transition-colors">J'accepte les conditions générales de vente</label>
+                                        <label className="text-[9px] text-white/40 uppercase tracking-[0.2em] font-black group-hover:text-white/60 transition-colors cursor-pointer">
+                                            J'accepte les {" "}
+                                            {/* 🏺 Lien direct vers le protocole contractuel */}
+                                            <Link
+                                                to="/cgv"
+                                                onClick={(e) => { e.stopPropagation(); onClose(); }}
+                                                className="text-rhum-gold underline underline-offset-4 decoration-rhum-gold/30 hover:text-white transition-colors"
+                                            >
+                                                conditions générales de vente
+                                            </Link>
+                                        </label>
                                     </div>
 
                                     <button
