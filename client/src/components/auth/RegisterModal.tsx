@@ -3,19 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 
-/**
- * 🏺 PORTAIL D'INSCRIPTION AU REGISTRE
- * Version épurée : Suppression de l'identité individuelle pour les comptes CE/PRO.
- */
 export default function RegisterModal() {
     const { isRegisterOpen, setRegisterOpen, setAuth } = useAuthStore();
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
-    // 🏺 Pilotage des segments institutionnels
-    const [isPro, setIsPro] = useState(false); // Mode CE complet
-    const [isEmployee, setIsEmployee] = useState(false); // Mode Particulier rattaché à un CE
+    const [isPro, setIsPro] = useState(false);
+    const [isEmployee, setIsEmployee] = useState(false);
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -25,8 +20,6 @@ export default function RegisterModal() {
         const formData = new FormData(e.currentTarget);
         const data = Object.fromEntries(formData.entries());
 
-        // 🏺 Construction du payload conforme au protocole
-        // Si PRO, on envoie des chaînes vides pour le prénom/nom pour éviter les erreurs serveurs
         const payload = {
             ...data,
             firstName: isPro ? "CE" : data.firstName,
@@ -58,7 +51,7 @@ export default function RegisterModal() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/98 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/98 backdrop-blur-md cursor-pointer"
                         onClick={() => setRegisterOpen(false)}
                     />
 
@@ -66,28 +59,36 @@ export default function RegisterModal() {
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        className="relative bg-[#0a1a14] border border-rhum-gold/20 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto custom-scrollbar"
+                        className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto custom-scrollbar cursor-default"
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <button onClick={() => setRegisterOpen(false)} className="absolute top-4 right-5 text-rhum-gold/40 hover:text-white transition-colors text-2xl font-extralight">&times;</button>
+                        {/* 🏺 Bouton Fermeture avec main */}
+                        <button
+                            onClick={() => setRegisterOpen(false)}
+                            className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white transition-colors text-3xl font-extralight cursor-pointer"
+                        >
+                            &times;
+                        </button>
 
-                        <header className="text-center mb-8">
-                            <p className="text-rhum-gold/60 text-[10px] uppercase tracking-[0.4em] mt-3 font-black">Registre</p>
-                            <h2 className="text-2xl md:text-3xl font-serif text-white uppercase tracking-tight">Création de Dossier</h2>
+                        <header className="text-center mb-10">
+                            <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Accès client</p>
+                            <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Créer un Compte</h2>
 
-                            <div className="flex items-center justify-center gap-4 mt-6">
+                            {/* Toggles avec curseur main */}
+                            <div className="flex items-center justify-center gap-4 mt-8">
                                 <button
                                     type="button"
                                     onClick={() => { setIsPro(false); setIsEmployee(false); }}
-                                    className={`text-[9px] uppercase tracking-widest px-4 py-2 border transition-all ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40'}`}
+                                    className={`text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 border transition-all cursor-pointer font-black ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40 hover:border-white/30'}`}
                                 >
                                     Individuel
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setIsPro(true); setIsEmployee(false); }}
-                                    className={`text-[9px] uppercase tracking-widest px-4 py-2 border transition-all ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40'}`}
+                                    className={`text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 border transition-all cursor-pointer font-black ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40 hover:border-white/30'}`}
                                 >
-                                    Établissement / Pro
+                                    Entreprise (Pro)
                                 </button>
                             </div>
                         </header>
@@ -97,63 +98,69 @@ export default function RegisterModal() {
                                 <div className="w-16 h-16 border border-rhum-gold rounded-full flex items-center justify-center mx-auto mb-6">
                                     <span className="text-rhum-gold text-2xl font-serif">✓</span>
                                 </div>
-                                <p className="text-rhum-gold font-serif italic text-lg">Dossier scellé avec succès !</p>
-                                <p className="text-[9px] text-white/40 uppercase tracking-widest">Ouverture de votre espace...</p>
+                                <p className="text-rhum-gold font-serif italic text-xl">Dossier scellé avec succès !</p>
+                                <p className="text-[10px] text-white/50 uppercase tracking-widest font-black">Ouverture de votre espace...</p>
                             </div>
                         ) : (
-                            <form onSubmit={handleRegister} className="space-y-5">
+                            <form onSubmit={handleRegister} className="space-y-6">
 
-                                {/* 🏺 CONDITION : Identité individuelle (Masquée pour les CE) */}
                                 {!isPro && (
                                     <div className="grid grid-cols-2 gap-4">
-                                        <input name="firstName" required placeholder="PRÉNOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
-                                        <input name="lastName" required placeholder="NOM" className="bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
+                                        <div className="space-y-2">
+                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Prénom</p>
+                                            <input name="firstName" required placeholder="EX: JEAN" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Nom</p>
+                                            <input name="lastName" required placeholder="EX: DUPONT" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        </div>
                                     </div>
                                 )}
 
-                                {/* Levier Salarié (Visible uniquement Individuels) */}
                                 {!isPro && (
-                                    <div className="py-2">
-                                        <label className="flex items-center gap-3 cursor-pointer group">
+                                    <div className="py-2 border-y border-white/5">
+                                        <label className="flex items-center gap-4 cursor-pointer group">
                                             <div
                                                 onClick={() => setIsEmployee(!isEmployee)}
-                                                className={`w-8 h-4 rounded-full relative transition-all duration-300 ${isEmployee ? 'bg-rhum-gold' : 'bg-white/10'}`}
+                                                className={`w-10 h-5 rounded-full relative transition-all duration-300 ${isEmployee ? 'bg-rhum-gold' : 'bg-white/10'}`}
                                             >
-                                                <div className={`absolute top-1 w-2 h-2 rounded-full bg-white transition-all duration-300 ${isEmployee ? 'left-5' : 'left-1'}`} />
+                                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-300 ${isEmployee ? 'left-6' : 'left-1'}`} />
                                             </div>
-                                            <span className="text-[9px] text-white/40 uppercase tracking-widest font-black group-hover:text-rhum-gold transition-colors">
+                                            <span className="text-[9px] text-white/50 uppercase tracking-widest font-black group-hover:text-rhum-gold transition-colors">
                                                 Je suis bénéficiaire d'un Comité d'Entreprise
                                             </span>
                                         </label>
                                     </div>
                                 )}
 
-                                {/* Champs institutionnels (Si PRO ou Si Salarié CE) */}
                                 {(isPro || (!isPro && isEmployee)) && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-                                        <input
-                                            name="companyName"
-                                            required
-                                            placeholder="NOM DE VOTRE ENTREPRISE"
-                                            className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase"
-                                        />
-                                        <input
-                                            name="siret"
-                                            required
-                                            pattern="[0-9]{14}"
-                                            title="Le SIRET doit contenir 14 chiffres"
-                                            placeholder="NUMÉRO SIRET (14 CHIFFRES)"
-                                            className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase"
-                                        />
+                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 bg-white/[0.02] p-4 border-l border-rhum-gold/30">
+                                        <div className="space-y-2">
+                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Raison Sociale</p>
+                                            <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className="w-full bg-transparent border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Identifiant Fiscal</p>
+                                            <input name="siret" required pattern="[0-9]{14}" placeholder="NUMÉRO SIRET (14 CHIFFRES)" className="w-full bg-transparent border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        </div>
                                     </motion.div>
                                 )}
 
-                                <input name="email" type="email" required placeholder="EMAIL DE CONTACT" className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
-                                <input name="phone" type="tel" placeholder="TÉLÉPHONE" className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
-                                <input name="password" type="password" required placeholder="MOT DE PASSE" className="w-full bg-white/[0.03] border-b border-rhum-gold/20 py-3 px-4 text-rhum-cream outline-none focus:border-rhum-gold transition-all text-xs placeholder:text-white/20 uppercase" />
+                                <div className="space-y-2">
+                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Email</p>
+                                    <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Téléphone</p>
+                                    <input name="phone" type="tel" placeholder="06 00 00 00 00" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                </div>
+                                <div className="space-y-2">
+                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Mot de passe</p>
+                                    <input name="password" type="password" required placeholder="••••••••" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                </div>
 
                                 {error && (
-                                    <p className="text-red-400 text-[10px] uppercase tracking-wider text-center bg-red-400/5 py-3 border border-red-400/20">
+                                    <p className="text-red-400 text-[10px] uppercase tracking-widest text-center bg-red-400/10 py-4 border border-red-400/30 font-black">
                                         {error}
                                     </p>
                                 )}
@@ -161,9 +168,9 @@ export default function RegisterModal() {
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all shadow-xl rounded-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                 >
-                                    {isPending ? 'SCELLAGE...' : (isPro ? "Enregistrer" : (isEmployee ? "Valider mon rattachement" : "Créer mon dossier"))}
+                                    {isPending ? 'CHARGEMENT...' : "Créer un compte"}
                                 </button>
                             </form>
                         )}
