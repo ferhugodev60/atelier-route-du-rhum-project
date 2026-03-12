@@ -3,12 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
+import { Eye, EyeOff } from 'lucide-react'; // 🏺 Iconographie certifiée
 
 export default function LoginModal() {
     const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth } = useAuthStore();
 
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false); // 🏺 État du verrou visuel
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -35,7 +37,7 @@ export default function LoginModal() {
                 <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
                     <motion.div
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/98 backdrop-blur-md"
+                        className="absolute inset-0 bg-black/98 backdrop-blur-md cursor-pointer"
                         onClick={() => setLoginOpen(false)}
                     />
 
@@ -43,14 +45,19 @@ export default function LoginModal() {
                         initial={{ opacity: 0, scale: 0.95, y: 20 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto"
+                        className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto cursor-default"
+                        onClick={(e) => e.stopPropagation()}
                     >
                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/60 to-transparent" />
 
-                        <button onClick={() => setLoginOpen(false)} className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white text-3xl font-extralight transition-colors">&times;</button>
+                        <button
+                            onClick={() => setLoginOpen(false)}
+                            className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white text-3xl font-extralight transition-colors cursor-pointer"
+                        >
+                            &times;
+                        </button>
 
                         <header className="text-center mb-10">
-                            {/* 🏺 Opacité augmentée pour le titre de section */}
                             <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Authentification</p>
                             <h2 className="text-3xl md:text-4xl font-serif text-white uppercase tracking-tight">Se connecter</h2>
                         </header>
@@ -77,19 +84,30 @@ export default function LoginModal() {
                                     </label>
                                     <button
                                         type="button"
-                                        className="text-[9px] uppercase tracking-widest text-rhum-gold/60 hover:text-rhum-gold transition-colors font-bold"
+                                        className="text-[9px] uppercase tracking-widest text-rhum-gold/60 hover:text-rhum-gold transition-colors font-bold cursor-pointer"
                                     >
                                         Oublié ?
                                     </button>
                                 </div>
-                                <input
-                                    id="password"
-                                    name="password"
-                                    type="password"
-                                    required
-                                    className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-4 px-4 text-base text-white focus:border-rhum-gold outline-none transition-all placeholder:text-white/20"
-                                    placeholder="••••••••"
-                                />
+
+                                {/* 🏺 Champ Mot de passe avec bascule visuelle */}
+                                <div className="relative group">
+                                    <input
+                                        id="password"
+                                        name="password"
+                                        type={showPassword ? "text" : "password"}
+                                        required
+                                        className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-4 px-4 pr-12 text-base text-white focus:border-rhum-gold outline-none transition-all placeholder:text-white/20"
+                                        placeholder="••••••••"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
+                                    >
+                                        {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                    </button>
+                                </div>
                             </div>
 
                             {error && (
@@ -102,7 +120,11 @@ export default function LoginModal() {
                                 </motion.p>
                             )}
 
-                            <button type="submit" disabled={isPending} className="w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm">
+                            <button
+                                type="submit"
+                                disabled={isPending}
+                                className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
+                            >
                                 {isPending ? 'CHARGEMENT...' : "Se connecter"}
                             </button>
                         </form>
@@ -112,7 +134,7 @@ export default function LoginModal() {
                                 Pas encore membre ?{" "}
                                 <button
                                     onClick={() => setRegisterOpen(true)}
-                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-8 decoration-rhum-gold/50 font-black"
+                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-8 decoration-rhum-gold/50 font-black cursor-pointer"
                                 >
                                     REJOIGNEZ-NOUS
                                 </button>
@@ -127,7 +149,7 @@ export default function LoginModal() {
                                 <Link
                                     to="/admin"
                                     onClick={() => setLoginOpen(false)}
-                                    className="block text-rhum-gold/70 hover:text-rhum-gold transition-colors font-black text-[10px] uppercase tracking-[0.3em] border border-rhum-gold/20 py-4 rounded-sm mx-auto max-w-[240px] hover:bg-white/5"
+                                    className="block text-rhum-gold/70 hover:text-rhum-gold transition-colors font-black text-[10px] uppercase tracking-[0.3em] border border-rhum-gold/20 py-4 rounded-sm mx-auto max-w-[240px] hover:bg-white/5 cursor-pointer"
                                 >
                                     Console Administrateur
                                 </Link>

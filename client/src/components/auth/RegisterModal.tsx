@@ -2,15 +2,18 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function RegisterModal() {
-    const { isRegisterOpen, setRegisterOpen, setAuth } = useAuthStore();
+    // 🏺 Ajout de setLoginOpen pour permettre la redirection
+    const { isRegisterOpen, setRegisterOpen, setLoginOpen, setAuth } = useAuthStore();
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
 
     const [isPro, setIsPro] = useState(false);
     const [isEmployee, setIsEmployee] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -62,7 +65,8 @@ export default function RegisterModal() {
                         className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto custom-scrollbar cursor-default"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        {/* 🏺 Bouton Fermeture avec main */}
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/60 to-transparent" />
+
                         <button
                             onClick={() => setRegisterOpen(false)}
                             className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white transition-colors text-3xl font-extralight cursor-pointer"
@@ -71,10 +75,9 @@ export default function RegisterModal() {
                         </button>
 
                         <header className="text-center mb-10">
-                            <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Accès client</p>
+                            <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Authentification</p>
                             <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Créer un Compte</h2>
 
-                            {/* Toggles avec curseur main */}
                             <div className="flex items-center justify-center gap-4 mt-8">
                                 <button
                                     type="button"
@@ -118,7 +121,7 @@ export default function RegisterModal() {
                                 )}
 
                                 {!isPro && (
-                                    <div className="py-2 border-y border-white/5">
+                                    <div className="py-2">
                                         <label className="flex items-center gap-4 cursor-pointer group">
                                             <div
                                                 onClick={() => setIsEmployee(!isEmployee)}
@@ -154,9 +157,25 @@ export default function RegisterModal() {
                                     <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Téléphone</p>
                                     <input name="phone" type="tel" placeholder="06 00 00 00 00" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
                                 </div>
+
                                 <div className="space-y-2">
                                     <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Mot de passe</p>
-                                    <input name="password" type="password" required placeholder="••••••••" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                    <div className="relative group">
+                                        <input
+                                            name="password"
+                                            type={showPassword ? "text" : "password"}
+                                            required
+                                            placeholder="••••••••"
+                                            className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 pr-12"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
+                                        >
+                                            {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
 
                                 {error && (
@@ -168,10 +187,22 @@ export default function RegisterModal() {
                                 <button
                                     type="submit"
                                     disabled={isPending}
-                                    className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
+                                    className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
                                 >
                                     {isPending ? 'CHARGEMENT...' : "Créer un compte"}
                                 </button>
+                                <div className="text-center">
+                                    <p className="text-[10px] text-rhum-cream/70 uppercase tracking-[0.2em] font-medium">
+                                        Vous avez déjà un compte ?{" "}
+                                        <button
+                                            type="button"
+                                            onClick={() => { setRegisterOpen(false); setLoginOpen(true); }}
+                                            className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 decoration-rhum-gold/30 cursor-pointer font-black uppercase"
+                                        >
+                                            Se connecter
+                                        </button>
+                                    </p>
+                                </div>
                             </form>
                         )}
                     </motion.div>
