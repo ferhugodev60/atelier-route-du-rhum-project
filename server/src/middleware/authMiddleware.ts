@@ -40,7 +40,7 @@ export const authenticateToken = (req: Request, res: Response, next: NextFunctio
     // 🏺 Vérification stricte du format : "Bearer <token>"
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({
-            error: "Accès refusé. Certificat d'identité manquant ou mal formé."
+            error: "Identification requise. Veuillez vous connecter pour finaliser votre sélection."
         });
     }
 
