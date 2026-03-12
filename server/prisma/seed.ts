@@ -35,34 +35,16 @@ async function main() {
         }
     });
 
-    const catVrac = await prisma.category.create({
-        data: {
-            name: "Vrac",
-            description: "Sélections prêtes à la dégustation immédiate, sans résidus solides.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
-        }
-    });
-
-    const catDame = await prisma.category.create({
-        data: {
-            name: "Location de Dame-Jeanne",
-            description: "Prestations événementielles de prestige en grands formats. Une caution de 50 € est exigée par bouteille lors de la mise à disposition. La restitution doit impérativement être effectuée sous 3 jours après l'événement ; passé ce délai, le dépôt de garantie ne pourra plus être récupéré.",
-            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop"
-        }
-    });
-
     console.log('--- 📦 Référencement des Produits ---');
     await prisma.product.create({
         data: {
-            name: "Ananas & Vanille",
-            description: "Macération solaire optimisée pour un rempotage cyclique.",
+            name: "Café Gingembre Caramel",
+            description: "Rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
             categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 25, unit: " Centilitres", price: 20.0, stock: 10 },
                     { size: 50, unit: " Centilitres", price: 39.0, stock: 15 },
-                    { size: 1, unit: " Litre(s)", price: 75.0, stock: 5 }
                 ]
             }
         }
@@ -70,15 +52,13 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Mangue & Passion",
-            description: "Infusion intense filtrée pour une structure aromatique limpide.",
+            name: "Citron Vert Gingembre Vanille menthe blanche canne à sucre",
+            description: "Rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
-            categoryId: catVrac.id,
+            categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 33, unit: " Centilitres", price: 25.0, stock: 10 },
-                    { size: 70, unit: " Centilitres", price: 65.0, stock: 15 },
-                    { size: 1, unit: " Litre(s)", price: 75.0, stock: 5 }
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
                 ]
             }
         }
@@ -86,14 +66,55 @@ async function main() {
 
     await prisma.product.create({
         data: {
-            name: "Dame-Jeanne Location",
-            description: "Test",
+            name: "Piment de Guadeloupe Cardamome poivre timut kumquat vanille sucre de canne",
+            description: "Rhum agricole",
             image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
-            categoryId: catDame.id,
+            categoryId: catRhum.id,
             volumes: {
                 create: [
-                    { size: 3, unit: " Litre(s)", price: 150.0, stock: 5 },
-                    { size: 6, unit: " Litre(s)", price: 300.0, stock: 5 },
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                ]
+            }
+        }
+    });
+
+    await prisma.product.create({
+        data: {
+            name: "Carotte fruit du dragon rouge citron vert sucre de canne",
+            description: "Rhum agricole",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
+            categoryId: catRhum.id,
+            volumes: {
+                create: [
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                ]
+            }
+        }
+    });
+
+    await prisma.product.create({
+        data: {
+            name: "Fruit du dragon rouge ananas pains de sucre baie de goji sucre de canne",
+            description: "Rhum agricole",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
+            categoryId: catRhum.id,
+            volumes: {
+                create: [
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
+                ]
+            }
+        }
+    });
+
+    await prisma.product.create({
+        data: {
+            name: "Banane chocolat vanille caramel",
+            description: "Rhum agricole",
+            image: "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=1470&auto=format&fit=crop",
+            categoryId: catRhum.id,
+            volumes: {
+                create: [
+                    { size: 50, unit: " Centilitres", price: 39.0, stock: 10 },
                 ]
             }
         }
