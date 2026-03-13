@@ -16,6 +16,11 @@
   "prisma": {
     "seed": "ts-node prisma/seed.ts"
   },
+  "overrides": {
+    "multer-storage-cloudinary": {
+      "cloudinary": "$cloudinary"
+    }
+  },
   "dependencies": {
     "@prisma/client": "^6.19.2",
     "bcrypt": "^6.0.0",
