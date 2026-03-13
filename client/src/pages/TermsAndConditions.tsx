@@ -20,17 +20,17 @@ export default function TermsAndConditions() {
                     <section className="space-y-4">
                         <h2 className="text-rhum-gold font-serif text-2xl uppercase">Article 1 — Objet</h2>
                         <p>
-                            Les présentes conditions régissent la vente de produits (Rhum arrangé, Vrac) et de prestations de services (Séances de conception technique, Locations) par l'Établissement Atelier de la Route du Rhum via sa plateforme numérique.
+                            Les présentes conditions régissent la vente de bouteilles et de prestations de services (Ateliers, Locations) par l'Établissement Atelier de la Route du Rhum via sa plateforme numérique.
                         </p>
                     </section>
 
                     {/* Art 2 : Les Séances de Conception (Workshops) */}
                     <section className="space-y-6">
-                        <h2 className="text-rhum-gold font-serif text-2xl uppercase">Article 2 — Séances de Conception</h2>
+                        <h2 className="text-rhum-gold font-serif text-2xl uppercase">Article 2 — L'Atelier Conception</h2>
                         <div className="space-y-4">
-                            <p><strong>2.1. Niveaux et Progression :</strong> L'accès aux séances de niveaux 1 à 4 est strictement conditionné par la validation du palier technique précédent au sein du Registre de l'Établissement.</p>
-                            <p><strong>2.2. Validité :</strong> Toute séance acquise est valable pour une durée de 30 jours à compter de la date de scellage de la commande. Passé ce délai, l'accès à la formation est révoqué sans remboursement.</p>
-                            <p><strong>2.3. Identification :</strong> L'identification par Code Client (Passeport) est impérative pour les niveaux 1 à 4 afin de certifier l'identité du participant au Registre.</p>
+                            <p><strong>2.1. Niveaux et Progression :</strong> L'accès aux niveaux 1 à 4 est strictement conditionné par la validation du niveau précédent au sein de l'Établissement.</p>
+                            <p><strong>2.2. Validité :</strong> Tout atelier acquis est valable pour une durée de 30 jours (Atelier Découverte) et 6 mois (Atelier Conception) à compter de la date d'achat de la commande. Passé ce délai, l'accès à l'atelier est révoqué sans remboursement.</p>
+                            <p><strong>2.3. Identification :</strong> L'identification par Code Client est impérative pour les niveaux 1 à 4 de l'Atelier Conception afin de certifier l'identité et la progression du participant.</p>
                         </div>
                     </section>
 
@@ -67,7 +67,7 @@ export default function TermsAndConditions() {
                             </tr>
                             <tr>
                                 <td className="p-4 border border-white/10">Partenaire (PRO/CE)</td>
-                                <td className="p-4 border border-white/10">Tarif Institutionnel certifié</td>
+                                <td className="p-4 border border-white/10">Tarif entreprise</td>
                             </tr>
                             </tbody>
                         </table>
@@ -78,7 +78,7 @@ export default function TermsAndConditions() {
                     <section className="space-y-4">
                         <h2 className="text-rhum-gold font-serif text-2xl uppercase">Article 5 — Droit de Rétractation</h2>
                         <p>
-                            Conformément à la loi, les produits personnalisés ou les prestations de services datées (Séances de conception) ne sont pas soumis au droit de rétractation dès lors que l'exécution a commencé ou que la date est réservée.
+                            Conformément à la loi, les produits personnalisés ou les prestations de services datées (Ateliers) ne sont pas soumis au droit de rétractation dès lors que l'exécution a commencé ou que la date est réservée.
                         </p>
                     </section>
 
