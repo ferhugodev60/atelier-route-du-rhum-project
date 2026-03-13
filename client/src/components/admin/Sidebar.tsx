@@ -10,7 +10,7 @@ import {
     Home, Gift,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
-import Logo from '../../assets/logo/logo.png';
+import Logo from '../../assets/logo/logo.webp';
 
 export default function Sidebar() {
     const { logout } = useAuthStore();
