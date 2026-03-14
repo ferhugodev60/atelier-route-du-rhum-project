@@ -30,7 +30,7 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     };
 
     const navLinks = [
-        { name: 'à propos', href: '#about', isAnchor: true },
+        { name: 'Accueil', href: '/', isAnchor: true },
         { name: 'Nos Ateliers', href: '#workshops', isAnchor: true },
         { name: 'Boutique', href: '/boutique', isAnchor: false },
         { name: 'Contact', href: '#contact', isAnchor: true },
