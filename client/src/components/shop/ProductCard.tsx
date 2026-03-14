@@ -10,7 +10,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
     const [isHovered, setIsHovered] = useState(false);
 
-    // On extrait le prix le plus bas pour l'appel SEO "À partir de..."
+    // Extraction du prix d'appel scellé dans le Registre
     const startingPrice = product.volumes.length > 0
         ? Math.min(...product.volumes.map(v => v.price))
         : 0;
@@ -22,7 +22,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                {/* Badge Offre Entreprise si un volume est remisé */}
+                {/* 🏺 Badge Offre Entreprise scellé */}
                 {product.volumes.some(v => v.isDiscounted) && (
                     <div className="absolute top-4 left-4 z-40">
                         <span className="bg-rhum-gold text-rhum-green text-[7px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-sm flex items-center gap-2">
@@ -57,14 +57,17 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
 
             <div className="flex flex-col px-1">
-                <p className="text-rhum-gold/40 text-[8px] uppercase tracking-[0.4em] mb-2 font-black">
+                {/* 🏺 Correction : Suppression de l'opacité (/40) pour un Or pur et éclatant */}
+                <p className="text-rhum-gold text-[8px] uppercase tracking-[0.4em] mb-2 font-black">
                     {product.category?.name}
                 </p>
+
                 <div className="flex justify-between items-baseline gap-4">
                     <h3 className="text-2xl font-serif text-white uppercase tracking-tight group-hover:text-rhum-gold transition-colors">
                         {product.name}
                     </h3>
-                    <span className="font-serif text-xl text-white/80">
+                    {/* 🏺 Prix en Blanc haute visibilité */}
+                    <span className="font-serif text-xl text-white">
                         {startingPrice}€
                     </span>
                 </div>

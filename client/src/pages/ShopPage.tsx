@@ -19,7 +19,6 @@ export default function ShopPage() {
         window.scrollTo(0, 0);
         const fetchData = async () => {
             try {
-                // 🏺 Synchronisation simultanée du Registre
                 const [productsRes, categoriesRes] = await Promise.all([
                     api.get('/products'),
                     api.get('/categories')
@@ -49,9 +48,11 @@ export default function ShopPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
-                <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.3em] uppercase text-[10px] font-black">
-                    Extraction des essences du Registre...
-                </p>
+                <div className="text-center">
+                    <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.4em] uppercase text-[12px] font-black">
+                        Consultation du Registre des Essences...
+                    </p>
+                </div>
             </div>
         );
     }
@@ -60,29 +61,39 @@ export default function ShopPage() {
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen bg-[#0a1a14] pt-40 md:pt-60 pb-20 px-4 md:px-6 font-sans selection:bg-rhum-gold/30"
+            /* 🏺 Correction : Réduction du PT (Top Padding) de 60 à 32 pour remonter le contenu */
+            className="min-h-screen bg-[#0a1a14] pt-24 md:pt-32 pb-20 px-4 md:px-6 font-sans selection:bg-rhum-gold/40"
         >
             <div className="max-w-7xl mx-auto">
-                <header className="text-center mb-10 md:mb-16">
-                    <h1 className="text-4xl md:text-8xl font-serif text-white tracking-tighter uppercase mb-4">
+
+                {/* 🏺 HEADER : Format Compact Prestige */}
+                <header className="text-center mb-8 md:mb-12 relative">
+                    {/* 🏺 Correction : Taille de police réduite de 9xl à 7xl pour libérer de l'espace vertical */}
+                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
                         La <span className="text-rhum-gold">Boutique</span>
                     </h1>
-                    <p className="text-rhum-cream/40 max-w-xl mx-auto text-[10px] md:text-xs uppercase tracking-[0.4em] mt-10 leading-relaxed font-black">
-                        Chaque flacon est une promesse de voyage, distillée avec passion au sein de l'Établissement.
-                    </p>
+
+                    <div className="mt-6 flex justify-center gap-4">
+                        <div className="h-[1px] w-8 bg-rhum-gold/30 self-center" />
+                        <span className="text-rhum-gold text-[9px] font-black tracking-[0.3em] uppercase">Atelier de la route du Rhum</span>
+                        <div className="h-[1px] w-8 bg-rhum-gold/30 self-center" />
+                    </div>
                 </header>
 
-                <ShopFilters
-                    categories={categories}
-                    activeCat={activeCat}
-                    onCatChange={setActiveCat}
-                    onSortChange={setSortOrder}
-                />
+                {/* 🏺 FILTRES : Position remontée */}
+                <div className="mb-12 md:mb-16">
+                    <ShopFilters
+                        categories={categories}
+                        activeCat={activeCat}
+                        onCatChange={setActiveCat}
+                        onSortChange={setSortOrder}
+                    />
+                </div>
 
-                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 md:gap-x-12 md:gap-y-24">
+                {/* 🏺 GRILLE DE CATALOGUE : Désormais visible dès l'ouverture */}
+                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16 md:gap-x-16 md:gap-y-24">
                     <AnimatePresence mode="popLayout">
                         {processedProducts.map((product) => (
-                            /* 🏺 Appel simplifié : Seul le produit est nécessaire désormais */
                             <ProductCard
                                 key={product.id}
                                 product={product}
@@ -91,14 +102,22 @@ export default function ShopPage() {
                     </AnimatePresence>
                 </motion.div>
 
+                {/* ... État vide et réassurance ... */}
                 {processedProducts.length === 0 && (
-                    <div className="py-24 text-center border border-white/5 bg-white/[0.01]">
-                        <p className="font-serif italic text-rhum-cream/20 text-xl tracking-wider uppercase">
-                            Cet élixir n'a pas encore rejoint le Registre...
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="py-24 text-center border border-white/10 bg-white/5 rounded-sm"
+                    >
+                        <p className="font-serif italic text-white text-xl tracking-widest uppercase">
+                            Cet élixir n'a pas encore rejoint le <span className="text-rhum-gold">Registre</span>.
                         </p>
-                    </div>
+                    </motion.div>
                 )}
-                <ShopReassurance />
+
+                <div className="mt-32 border-t border-white/5 pt-16">
+                    <ShopReassurance />
+                </div>
             </div>
         </motion.main>
     );
