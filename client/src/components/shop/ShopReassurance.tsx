@@ -1,42 +1,48 @@
+import { Award, Store, ShieldCheck } from 'lucide-react'; // 🏺 Icônes institutionnelles
+
 export default function ShopReassurance() {
     return (
-        <footer className="mt-40 border-t border-rhum-gold/10 pt-20 pb-10">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center mb-20">
+        <footer className="mt-40 border-t border-rhum-gold/20 pt-24 pb-12 font-sans">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center mb-24 max-w-6xl mx-auto">
 
                 {/* Savoir-faire */}
                 <div className="flex flex-col items-center">
-                    <span className="text-2xl mb-5">🇫🇷</span>
-                    <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Savoir-Faire Français</h4>
-                    <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Chaque bouteille est une création artisanale conçue à la main dans notre Atelier au cœur de Compiègne.
+                    <Award className="w-8 h-8 mb-6 text-rhum-gold" strokeWidth={1.5} />
+                    <h4 className="text-rhum-gold text-[11px] uppercase tracking-[0.4em] font-black mb-5">
+                        Savoir-Faire Français
+                    </h4>
+                    {/* 🏺 Correction : Texte en Blanc pur pour lisibilité sur Mac/Mobile */}
+                    <p className="text-white text-[11px] md:text-xs leading-relaxed px-6 font-medium">
+                        Chaque flacon est une création artisanale scellée à la main dans notre <span className="text-rhum-gold">Établissement</span> au cœur de Compiègne.
                     </p>
                 </div>
 
-                {/* Retrait - Icône Bouteille SVG */}
+                {/* Retrait - Icône Boutique */}
                 <div className="flex flex-col items-center">
-                    <svg className="w-8 h-8 mb-5 text-rhum-gold opacity-80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                        <path d="M9 3h6v3a3 3 0 0 1-3 3h0a3 3 0 0 1-3-3V3z" />
-                        <path d="M7 11.5a4.5 4.5 0 0 1 4.5-4.5h1a4.5 4.5 0 0 1 4.5 4.5V21H7v-9.5z" />
-                        <line x1="7" y1="15" x2="17" y2="15" />
-                    </svg>
-                    <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Retrait à l'Atelier</h4>
-                    <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Réservez vos bouteilles en ligne et récupérez-les exclusivement à notre atelier. Expédition postale bientôt disponible.
+                    <Store className="w-8 h-8 mb-6 text-rhum-gold" strokeWidth={1.5} />
+                    <h4 className="text-rhum-gold text-[11px] uppercase tracking-[0.4em] font-black mb-5">
+                        Retrait à l'Établissement
+                    </h4>
+                    {/* 🏺 Correction : Suppression du terme "Atelier" */}
+                    <p className="text-white text-[11px] md:text-xs leading-relaxed px-6 font-medium">
+                        Commandez en ligne et retirez vos bouteilles directement à l'établissement. Expédition postale prochainement disponible.
                     </p>
                 </div>
 
                 {/* Sécurité */}
                 <div className="flex flex-col items-center">
-                    <span className="text-2xl mb-5">🔒</span>
-                    <h4 className="text-rhum-gold text-[10px] uppercase tracking-[0.3em] font-bold mb-4">Paiement Sécurisé</h4>
-                    <p className="text-white/40 text-xs font-sans leading-relaxed px-4">
-                        Transactions protégées par Stripe. Votre bouteille est mis de côté dès validation du paiement.
+                    <ShieldCheck className="w-8 h-8 mb-6 text-rhum-gold" strokeWidth={1.5} />
+                    <h4 className="text-rhum-gold text-[11px] uppercase tracking-[0.4em] font-black mb-5">
+                        Paiement Sécurisé
+                    </h4>
+                    <p className="text-white text-[11px] md:text-xs leading-relaxed px-6 font-medium">
+                        Transactions certifiées par Stripe. Vos références sont immédiatement mises de côté dès la validation du paiement.
                     </p>
                 </div>
             </div>
 
-            {/* Mention légale obligatoire */}
-            <p className="text-center text-[9px] text-white/20 uppercase tracking-[0.4em]">
+            {/* Mention légale : Visibilité augmentée (60%) mais reste discrète */}
+            <p className="text-center text-[10px] text-white/60 uppercase tracking-[0.5em] font-black px-4">
                 L'abus d'alcool est dangereux pour la santé — À consommer avec modération
             </p>
         </footer>

@@ -50,7 +50,7 @@ export default function ShopPage() {
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
                 <div className="text-center">
                     <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.4em] uppercase text-[12px] font-black">
-                        Consultation du Registre des Essences...
+                        Chargement des bouteilles...
                     </p>
                 </div>
             </div>
@@ -115,9 +115,8 @@ export default function ShopPage() {
                     </motion.div>
                 )}
 
-                <div className="mt-32 border-t border-white/5 pt-16">
-                    <ShopReassurance />
-                </div>
+                <ShopReassurance />
+
             </div>
         </motion.main>
     );
