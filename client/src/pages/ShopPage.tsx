@@ -1,33 +1,25 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../api/axiosInstance';
-import { Product, ProductVolume } from '../types/shop';
-import { useToastStore } from '../store/toastStore';
+import { Product } from '../types/shop';
 
 // Composants certifiés
 import ProductCard from '../components/shop/ProductCard.tsx';
 import ShopFilters from '../components/shop/ShopFilters.tsx';
 import ShopReassurance from '../components/shop/ShopReassurance.tsx';
 
-interface ShopPageProps {
-    onAddToCart: (product: Product, volume: ProductVolume, qty: number) => void;
-    cart: any[];
-}
-
-export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
+export default function ShopPage() {
     const [products, setProducts] = useState<Product[]>([]);
     const [categories, setCategories] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [activeCat, setActiveCat] = useState<string>("TOUS");
     const [sortOrder, setSortOrder] = useState<string>("default");
-    const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
-    const addToast = useToastStore(state => state.addToast);
 
     useEffect(() => {
         window.scrollTo(0, 0);
         const fetchData = async () => {
             try {
-                // 🏺 Synchronisation simultanée du Registre des produits et des catégories
+                // 🏺 Synchronisation simultanée du Registre
                 const [productsRes, categoriesRes] = await Promise.all([
                     api.get('/products'),
                     api.get('/categories')
@@ -54,19 +46,6 @@ export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
         return filtered;
     }, [activeCat, sortOrder, products]);
 
-    const handleAddToCartWithSecurity = (product: Product, volume: ProductVolume, qty: number) => {
-        const itemInCart = cart.find(item => item.volumeId === volume.id);
-        const currentQtyInCart = itemInCart ? itemInCart.quantity : 0;
-
-        if (currentQtyInCart + qty > volume.stock) {
-            addToast(`Stock limité : ${currentQtyInCart} flacons déjà présents dans votre sélection.`, "error");
-            return;
-        }
-
-        onAddToCart(product, volume, qty);
-        addToast("Référence ajoutée avec succès.");
-    };
-
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
@@ -89,7 +68,7 @@ export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
                         La <span className="text-rhum-gold">Boutique</span>
                     </h1>
                     <p className="text-rhum-cream/40 max-w-xl mx-auto text-[10px] md:text-xs uppercase tracking-[0.4em] mt-10 leading-relaxed font-black">
-                        Chaque bouteille est une promesse de voyage, distillée avec passion au sein de l'Atelier.
+                        Chaque flacon est une promesse de voyage, distillée avec passion au sein de l'Établissement.
                     </p>
                 </header>
 
@@ -103,13 +82,10 @@ export default function ShopPage({ onAddToCart, cart }: ShopPageProps) {
                 <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16 md:gap-x-12 md:gap-y-24">
                     <AnimatePresence mode="popLayout">
                         {processedProducts.map((product) => (
+                            /* 🏺 Appel simplifié : Seul le produit est nécessaire désormais */
                             <ProductCard
                                 key={product.id}
                                 product={product}
-                                isSelected={selectedProductId === product.id}
-                                onToggleSelect={() => setSelectedProductId(selectedProductId === product.id ? null : product.id)}
-                                onAddToCart={handleAddToCartWithSecurity}
-                                currentCart={cart}
                             />
                         ))}
                     </AnimatePresence>

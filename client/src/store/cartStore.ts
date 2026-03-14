@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import {CartItem} from "../types/cart-item.ts";
+import { CartItem } from "../types/cart-item.ts";
 
 interface CartState {
     items: CartItem[];
@@ -13,7 +13,7 @@ interface CartState {
 
 /**
  * 🏺 REGISTRE DU PANIER (ZUSTAND)
- * Gère le scellage des articles, qu'il s'agisse de Cursus ou de Flacons Boutique.
+ * Gère le scellage des articles et la vérification stricte des stocks.
  */
 export const useCartStore = create<CartState>()(
     persist(
@@ -25,27 +25,33 @@ export const useCartStore = create<CartState>()(
 
             /**
              * 🏺 AJOUT AU REGISTRE DU PANIER
-             * Capture automatiquement les tarifs préférentiels et les données de Cursus.
+             * Inclut désormais une vérification de sécurité contre la sur-vente.
              */
             addItem: (product, detail, qty) => set((state) => {
                 const uniqueId = detail.cartId || detail.id;
                 const existing = state.items.find(i => i.cartId === uniqueId);
 
-                // 🏺 Mise à jour du volume si la référence est déjà scellée
+                // 🏺 Extraction de la limite du Registre (stock)
+                // Pour les produits, detail.stock est utilisé. Pour les ateliers, on peut considérer un stock infini ou spécifique.
+                const totalStock = detail.stock !== undefined ? detail.stock : 999;
+
                 if (existing) {
+                    // 🏺 Calcul de la nouvelle quantité plafonnée par le stock disponible
+                    const newQuantity = Math.min(existing.quantity + qty, totalStock);
+
                     return {
                         items: state.items.map(i => i.cartId === uniqueId
-                            ? { ...i, quantity: i.quantity + qty }
+                            ? { ...i, quantity: newQuantity }
                             : i
                         ),
                         isCartOpen: true
                     };
                 }
 
-                // 🏺 Création d'une nouvelle entrée certifiée
-                // 🏺 AJOUTEZ LES PROPRIÉTÉS MANQUANTES DANS newItem
+                // 🏺 Création d'une nouvelle entrée certifiée avec scellage du stock
                 const newItem: CartItem = {
                     cartId: uniqueId,
+                    stock: totalStock, // 🏺 Archivage de la limite pour contrôles futurs
                     name: product
                         ? `${product.name} (${detail.size}${detail.unit})`
                         : (detail.name || detail.title),
@@ -55,11 +61,10 @@ export const useCartStore = create<CartState>()(
                     isDiscounted: !!detail.isDiscounted,
 
                     image: product?.image || detail.image,
-                    quantity: qty,
+                    quantity: Math.min(qty, totalStock), // Sécurité dès l'insertion
 
-                    // 🏺 SCELLAGE DES TYPES (L'oubli était ici)
-                    type: detail.type,     // 🏺 INDISPENSABLE : Pour le titre cadeau
-                    amount: detail.amount, // 🏺 Valeur faciale
+                    type: detail.type,
+                    amount: detail.amount,
                     isBusiness: !!detail.isBusiness,
 
                     workshopId: !product ? (detail.workshopId || detail.id) : undefined,
@@ -68,6 +73,7 @@ export const useCartStore = create<CartState>()(
                     level: detail.level,
                     participants: detail.participants || []
                 };
+
                 return { items: [...state.items, newItem], isCartOpen: true };
             }),
 
@@ -78,7 +84,6 @@ export const useCartStore = create<CartState>()(
             clearCart: () => set({ items: [] }),
         }),
         {
-            // 🏺 Clé de session certifiée
             name: 'rhum-session-cart',
         }
     )

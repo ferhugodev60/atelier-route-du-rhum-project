@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { getShopProducts, createProduct } from '../controllers/productController';
+import { getShopProducts, getProductById, createProduct } from '../controllers/productController';
 import { getWorkshops, createWorkshop } from '../controllers/workshopController';
 import { getMe } from '../controllers/userController';
 import { authenticateToken, isAdmin } from '../middleware/authMiddleware';
@@ -8,48 +8,27 @@ import { upload } from '../config/cloudinary';
 
 const router = Router();
 
-/**
- * 🏺 MIDDLEWARE D'IDENTIFICATION OPTIONNELLE
- * Permet au Registre de reconnaître le membre (PRO/CE) pour appliquer
- * les tarifs préférentiels, sans bloquer l'accès au public.
- */
 const optionalAuth = (req: any, res: any, next: any) => {
     const token = req.headers['authorization']?.split(' ')[1];
-
     if (token) {
         try {
             req.user = jwt.verify(token, process.env.JWT_SECRET!) as any;
-        } catch {
-        }
+        } catch {}
     }
     next();
 };
 
-// --- 🛍️ CATALOGUE PRODUITS ---
-// 🏺 MODIFICATION : Identification du membre pour activer les -10%
+// --- 🛍️ CATALOGUE ---
 router.get('/', optionalAuth, getShopProducts);
+router.get('/:id', optionalAuth, getProductById); // 🏺 Route pour la page détail SEO
 
-router.post(
-    '/',
-    authenticateToken,
-    isAdmin,
-    upload.single('image'),
-    createProduct
-);
+router.post('/', authenticateToken, isAdmin, upload.single('image'), createProduct);
 
-// --- 🎓 CURSUS PROFESSIONNELS ---
-// 🏺 MODIFICATION : Identification du membre pour les tarifs Cursus institutionnels
+// --- 🎓 CURSUS ---
 router.get('/workshops', optionalAuth, getWorkshops);
+router.post('/workshops', authenticateToken, isAdmin, upload.single('image'), createWorkshop);
 
-router.post(
-    '/workshops',
-    authenticateToken,
-    isAdmin,
-    upload.single('image'),
-    createWorkshop
-);
-
-// --- 👤 ESPACE PERSONNEL ---
+// --- 👤 COMPTE ---
 router.get('/me', authenticateToken, getMe);
 
 export default router;

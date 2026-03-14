@@ -29,6 +29,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminBoutique = lazy(() => import('./pages/admin/AdminBoutique'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
+const ProductPage = lazy(() => import('./pages/ProductPage.tsx'));
 const Sections = {
     Hero: lazy(() => import('./components/sections/Hero.tsx')),
     About: lazy(() => import('./components/sections/About.tsx')),
@@ -85,6 +86,7 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/boutique" element={<ShopPage onAddToCart={addItem} cart={items} />} />
+                        <Route path="/boutique/:id" element={<ProductPage />} />
                         <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
 
                         {/* 🏺 ROUTE DES MENTIONS LÉGALES */}

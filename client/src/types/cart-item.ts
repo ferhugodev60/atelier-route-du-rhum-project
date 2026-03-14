@@ -7,6 +7,7 @@ export interface CartItem {
     price: number;
     image?: string;
     quantity: number;
+    stock: number;
 
     // 🏺 SCELLAGE DU TITRE DE CURSUS
     type?: string;   // "GIFT_CARD" ou null

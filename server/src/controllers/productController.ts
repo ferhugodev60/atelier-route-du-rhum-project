@@ -7,53 +7,36 @@ interface RequestWithFile extends Request {
 }
 
 /**
- * 🏺 Intégration d'une nouvelle référence au Registre
+ * 🏺 Utilitaire de tarification institutionnelle
+ * Formule appliquée : $Price_{final} = Price_{base} \times 0.9$
  */
-export const createProduct = async (req: RequestWithFile, res: Response) => {
-    try {
-        const { name, description, categoryId, volumes } = req.body;
-
-        // Extraction de l'URL sécurisée après téléversement
-        const imageUrl = req.file ? req.file.path : null;
-
-        const parsedVolumes = typeof volumes === 'string' ? JSON.parse(volumes) : volumes;
-
-        const product = await prisma.product.create({
-            data: {
-                name,
-                description,
-                image: imageUrl,
-                categoryId,
-                volumes: {
-                    create: parsedVolumes
-                }
-            },
-            include: { volumes: true }
-        });
-
-        res.status(201).json({ message: "Référence créée avec succès", product });
-    } catch (error: any) {
-        console.error("🔥 [REGISTRE_ERREUR]:", error.message);
-        res.status(400).json({ error: "Échec de la création de la référence et de ses formats." });
-    }
+const applyInstitutionalPricing = (volumes: any[], isInstitutional: boolean) => {
+    return volumes.map(vol => {
+        const basePrice = vol.price;
+        const finalPrice = isInstitutional ? basePrice * 0.9 : basePrice;
+        return {
+            ...vol,
+            originalPrice: basePrice,
+            price: finalPrice,
+            isDiscounted: isInstitutional
+        };
+    });
 };
 
 /**
- * 🏺 Lecture intégrale du Catalogue de l'Établissement
- * [DYNAMIQUE] : Inclut désormais toutes les collections certifiées
+ * 🏺 Lecture du Catalogue complet
  */
 export const getShopProducts = async (req: RequestWithFile, res: Response) => {
     const userId = req.user?.userId;
 
     try {
-        // 1. Identification du statut institutionnel au sein du Registre
         let isInstitutional = false;
         if (userId) {
             const user = await prisma.user.findUnique({ where: { id: userId } });
-            // 🏺 Scellage de l'éligibilité : PRO ou Particulier via CE
             isInstitutional = user?.role === 'PRO' || user?.isEmployee === true;
         }
 
+        // On précise le type attendu pour que TS reconnaisse 'volumes'
         const products = await prisma.product.findMany({
             include: {
                 volumes: true,
@@ -62,25 +45,77 @@ export const getShopProducts = async (req: RequestWithFile, res: Response) => {
             orderBy: { createdAt: 'desc' }
         });
 
-        // 2. Application dynamique du protocole de tarification
-        const productsWithScsealedPrices = products.map(product => ({
+        const productsWithPrices = products.map(product => ({
             ...product,
-            volumes: product.volumes.map(vol => {
-                const basePrice = vol.price;
-                // 🏺 Formule de remise institutionnelle : -10%
-                const finalPrice = isInstitutional ? basePrice * 0.9 : basePrice;
-
-                return {
-                    ...vol,
-                    originalPrice: basePrice, // Pour affichage "barré" côté Front
-                    price: finalPrice,
-                    isDiscounted: isInstitutional
-                };
-            })
+            volumes: applyInstitutionalPricing(product.volumes, isInstitutional)
         }));
 
-        res.json(productsWithScsealedPrices);
+        res.json(productsWithPrices);
     } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la lecture du catalogue des flacons." });
+        res.status(500).json({ error: "Erreur lors de la lecture du catalogue." });
+    }
+};
+
+/**
+ * 🏺 Lecture d'une Fiche Produit unique (Scellage SEO)
+ */
+export const getProductById = async (req: RequestWithFile, res: Response) => {
+    // 🏺 Correction TS2322 : On force le type string pour l'ID
+    const id = req.params.id as string;
+    const userId = req.user?.userId;
+
+    try {
+        let isInstitutional = false;
+        if (userId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            isInstitutional = user?.role === 'PRO' || user?.isEmployee === true;
+        }
+
+        const product = await prisma.product.findUnique({
+            where: { id: id },
+            include: {
+                volumes: true,
+                category: true
+            }
+        });
+
+        if (!product) {
+            return res.status(404).json({ message: "Référence introuvable." });
+        }
+
+        const productWithPrice = {
+            ...product,
+            volumes: applyInstitutionalPricing(product.volumes, isInstitutional)
+        };
+
+        res.json(productWithPrice);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'extraction de la fiche." });
+    }
+};
+
+/**
+ * 🏺 Création d'une nouvelle référence
+ */
+export const createProduct = async (req: RequestWithFile, res: Response) => {
+    try {
+        const { name, description, categoryId, volumes } = req.body;
+        const imageUrl = req.file ? req.file.path : null;
+        const parsedVolumes = typeof volumes === 'string' ? JSON.parse(volumes) : volumes;
+
+        const product = await prisma.product.create({
+            data: {
+                name,
+                description,
+                image: imageUrl,
+                categoryId,
+                volumes: { create: parsedVolumes }
+            },
+            include: { volumes: true }
+        });
+
+        res.status(201).json({ message: "Référence scellée avec succès", product });
+    } catch (error: any) {
+        res.status(400).json({ error: "Échec de l'intégration au Registre." });
     }
 };
