@@ -23,7 +23,7 @@ export default function ShopFilters({ categories, activeCat, onCatChange, onSort
     ];
 
     return (
-        <div className="flex flex-col gap-8 mb-10 md:mb-14 border-y border-rhum-gold/20 py-8 md:flex-row md:justify-between md:items-end font-sans">
+        <div className="flex flex-col gap-8 mb-10 md:mb-14 py-8 md:flex-row md:justify-between md:items-end font-sans">
 
             {/* COLLECTIONS DYNAMIQUES */}
             <div className="flex flex-col gap-5 items-center md:items-start">
