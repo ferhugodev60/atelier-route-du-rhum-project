@@ -1,12 +1,16 @@
 import { useState, useMemo, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import api from '../api/axiosInstance';
 import { Product } from '../types/shop';
+
+// Importation Pro
+import heroShop from '../assets/images/hero-shop.webp';
 
 // Composants certifiés
 import ProductCard from '../components/shop/ProductCard.tsx';
 import ShopFilters from '../components/shop/ShopFilters.tsx';
 import ShopReassurance from '../components/shop/ShopReassurance.tsx';
+import ScrollReveal from '../components/animations/ScrollReveal.tsx';
 
 export default function ShopPage() {
     const [products, setProducts] = useState<Product[]>([]);
@@ -14,6 +18,13 @@ export default function ShopPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [activeCat, setActiveCat] = useState<string>("TOUS");
     const [sortOrder, setSortOrder] = useState<string>("default");
+
+    const { scrollY } = useScroll();
+
+    // 🏺 Parallaxe scellé dans le territoire Héroïque
+    const yHero = useTransform(scrollY, [0, 800], [0, 200]);
+    // 🏺 L'image s'efface subtilement à l'approche de la frontière
+    const opacityHero = useTransform(scrollY, [0, 700], [1, 0.2]);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -26,7 +37,7 @@ export default function ShopPage() {
                 setProducts(productsRes.data);
                 setCategories(categoriesRes.data);
             } catch (err) {
-                console.error("Échec de synchronisation technique :", err);
+                console.error("Échec technique :", err);
             } finally {
                 setIsLoading(false);
             }
@@ -48,11 +59,9 @@ export default function ShopPage() {
     if (isLoading) {
         return (
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
-                <div className="text-center">
-                    <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.4em] uppercase text-[12px] font-black">
-                        Chargement des bouteilles...
-                    </p>
-                </div>
+                <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.4em] uppercase text-[12px] font-black">
+                    Consultation du Registre...
+                </p>
             </div>
         );
     }
@@ -61,62 +70,92 @@ export default function ShopPage() {
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            /* 🏺 Correction : Réduction du PT (Top Padding) de 60 à 32 pour remonter le contenu */
-            className="min-h-screen bg-[#0a1a14] pt-24 md:pt-32 pb-20 px-4 md:px-6 font-sans selection:bg-rhum-gold/40"
+            className="min-h-screen bg-[#0a1a14] selection:bg-rhum-gold/40 overflow-x-hidden"
         >
-            <div className="max-w-7xl mx-auto">
+            {/* --- 🏺 SECTION 1 : TERRITOIRE HÉROÏQUE (Full width/Height) --- */}
+            <div className="relative w-full h-[80vh] md:h-[100vh] overflow-hidden border-b border-white/10 z-0">
 
-                {/* 🏺 HEADER : Format Compact Prestige */}
-                <header className="text-center mb-8 md:mb-12 relative">
-                    {/* 🏺 Correction : Taille de police réduite de 9xl à 7xl pour libérer de l'espace vertical */}
-                    <h1 className="text-5xl md:text-7xl lg:text-8xl font-serif text-white tracking-tighter uppercase mb-4 drop-shadow-2xl">
-                        La <span className="text-rhum-gold">Boutique</span>
-                    </h1>
-
-                    <div className="mt-6 flex justify-center gap-4">
-                        <div className="h-[1px] w-8 bg-rhum-gold/30 self-center" />
-                        <span className="text-rhum-gold text-[9px] font-black tracking-[0.3em] uppercase">Atelier de la route du Rhum</span>
-                        <div className="h-[1px] w-8 bg-rhum-gold/30 self-center" />
-                    </div>
-                </header>
-
-                {/* 🏺 FILTRES : Position remontée */}
-                <div className="mb-12 md:mb-16">
-                    <ShopFilters
-                        categories={categories}
-                        activeCat={activeCat}
-                        onCatChange={setActiveCat}
-                        onSortChange={setSortOrder}
+                {/* Image de fond avec Parallaxe et Filtre Vert */}
+                <motion.div style={{ y: yHero, opacity: opacityHero }} className="absolute inset-0 z-0">
+                    <img
+                        src={heroShop}
+                        className="w-full h-full object-cover"
+                        alt="Bannière Établissement"
+                        loading="eager"
                     />
-                </div>
 
-                {/* 🏺 GRILLE DE CATALOGUE : Désormais visible dès l'ouverture */}
-                <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-10 gap-y-16 md:gap-x-16 md:gap-y-24">
-                    <AnimatePresence mode="popLayout">
-                        {processedProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                            />
-                        ))}
-                    </AnimatePresence>
+                    {/* LE FILTRE VERT SCELLÉ */}
+                    <div className="absolute inset-0 bg-[#0a1a14]/60 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-[#0a1a14]/40" />
                 </motion.div>
 
-                {/* ... État vide et réassurance ... */}
-                {processedProducts.length === 0 && (
+                {/* Contenu du Header (Centré dans le Banner) */}
+                <div className="relative z-10 flex flex-col items-center justify-center h-full px-4 md:px-6">
+                    <header className="text-center">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            transition={{ duration: 1.5, ease: "easeOut" }}
+                        >
+                            <h1 className="text-6xl md:text-9xl font-serif text-white uppercase mb-10 tracking-tighter drop-shadow-[0_15px_35px_rgba(0,0,0,0.6)]">
+                                La <span className="text-rhum-gold">Boutique</span>
+                            </h1>
+                        </motion.div>
+                    </header>
+                </div>
+            </div>
+
+            {/* 🏺 FRONTIÈRE DE SCÉLLAGE (Le délimiteur horizontal) */}
+            <div className="w-full h-[1px] bg-white/10 z-30" />
+
+            {/* --- 🏺 SECTION 2 : TERRITOIRE DES ESSENCES (Solid background) --- */}
+            <div className="relative z-20 bg-[#0a1a14] pt-16 md:pt-24 pb-20 px-4 md:px-6">
+                <div className="max-w-7xl mx-auto">
+
+                    {/* COLLECTIONS & FILTRES : Positionnés sur le fond uni */}
+                    <ScrollReveal>
+                        <div className="mb-20 md:mb-28">
+                            <ShopFilters
+                                categories={categories}
+                                activeCat={activeCat}
+                                onCatChange={setActiveCat}
+                                onSortChange={setSortOrder}
+                            />
+                        </div>
+                    </ScrollReveal>
+
+                    {/* GRILLE DE PRODUITS */}
                     <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        className="py-24 text-center border border-white/10 bg-white/5 rounded-sm"
+                        layout
+                        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-12 gap-y-24 md:gap-y-32"
                     >
-                        <p className="font-serif italic text-white text-xl tracking-widest uppercase">
-                            Cet élixir n'a pas encore rejoint le <span className="text-rhum-gold">Registre</span>.
-                        </p>
+                        <AnimatePresence mode="popLayout">
+                            {processedProducts.map((product, index) => (
+                                <motion.div
+                                    key={product.id}
+                                    initial={{ opacity: 0, y: 30 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true }}
+                                    transition={{ delay: index * 0.05, duration: 0.7 }}
+                                >
+                                    <ProductCard product={product} />
+                                </motion.div>
+                            ))}
+                        </AnimatePresence>
                     </motion.div>
-                )}
 
-                <ShopReassurance />
+                    {processedProducts.length === 0 && (
+                        <div className="py-32 text-center border border-white/10 bg-white/5 rounded-sm">
+                            <p className="font-serif italic text-white text-2xl tracking-widest uppercase">
+                                Aucune bouteille disponible dans le Registre.
+                            </p>
+                        </div>
+                    )}
 
+                    <div className="mt-40 border-t border-white/5 pt-20">
+                        <ShopReassurance />
+                    </div>
+                </div>
             </div>
         </motion.main>
     );
