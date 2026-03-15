@@ -30,10 +30,11 @@ const AdminBoutique = lazy(() => import('./pages/admin/AdminBoutique'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 const ProductPage = lazy(() => import('./pages/ProductPage.tsx'));
-
-// 🏺 Nouvelles Routes des Cursus et Ateliers
 const AtelierConceptionPage = lazy(() => import('./pages/AtelierConceptionPage.tsx'));
 const WorkshopDetails = lazy(() => import('./pages/WorkshopDetails.tsx'));
+
+// 🏺 Nouveau : Page dédiée aux Titres au Porteur
+const GiftCardPage = lazy(() => import('./pages/GiftCardPage.tsx'));
 
 const Sections = {
     Hero: lazy(() => import('./components/sections/Hero.tsx')),
@@ -44,18 +45,14 @@ const Sections = {
 };
 
 function HomePage() {
-    const addItem = useCartStore(state => state.addItem);
+    // 🏺 Correction : Workshops utilise désormais le store en interne, plus besoin de props.
     return (
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
             <section id="workshops">
                 <ScrollReveal>
-                    <Sections.Workshops
-                        onAddToCart={(ws: any, q: number) => {
-                            addItem(null, ws, q);
-                        }}
-                    />
+                    <Sections.Workshops />
                 </ScrollReveal>
             </section>
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
@@ -65,13 +62,13 @@ function HomePage() {
 }
 
 export default function App() {
-    const { items, isCartOpen, setCartOpen, removeItem, addItem } = useCartStore();
+    const { items, isCartOpen, setCartOpen, removeItem } = useCartStore();
 
     return (
         <BrowserRouter>
             <div className="min-h-screen bg-[#0a1a14] font-sans text-rhum-cream">
 
-                {/* --- 🏺 GESTION DES EXCLUSIONS (Navbar) --- */}
+                {/* --- 🏺 NAVBAR --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
@@ -90,15 +87,17 @@ export default function App() {
                 <Suspense fallback={<div className="h-screen bg-[#0a1a14] flex items-center justify-center" />}>
                     <Routes>
                         <Route path="/" element={<HomePage />} />
-                        <Route path="/boutique" element={<ShopPage onAddToCart={addItem} cart={items} />} />
+
+                        {/* 🏺 Correction : ShopPage gère son propre état via Zustand */}
+                        <Route path="/boutique" element={<ShopPage />} />
                         <Route path="/boutique/:id" element={<ProductPage />} />
                         <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
 
-                        {/* 🏺 ROUTES DES ATELIERS & CURSUS SCELLÉES */}
-                        {/* La Roadmap du parcours Conception */}
                         <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
-                        {/* La Fiche Technique (Découverte ou Niveaux 1-4) */}
                         <Route path="/ateliers/:id" element={<WorkshopDetails />} />
+
+                        {/* 🏺 Nouvelle Route : Fiche technique Carte Cadeau */}
+                        <Route path="/carte-cadeau" element={<GiftCardPage />} />
 
                         <Route path="/mentions-legales" element={<LegalMentions />} />
                         <Route path="/cgv" element={<TermsAndConditions />} />
@@ -126,7 +125,7 @@ export default function App() {
                 <PaymentSuccess />
                 <PaymentError />
 
-                {/* --- 🏺 GESTION DES EXCLUSIONS (Panier) --- */}
+                {/* --- 🏺 PANIER --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
@@ -144,7 +143,7 @@ export default function App() {
                     />
                 </Routes>
 
-                {/* --- 🏺 GESTION DES EXCLUSIONS (Footer) --- */}
+                {/* --- 🏺 FOOTER --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />

@@ -58,26 +58,33 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
 
         try {
             const payload = {
-                items: items.map(item => ({
-                    type: item.type ? item.type.toUpperCase() : null,
-                    amount: Number(item.price || item.amount || 0),
-                    workshopId: item.workshopId || (item.type !== 'GIFT_CARD' && !item.volumeId ? item.id : null),
-                    volumeId: item.volumeId || null,
-                    quantity: Number(item.quantity) || 1,
-                    isBusiness: !!item.isBusiness,
-                    participants: item.participants || []
-                })),
+                items: items.map(item => {
+                    // 🏺 Identification explicite du type
+                    const isWorkshop = item.workshopId || item.level !== undefined;
+                    const isGiftCard = item.type === 'GIFT_CARD';
+                    const isProduct = !isWorkshop && !isGiftCard;
+
+                    return {
+                        // On envoie l'ID dans le champ attendu par le serveur
+                        workshopId: isWorkshop ? (item.workshopId || item.id) : null,
+                        volumeId: isProduct ? (item.volumeId || item.id) : null,
+                        type: isGiftCard ? 'GIFT_CARD' : (isWorkshop ? 'WORKSHOP' : 'PRODUCT'),
+
+                        price: Number(item.price || 0),
+                        quantity: Number(item.quantity) || 1,
+                        isBusiness: !!item.isBusiness,
+                        participants: item.participants || [],
+                        name: item.name
+                    };
+                }),
                 giftCardCode: appliedDiscount > 0 ? giftCode : null
             };
 
             const response = await api.post('/checkout/create-session', payload);
+            if (response.data.url) window.location.href = response.data.url;
 
-            if (response.data.url) {
-                window.location.href = response.data.url;
-            }
         } catch (error: any) {
-            const errorMsg = error.response?.data?.error || "Échec technique du Registre financier.";
-            setOrderError(errorMsg);
+            setOrderError(error.response?.data?.error || "Échec de synchronisation financière.");
         } finally {
             setIsSubmitting(false);
         }

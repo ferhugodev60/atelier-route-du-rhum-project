@@ -1,20 +1,15 @@
 import { useState, useEffect, useMemo } from 'react';
-import { AnimatePresence } from 'framer-motion';
 import api from '../../../api/axiosInstance';
 import WorkshopCard from './WorkshopCard.tsx';
-import ConceptionCard from './ConceptionCard.tsx'; // Assurez-vous d'y ajouter le bouton "Savoir plus" également
+import ConceptionCard from './ConceptionCard.tsx';
 import ShopBanner from './ShopBanner.tsx';
 import GiftBanner from './GiftBanner.tsx';
-import GiftModal from './GiftModal.tsx';
 import { Workshop } from "../../../types/workshop.ts";
-import { useAuthStore } from "../../../store/authStore";
 
 export default function Workshops() {
+    // 🏺 Rectification du nom de la fonction (setWorkshops au lieu de setSetWorkshops)
     const [workshops, setWorkshops] = useState<Workshop[]>([]);
-    const [isGiftModalOpen, setIsGiftModalOpen] = useState(false);
     const [loading, setLoading] = useState(true);
-
-    const { user } = useAuthStore();
 
     useEffect(() => {
         const fetchWorkshops = async () => {
@@ -56,29 +51,14 @@ export default function Workshops() {
                 </header>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 mb-12 items-stretch">
-                    {/* 🏺 Carte Découverte (Niveau 0) */}
-                    {discoveryWorkshop && (
-                        <WorkshopCard workshop={discoveryWorkshop} />
-                    )}
-
-                    {/* 🏺 Cartes Conception (Niveaux 1-4) */}
+                    {discoveryWorkshop && <WorkshopCard workshop={discoveryWorkshop} />}
                     <ConceptionCard workshops={conceptionWorkshops} />
                 </div>
 
-                {/* Bannières de transition */}
                 <div className="mt-24 space-y-20">
                     <ShopBanner />
-                    <GiftBanner onOpenModal={() => setIsGiftModalOpen(true)} />
+                    <GiftBanner />
                 </div>
-
-                <AnimatePresence>
-                    {isGiftModalOpen && (
-                        <GiftModal
-                            onClose={() => setIsGiftModalOpen(false)}
-                            onConfirm={(amount) => {/* Logique d'ajout de carte cadeau */}}
-                        />
-                    )}
-                </AnimatePresence>
             </div>
         </section>
     );
