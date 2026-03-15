@@ -6,23 +6,21 @@ interface RequestWithFile extends Request {
 }
 
 /**
- * 🏺 GESTIONNAIRE DES SÉANCES TECHNIQUE
- * Administre les modules de formation et leurs règles de caducité.
+ * 🏺 GESTIONNAIRE DES SÉANCES TECHNIQUES
+ * Administre les cursus de formation et leurs règles de validité.
  */
 
-// --- 📋 LECTURE (Enrichie avec la validité) ---
+// --- 📋 LECTURE (Enrichie) ---
 export const getWorkshops = async (req: Request, res: Response) => {
     try {
         const workshops = await prisma.workshop.findMany({
             orderBy: { level: 'asc' }
         });
 
-        // 🏺 Application des règles de validité du Registre
         const enrichedWorkshops = workshops.map(ws => {
-            const isConception = ws.level > 0 || ws.title.toLowerCase().includes('free');
+            const isConception = ws.level > 0 || ws.title.toLowerCase().includes('conception');
             return {
                 ...ws,
-                // 30 jours pour le Niveau 0, 6 mois pour les paliers techniques
                 validityDays: isConception ? 180 : 30,
                 validityPeriod: isConception ? "6 mois" : "30 jours"
             };
@@ -30,14 +28,46 @@ export const getWorkshops = async (req: Request, res: Response) => {
 
         res.json(enrichedWorkshops);
     } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la récupération des séances." });
+        res.status(500).json({ error: "Erreur lors de la récupération des paliers techniques." });
     }
 };
 
-// --- ➕ CRÉATION (Sécurisée) ---
+// --- 🔍 LECTURE INDIVIDUELLE ---
+export const getWorkshopById = async (req: Request, res: Response) => {
+    const id = req.params.id as string;
+
+    try {
+        const workshop = await prisma.workshop.findUnique({
+            where: { id }
+        });
+
+        if (!workshop) {
+            return res.status(404).json({ error: "Ce palier technique n'existe pas dans le Registre." });
+        }
+
+        // 🏺 On applique la même logique de validité pour la page "Détails"
+        const isConception = workshop.level > 0 || workshop.title.toLowerCase().includes('conception');
+        const enrichedWorkshop = {
+            ...workshop,
+            validityDays: isConception ? 180 : 30,
+            validityPeriod: isConception ? "6 mois" : "30 jours"
+        };
+
+        res.json(enrichedWorkshop);
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la lecture du cursus." });
+    }
+};
+
+// --- ➕ CRÉATION ---
 export const createWorkshop = async (req: RequestWithFile, res: Response) => {
     try {
-        const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
+        const {
+            level, title, description, fullDescription,
+            color, format, duration, availability,
+            quote, price, priceInstitutional
+        } = req.body;
+
         const imageUrl = req.file ? req.file.path : null;
 
         const workshop = await prisma.workshop.create({
@@ -45,8 +75,10 @@ export const createWorkshop = async (req: RequestWithFile, res: Response) => {
                 level: parseInt(level),
                 title,
                 description,
+                fullDescription,
                 color,
                 format,
+                duration,
                 availability,
                 quote,
                 price: parseFloat(price),
@@ -57,21 +89,27 @@ export const createWorkshop = async (req: RequestWithFile, res: Response) => {
 
         res.status(201).json(workshop);
     } catch (error: any) {
-        res.status(400).json({ error: "Niveau déjà existant ou données de séance invalides." });
+        res.status(400).json({ error: "Conflit de palier ou données de cursus invalides." });
     }
 };
 
-// --- 🔧 MODIFICATION (Sécurisée) ---
+// --- 🔧 MODIFICATION ---
 export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
     const id = req.params.id as string;
     try {
-        const { level, title, description, color, format, availability, quote, price, priceInstitutional } = req.body;
+        const {
+            level, title, description, fullDescription,
+            color, format, duration, availability,
+            quote, price, priceInstitutional
+        } = req.body;
 
         const updateData: any = {
             title,
             description,
+            fullDescription,
             color,
             format,
+            duration,
             availability,
             quote,
             level: level ? parseInt(level) : undefined,
@@ -90,7 +128,7 @@ export const updateWorkshop = async (req: RequestWithFile, res: Response) => {
 
         res.json(workshop);
     } catch (error) {
-        res.status(404).json({ error: "Séance introuvable au Registre." });
+        res.status(404).json({ error: "Référence introuvable au Registre." });
     }
 };
 
@@ -99,8 +137,8 @@ export const deleteWorkshop = async (req: Request, res: Response) => {
     const id = req.params.id as string;
     try {
         await prisma.workshop.delete({ where: { id } });
-        res.json({ message: "La séance a été retirée du catalogue officiel." });
+        res.json({ message: "Le cursus a été retiré du catalogue officiel." });
     } catch (error) {
-        res.status(400).json({ error: "Suppression impossible : des commandes sont liées à cette séance." });
+        res.status(400).json({ error: "Suppression impossible : des membres sont déjà inscrits à ce palier." });
     }
 };

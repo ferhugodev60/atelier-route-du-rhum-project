@@ -21,7 +21,7 @@ import TermsAndConditions from "./pages/TermsAndConditions.tsx";
 
 // --- Imports (Lazy Loading) ---
 const LegalMentions = lazy(() => import('./pages/LegalMentions.tsx'));
-const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx')); // 🏺 Nouveau : Scellage du secret personnel
+const ResetPassword = lazy(() => import('./pages/ResetPassword.tsx'));
 const ValidationPage = lazy(() => import('./pages/ValidationPage.tsx'));
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
 const AdminLayout = lazy(() => import('./components/admin/AdminLayout'));
@@ -30,6 +30,11 @@ const AdminBoutique = lazy(() => import('./pages/admin/AdminBoutique'));
 
 const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 const ProductPage = lazy(() => import('./pages/ProductPage.tsx'));
+
+// 🏺 Nouvelles Routes des Cursus et Ateliers
+const AtelierConceptionPage = lazy(() => import('./pages/AtelierConceptionPage.tsx'));
+const WorkshopDetails = lazy(() => import('./pages/WorkshopDetails.tsx'));
+
 const Sections = {
     Hero: lazy(() => import('./components/sections/Hero.tsx')),
     About: lazy(() => import('./components/sections/About.tsx')),
@@ -89,16 +94,15 @@ export default function App() {
                         <Route path="/boutique/:id" element={<ProductPage />} />
                         <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
 
-                        {/* 🏺 ROUTE DES MENTIONS LÉGALES */}
+                        {/* 🏺 ROUTES DES ATELIERS & CURSUS SCELLÉES */}
+                        {/* La Roadmap du parcours Conception */}
+                        <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
+                        {/* La Fiche Technique (Découverte ou Niveaux 1-4) */}
+                        <Route path="/ateliers/:id" element={<WorkshopDetails />} />
+
                         <Route path="/mentions-legales" element={<LegalMentions />} />
-
-                        {/* 🏺 ROUTE DES MENTIONS LÉGALES */}
                         <Route path="/cgv" element={<TermsAndConditions />} />
-
-                        {/* 🏺 ROUTE PUBLIQUE DE SCELLAGE PAR QR CODE */}
                         <Route path="/validate/:participantId" element={<ValidationPage />} />
-
-                        {/* 🏺 ROUTE DE DÉFINITION DU SECRET PERSONNEL */}
                         <Route path="/reset-password" element={<ResetPassword />} />
 
                         {/* --- ROUTES ADMIN --- */}

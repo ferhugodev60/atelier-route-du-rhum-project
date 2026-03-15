@@ -73,16 +73,18 @@ model ProductVolume {
 model Workshop {
   id                 String      @id @default(uuid())
   level              Int
-  type               String      @default("PARTICULIER") // "PARTICULIER" ou "ENTREPRISE"
+  type               String      @default("PARTICULIER")
   title              String
   description        String
+  fullDescription    String?     @default("")
   image              String?
   color              String?
-  format             String
-  availability       String?
+  format             String // Contient actuellement la durée dans vos données
+  duration           String? // Nouveau champ dédié
+  availability       String? // "Du mardi au samedi..."
   quote              String
-  price              Float // Tarif Public
-  priceInstitutional Float       @default(0) // Tarif PRO / Salarié CE
+  price              Float
+  priceInstitutional Float       @default(0)
   orderItems         OrderItem[]
 
   @@unique([level, type])
