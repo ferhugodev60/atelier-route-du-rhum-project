@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
@@ -13,6 +13,33 @@ export default function RegisterModal() {
     const [isPro, setIsPro] = useState(false);
     const [isEmployee, setIsEmployee] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+
+    // 🏺 PROTOCOLE DE SÉCURITÉ : Fixation de l'arrière-plan
+    useEffect(() => {
+        if (isRegisterOpen) {
+            const scrollY = window.scrollY;
+            document.documentElement.style.overflow = 'hidden';
+            document.body.style.overflow = 'hidden';
+            document.body.style.position = 'fixed';
+            document.body.style.top = `-${scrollY}px`;
+            document.body.style.width = '100%';
+        } else {
+            const scrollY = document.body.style.top;
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+            document.body.style.top = '';
+            document.body.style.width = '';
+            if (scrollY) {
+                window.scrollTo(0, parseInt(scrollY || '0') * -1);
+            }
+        }
+        return () => {
+            document.documentElement.style.overflow = '';
+            document.body.style.overflow = '';
+            document.body.style.position = '';
+        };
+    }, [isRegisterOpen]);
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -45,31 +72,34 @@ export default function RegisterModal() {
         }
     };
 
-    // 🏺 Styles adaptatifs pour une lecture fluide sur mobile
     const labelStyle = "text-[9px] md:text-[11px] uppercase tracking-[0.25em] text-rhum-gold font-black mb-1.5 block ml-1";
-    /* Placeholder opacité augmentée à 30% pour la visibilité */
     const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-3 md:py-4 px-4 md:px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-sm md:text-base placeholder:text-white/30 uppercase font-medium rounded-sm";
 
     return (
         <AnimatePresence>
             {isRegisterOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-6 md:px-4 md:py-10">
+                <div className="fixed inset-0 z-[100] overflow-y-auto bg-[#0a1a14] md:bg-transparent">
+
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/96 backdrop-blur-xl cursor-pointer"
+                        className="hidden md:block fixed inset-0 bg-black/96 backdrop-blur-xl cursor-pointer"
                         onClick={() => setRegisterOpen(false)}
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                        initial={{ opacity: 0, y: 0, scale: 1 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 15, scale: 0.98 }}
-                        className="relative bg-[#0a1a14] border border-rhum-gold/20 p-6 md:p-14 w-full max-w-xl shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-sm max-h-[90vh] md:max-h-full overflow-y-auto custom-scrollbar cursor-default"
+                        exit={{ opacity: 0 }}
+                        className={`
+                            relative z-10 bg-[#0a1a14] flex flex-col min-h-screen w-full
+                            md:min-h-0 md:max-w-xl md:mx-auto md:my-10 md:border md:border-rhum-gold/20 md:p-14 md:shadow-[0_0_50px_rgba(0,0,0,0.9)] md:rounded-sm
+                            p-8 pt-24
+                        `}
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
+                        <div className="hidden md:block absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
                         <button
                             onClick={() => setRegisterOpen(false)}
@@ -78,7 +108,7 @@ export default function RegisterModal() {
                             &times;
                         </button>
 
-                        <header className="text-center mb-8 md:mb-12">
+                        <header className="text-center mb-10 md:mb-12">
                             <span className="text-rhum-gold text-[8px] md:text-[10px] uppercase tracking-[0.5em] mb-3 block font-black">Accès Client</span>
                             <h2 className="text-2xl md:text-5xl font-serif text-white uppercase tracking-tighter">Créer un Compte</h2>
 
@@ -103,7 +133,7 @@ export default function RegisterModal() {
                         </header>
 
                         {success ? (
-                            <div className="py-12 md:py-16 text-center space-y-4 md:space-y-6">
+                            <div className="py-16 text-center space-y-6 flex-1 flex flex-col justify-center">
                                 <div className="w-16 h-16 md:w-20 md:h-20 border border-rhum-gold rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-gold-glow">
                                     <ShieldCheck className="text-rhum-gold" size={32} />
                                 </div>
@@ -111,8 +141,7 @@ export default function RegisterModal() {
                                 <p className="text-[9px] md:text-[11px] text-white/40 uppercase tracking-[0.3em] font-black">Ouverture de votre espace...</p>
                             </div>
                         ) : (
-                            <form onSubmit={handleRegister} className="space-y-6 md:space-y-8">
-
+                            <form onSubmit={handleRegister} className="space-y-6 md:space-y-8 flex-1">
                                 {!isPro && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                                         <div className="space-y-1.5">
@@ -149,21 +178,22 @@ export default function RegisterModal() {
                                             <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className={inputStyle} />
                                         </div>
                                         <div className="space-y-1.5">
-                                            <label className={labelStyle}>SIRET (14 CHIFFRES)</label>
+                                            <label className={labelStyle}>SIRET</label>
                                             <input name="siret" required pattern="[0-9]{14}" placeholder="000 000 000 00000" className={inputStyle} />
                                         </div>
                                     </motion.div>
                                 )}
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                    <div className="space-y-1.5">
-                                        <label className={labelStyle}>Email</label>
-                                        <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className={labelStyle}>Téléphone</label>
-                                        <input name="phone" type="tel" placeholder="06 00 00 00 00" className={inputStyle} />
-                                    </div>
+                                {/* 🏺 EMAIL : Toute la largeur pour un confort de saisie optimal */}
+                                <div className="space-y-1.5">
+                                    <label className={labelStyle}>Email</label>
+                                    <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
+                                </div>
+
+                                {/* 🏺 TÉLÉPHONE : Sur sa propre ligne également pour la cohérence visuelle */}
+                                <div className="space-y-1.5">
+                                    <label className={labelStyle}>Téléphone</label>
+                                    <input name="phone" type="tel" placeholder="06 00 00 00 00" className={inputStyle} />
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -200,22 +230,22 @@ export default function RegisterModal() {
                                     >
                                         {isPending ? 'VALIDATION...' : "Créer mon compte"}
                                     </button>
-
-                                    <div className="text-center">
-                                        <p className="text-[10px] md:text-[11px] text-rhum-cream/50 uppercase tracking-[0.2em] font-medium">
-                                            Déjà membre ?{" "}
-                                            <button
-                                                type="button"
-                                                onClick={() => { setRegisterOpen(false); setLoginOpen(true); }}
-                                                className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 md:underline-offset-8 decoration-rhum-gold/30 cursor-pointer font-black uppercase"
-                                            >
-                                                Se connecter
-                                            </button>
-                                        </p>
-                                    </div>
                                 </div>
                             </form>
                         )}
+
+                        <footer className="mt-12 md:mt-16 text-center border-t border-white/5 pt-10 pb-10 md:pb-0">
+                            <p className="text-[10px] md:text-[11px] text-rhum-cream/50 uppercase tracking-[0.2em] font-medium">
+                                Déjà membre ?{" "}
+                                <button
+                                    type="button"
+                                    onClick={() => { setRegisterOpen(false); setLoginOpen(true); }}
+                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 md:underline-offset-8 decoration-rhum-gold/30 font-black uppercase"
+                                >
+                                    Se connecter
+                                </button>
+                            </p>
+                        </footer>
                     </motion.div>
                 </div>
             )}
