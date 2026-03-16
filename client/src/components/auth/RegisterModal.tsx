@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, ShieldCheck, Landmark, User as UserIcon } from 'lucide-react';
 
 export default function RegisterModal() {
-    // 🏺 Ajout de setLoginOpen pour permettre la redirection
     const { isRegisterOpen, setRegisterOpen, setLoginOpen, setAuth } = useAuthStore();
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -46,162 +45,174 @@ export default function RegisterModal() {
         }
     };
 
+    // 🏺 Styles adaptatifs pour une lecture fluide sur mobile
+    const labelStyle = "text-[9px] md:text-[11px] uppercase tracking-[0.25em] text-rhum-gold font-black mb-1.5 block ml-1";
+    /* Placeholder opacité augmentée à 30% pour la visibilité */
+    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-3 md:py-4 px-4 md:px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-sm md:text-base placeholder:text-white/30 uppercase font-medium rounded-sm";
+
     return (
         <AnimatePresence>
             {isRegisterOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-6 md:px-4 md:py-10">
                     <motion.div
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/98 backdrop-blur-md cursor-pointer"
+                        className="absolute inset-0 bg-black/96 backdrop-blur-xl cursor-pointer"
                         onClick={() => setRegisterOpen(false)}
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto custom-scrollbar cursor-default"
+                        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.98 }}
+                        className="relative bg-[#0a1a14] border border-rhum-gold/20 p-6 md:p-14 w-full max-w-xl shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-sm max-h-[90vh] md:max-h-full overflow-y-auto custom-scrollbar cursor-default"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/60 to-transparent" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
                         <button
                             onClick={() => setRegisterOpen(false)}
-                            className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white transition-colors text-3xl font-extralight cursor-pointer"
+                            className="absolute top-4 right-6 text-rhum-gold/40 hover:text-white transition-colors text-3xl font-extralight cursor-pointer"
                         >
                             &times;
                         </button>
 
-                        <header className="text-center mb-10">
-                            <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Authentification</p>
-                            <h2 className="text-3xl font-serif text-white uppercase tracking-tight">Créer un Compte</h2>
+                        <header className="text-center mb-8 md:mb-12">
+                            <span className="text-rhum-gold text-[8px] md:text-[10px] uppercase tracking-[0.5em] mb-3 block font-black">Accès Client</span>
+                            <h2 className="text-2xl md:text-5xl font-serif text-white uppercase tracking-tighter">Créer un Compte</h2>
 
-                            <div className="flex items-center justify-center gap-4 mt-8">
+                            <div className="flex flex-row items-center justify-center gap-2 md:gap-4 mt-8 md:mt-10">
                                 <button
                                     type="button"
                                     onClick={() => { setIsPro(false); setIsEmployee(false); }}
-                                    className={`text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 border transition-all cursor-pointer font-black ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40 hover:border-white/30'}`}
+                                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
                                 >
+                                    <UserIcon size={12} className="md:w-[14px]" />
                                     Individuel
                                 </button>
                                 <button
                                     type="button"
                                     onClick={() => { setIsPro(true); setIsEmployee(false); }}
-                                    className={`text-[9px] uppercase tracking-[0.2em] px-5 py-2.5 border transition-all cursor-pointer font-black ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold' : 'border-white/10 text-white/40 hover:border-white/30'}`}
+                                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
                                 >
-                                    Entreprise (Pro)
+                                    <Landmark size={12} className="md:w-[14px]" />
+                                    Pro
                                 </button>
                             </div>
                         </header>
 
                         {success ? (
-                            <div className="py-12 text-center space-y-4">
-                                <div className="w-16 h-16 border border-rhum-gold rounded-full flex items-center justify-center mx-auto mb-6">
-                                    <span className="text-rhum-gold text-2xl font-serif">✓</span>
+                            <div className="py-12 md:py-16 text-center space-y-4 md:space-y-6">
+                                <div className="w-16 h-16 md:w-20 md:h-20 border border-rhum-gold rounded-full flex items-center justify-center mx-auto mb-6 md:mb-8 shadow-gold-glow">
+                                    <ShieldCheck className="text-rhum-gold" size={32} />
                                 </div>
-                                <p className="text-rhum-gold font-serif italic text-xl">Dossier scellé avec succès !</p>
-                                <p className="text-[10px] text-white/50 uppercase tracking-widest font-black">Ouverture de votre espace...</p>
+                                <p className="text-rhum-gold font-serif italic text-2xl md:text-3xl">Dossier scellé</p>
+                                <p className="text-[9px] md:text-[11px] text-white/40 uppercase tracking-[0.3em] font-black">Ouverture de votre espace...</p>
                             </div>
                         ) : (
-                            <form onSubmit={handleRegister} className="space-y-6">
+                            <form onSubmit={handleRegister} className="space-y-6 md:space-y-8">
 
                                 {!isPro && (
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Prénom</p>
-                                            <input name="firstName" required placeholder="EX: JEAN" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                        <div className="space-y-1.5">
+                                            <label className={labelStyle}>Prénom</label>
+                                            <input name="firstName" required placeholder="EX: JEAN" className={inputStyle} />
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Nom</p>
-                                            <input name="lastName" required placeholder="EX: DUPONT" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        <div className="space-y-1.5">
+                                            <label className={labelStyle}>Nom</label>
+                                            <input name="lastName" required placeholder="EX: DUPONT" className={inputStyle} />
                                         </div>
                                     </div>
                                 )}
 
                                 {!isPro && (
-                                    <div className="py-2">
-                                        <label className="flex items-center gap-4 cursor-pointer group">
+                                    <div className="py-3 px-4 md:px-6 bg-white/[0.02] border border-white/5 rounded-sm">
+                                        <label className="flex items-center gap-4 md:gap-5 cursor-pointer group">
                                             <div
                                                 onClick={() => setIsEmployee(!isEmployee)}
-                                                className={`w-10 h-5 rounded-full relative transition-all duration-300 ${isEmployee ? 'bg-rhum-gold' : 'bg-white/10'}`}
+                                                className={`w-10 h-5 md:w-12 md:h-6 rounded-full relative transition-all duration-300 border ${isEmployee ? 'bg-rhum-gold border-rhum-gold' : 'bg-transparent border-white/20'}`}
                                             >
-                                                <div className={`absolute top-1 w-3 h-3 rounded-full bg-white shadow-sm transition-all duration-300 ${isEmployee ? 'left-6' : 'left-1'}`} />
+                                                <div className={`absolute top-0.5 md:top-1 w-3.5 h-3.5 rounded-full bg-white transition-all duration-300 ${isEmployee ? 'left-6 md:left-7' : 'left-0.5 md:left-1'}`} />
                                             </div>
-                                            <span className="text-[9px] text-white/50 uppercase tracking-widest font-black group-hover:text-rhum-gold transition-colors">
-                                                Je suis bénéficiaire d'un Comité d'Entreprise
+                                            <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-[0.15em] font-black group-hover:text-rhum-gold transition-colors">
+                                                Bénéficiaire d'un Comité d'Entreprise
                                             </span>
                                         </label>
                                     </div>
                                 )}
 
                                 {(isPro || (!isPro && isEmployee)) && (
-                                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6 bg-white/[0.02] p-4 border-l border-rhum-gold/30">
-                                        <div className="space-y-2">
-                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Raison Sociale</p>
-                                            <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className="w-full bg-transparent border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 md:space-y-8 bg-rhum-gold/5 p-5 md:p-8 border-l-2 border-rhum-gold/40">
+                                        <div className="space-y-1.5">
+                                            <label className={labelStyle}>Raison Sociale</label>
+                                            <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className={inputStyle} />
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Identifiant Fiscal</p>
-                                            <input name="siret" required pattern="[0-9]{14}" placeholder="NUMÉRO SIRET (14 CHIFFRES)" className="w-full bg-transparent border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                        <div className="space-y-1.5">
+                                            <label className={labelStyle}>SIRET (14 CHIFFRES)</label>
+                                            <input name="siret" required pattern="[0-9]{14}" placeholder="000 000 000 00000" className={inputStyle} />
                                         </div>
                                     </motion.div>
                                 )}
 
-                                <div className="space-y-2">
-                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Email</p>
-                                    <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
-                                </div>
-                                <div className="space-y-2">
-                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Téléphone</p>
-                                    <input name="phone" type="tel" placeholder="06 00 00 00 00" className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 uppercase" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                    <div className="space-y-1.5">
+                                        <label className={labelStyle}>Email</label>
+                                        <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <label className={labelStyle}>Téléphone</label>
+                                        <input name="phone" type="tel" placeholder="06 00 00 00 00" className={inputStyle} />
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <p className="text-[8px] uppercase tracking-widest text-rhum-gold/60 font-black ml-1">Mot de passe</p>
+                                <div className="space-y-1.5">
+                                    <label className={labelStyle}>Mot de passe</label>
                                     <div className="relative group">
                                         <input
                                             name="password"
                                             type={showPassword ? "text" : "password"}
                                             required
-                                            placeholder="••••••••"
-                                            className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-3 px-4 text-white outline-none focus:border-rhum-gold transition-all text-sm placeholder:text-white/10 pr-12"
+                                            placeholder="••••••••••••"
+                                            className={`${inputStyle} pr-12 md:pr-14`}
                                         />
                                         <button
                                             type="button"
                                             onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
+                                            className="absolute right-4 md:right-5 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
                                         >
-                                            {showPassword ? <Eye size={16} /> : <EyeOff size={16} />}
+                                            {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                         </button>
                                     </div>
                                 </div>
 
                                 {error && (
-                                    <p className="text-red-400 text-[10px] uppercase tracking-widest text-center bg-red-400/10 py-4 border border-red-400/30 font-black">
+                                    <p className="text-red-400 text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-center bg-red-400/5 py-4 border border-red-400/20 font-black">
                                         {error}
                                     </p>
                                 )}
 
-                                <button
-                                    type="submit"
-                                    disabled={isPending}
-                                    className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'}`}
-                                >
-                                    {isPending ? 'CHARGEMENT...' : "Créer un compte"}
-                                </button>
-                                <div className="text-center">
-                                    <p className="text-[10px] text-rhum-cream/70 uppercase tracking-[0.2em] font-medium">
-                                        Vous avez déjà un compte ?{" "}
-                                        <button
-                                            type="button"
-                                            onClick={() => { setRegisterOpen(false); setLoginOpen(true); }}
-                                            className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 decoration-rhum-gold/30 cursor-pointer font-black uppercase"
-                                        >
-                                            Se connecter
-                                        </button>
-                                    </p>
+                                <div className="pt-4 md:pt-6 space-y-5 md:space-y-6">
+                                    <button
+                                        type="submit"
+                                        disabled={isPending}
+                                        className={`w-full bg-rhum-gold text-rhum-green py-5 md:py-6 font-black uppercase tracking-[0.3em] text-[11px] md:text-[12px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-[0.98]'}`}
+                                    >
+                                        {isPending ? 'VALIDATION...' : "Créer mon compte"}
+                                    </button>
+
+                                    <div className="text-center">
+                                        <p className="text-[10px] md:text-[11px] text-rhum-cream/50 uppercase tracking-[0.2em] font-medium">
+                                            Déjà membre ?{" "}
+                                            <button
+                                                type="button"
+                                                onClick={() => { setRegisterOpen(false); setLoginOpen(true); }}
+                                                className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 md:underline-offset-8 decoration-rhum-gold/30 cursor-pointer font-black uppercase"
+                                            >
+                                                Se connecter
+                                            </button>
+                                        </p>
+                                    </div>
                                 </div>
                             </form>
                         )}

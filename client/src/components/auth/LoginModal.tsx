@@ -3,14 +3,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
-import { Eye, EyeOff } from 'lucide-react'; // 🏺 Iconographie certifiée
+import { Eye, EyeOff, ShieldCheck, LockKeyhole } from 'lucide-react';
 
 export default function LoginModal() {
     const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth } = useAuthStore();
 
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showPassword, setShowPassword] = useState(false); // 🏺 État du verrou visuel
+    const [showPassword, setShowPassword] = useState(false);
 
     const handleFormSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -31,79 +31,80 @@ export default function LoginModal() {
         }
     };
 
+    const labelStyle = "text-[9px] md:text-[11px] uppercase tracking-[0.25em] text-rhum-gold font-black block ml-1";
+    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-3 md:py-4 px-4 md:px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-sm md:text-base placeholder:text-white/30 uppercase font-medium rounded-sm";
+
     return (
         <AnimatePresence>
             {isLoginOpen && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center px-4 py-6">
+                <div className="fixed inset-0 z-[100] flex items-center justify-center px-3 py-6 md:px-4 md:py-10">
                     <motion.div
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        className="absolute inset-0 bg-black/98 backdrop-blur-md cursor-pointer"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 bg-black/96 backdrop-blur-xl cursor-pointer"
                         onClick={() => setLoginOpen(false)}
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                        className="relative bg-[#0a1a14] border border-rhum-gold/30 p-8 md:p-12 w-full max-w-md shadow-2xl rounded-sm max-h-full overflow-y-auto cursor-default"
+                        initial={{ opacity: 0, y: 15, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 15, scale: 0.98 }}
+                        className="relative bg-[#0a1a14] border border-rhum-gold/20 p-6 md:p-14 w-full max-w-xl shadow-[0_0_50px_rgba(0,0,0,0.9)] rounded-sm max-h-[90vh] md:max-h-full overflow-y-auto custom-scrollbar cursor-default"
                         onClick={(e) => e.stopPropagation()}
                     >
-                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/60 to-transparent" />
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
                         <button
                             onClick={() => setLoginOpen(false)}
-                            className="absolute top-4 right-5 text-rhum-gold/60 hover:text-white text-3xl font-extralight transition-colors cursor-pointer"
+                            className="absolute top-4 right-6 text-rhum-gold/60 hover:text-white transition-colors text-3xl font-extralight cursor-pointer"
                         >
                             &times;
                         </button>
 
-                        <header className="text-center mb-10">
-                            <p className="text-rhum-gold/80 text-[10px] uppercase tracking-[0.4em] mb-2 font-black">Authentification</p>
-                            <h2 className="text-3xl md:text-4xl font-serif text-white uppercase tracking-tight">Se connecter</h2>
+                        <header className="text-center mb-10 md:mb-14">
+                            <span className="text-rhum-gold text-[8px] md:text-[10px] uppercase tracking-[0.5em] mb-3 block font-black">Accès client</span>
+                            <h2 className="text-3xl md:text-5xl font-serif text-white uppercase tracking-tighter">Se Connecter</h2>
                         </header>
 
-                        <form onSubmit={handleFormSubmit} className="space-y-8">
-                            <div className="space-y-3">
-                                <label htmlFor="email" className="block text-[10px] uppercase tracking-[0.3em] text-rhum-gold/90 font-black ml-1">
-                                    Identifiant (Email)
-                                </label>
+                        <form onSubmit={handleFormSubmit} className="space-y-6 md:space-y-10">
+                            <div className="space-y-2">
+                                <label htmlFor="email" className={labelStyle}>Identifiant (Email)</label>
                                 <input
                                     id="email"
                                     name="email"
                                     type="email"
                                     required
-                                    className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-4 px-4 text-base text-white focus:border-rhum-gold outline-none transition-all placeholder:text-white/20"
-                                    placeholder="votre@email.com"
+                                    className={inputStyle}
+                                    placeholder="VOTRE@EMAIL.COM"
                                 />
                             </div>
 
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-end">
-                                    <label htmlFor="password" className="block text-[10px] uppercase tracking-[0.3em] text-rhum-gold/90 font-black ml-1">
-                                        Mot de passe
-                                    </label>
+                            <div className="space-y-2">
+                                {/* 🏺 Alignement rectifié : items-baseline pour caler le lien sur la ligne du label */}
+                                <div className="flex justify-between items-baseline mb-1">
+                                    <label htmlFor="password" className={labelStyle}>Mot de passe</label>
                                     <button
                                         type="button"
-                                        className="text-[9px] uppercase tracking-widest text-rhum-gold/60 hover:text-rhum-gold transition-colors font-bold cursor-pointer"
+                                        /* 🏺 Opacité supprimée (text-rhum-gold pur) */
+                                        className="text-[8px] md:text-[9px] uppercase tracking-widest text-rhum-gold hover:text-white transition-colors font-black cursor-pointer"
                                     >
                                         Oublié ?
                                     </button>
                                 </div>
-
-                                {/* 🏺 Champ Mot de passe avec bascule visuelle */}
                                 <div className="relative group">
                                     <input
                                         id="password"
                                         name="password"
                                         type={showPassword ? "text" : "password"}
                                         required
-                                        className="w-full bg-white/[0.04] border-b border-rhum-gold/40 py-4 px-4 pr-12 text-base text-white focus:border-rhum-gold outline-none transition-all placeholder:text-white/20"
-                                        placeholder="••••••••"
+                                        className={`${inputStyle} pr-12 md:pr-14`}
+                                        placeholder="••••••••••••"
                                     />
                                     <button
                                         type="button"
                                         onClick={() => setShowPassword(!showPassword)}
-                                        className="absolute right-4 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
+                                        className="absolute right-4 md:right-5 top-1/2 -translate-y-1/2 text-rhum-gold/60 hover:text-rhum-gold transition-colors cursor-pointer"
                                     >
                                         {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                                     </button>
@@ -111,47 +112,47 @@ export default function LoginModal() {
                             </div>
 
                             {error && (
-                                <motion.p
-                                    initial={{ opacity: 0, y: -5 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    className="text-red-400 text-[10px] uppercase tracking-widest text-center bg-red-400/10 py-4 border border-red-400/30 font-bold"
-                                >
+                                <p className="text-red-400 text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-center bg-red-400/5 py-4 border border-red-400/20 font-black">
                                     {error}
-                                </motion.p>
+                                </p>
                             )}
 
-                            <button
-                                type="submit"
-                                disabled={isPending}
-                                className={`w-full bg-rhum-gold text-rhum-green py-5 font-black uppercase tracking-[0.2em] text-[11px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}
-                            >
-                                {isPending ? 'CHARGEMENT...' : "Se connecter"}
-                            </button>
+                            <div className="pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={isPending}
+                                    className={`w-full bg-rhum-gold text-rhum-green py-5 md:py-6 font-black uppercase tracking-[0.3em] text-[11px] md:text-[12px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-[0.98]'}`}
+                                >
+                                    {isPending ? 'AUTHENTIFICATION...' : "Accéder à mon espace"}
+                                </button>
+                            </div>
                         </form>
 
-                        <footer className="mt-12 text-center border-t border-white/10 pt-10 space-y-8">
-                            <p className="text-[10px] text-rhum-cream/70 uppercase tracking-[0.2em] font-medium">
-                                Pas encore membre ?{" "}
+                        <footer className="mt-12 md:mt-16 text-center border-t border-white/5 pt-10 space-y-10">
+                            <p className="text-[10px] md:text-[11px] text-rhum-cream/50 uppercase tracking-[0.2em] font-medium">
+                                Vous êtes Nouveau ?{" "}
                                 <button
-                                    onClick={() => setRegisterOpen(true)}
-                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-8 decoration-rhum-gold/50 font-black cursor-pointer"
+                                    onClick={() => { setLoginOpen(false); setRegisterOpen(true); }}
+                                    className="text-rhum-gold hover:text-white transition-colors underline underline-offset-4 md:underline-offset-8 decoration-rhum-gold/30 font-black cursor-pointer uppercase"
                                 >
-                                    REJOIGNEZ-NOUS
+                                    Créer un compte
                                 </button>
                             </p>
 
-                            <div className="pt-2">
-                                <div className="flex items-center justify-center gap-4 mb-6">
-                                    <div className="h-[1px] w-8 bg-white/10" />
-                                    <span className="text-[8px] text-white/20 uppercase tracking-[0.4em]">Accès réservé</span>
-                                    <div className="h-[1px] w-8 bg-white/10" />
+                            <div className="pt-4">
+                                <div className="flex items-center justify-center gap-4 mb-8">
+                                    <div className="h-[1px] w-12 bg-white/5" />
+                                    <ShieldCheck size={16} className="text-white/20" />
+                                    <div className="h-[1px] w-12 bg-white/5" />
                                 </div>
                                 <Link
                                     to="/admin"
                                     onClick={() => setLoginOpen(false)}
-                                    className="block text-rhum-gold/70 hover:text-rhum-gold transition-colors font-black text-[10px] uppercase tracking-[0.3em] border border-rhum-gold/20 py-4 rounded-sm mx-auto max-w-[240px] hover:bg-white/5 cursor-pointer"
+                                    /* 🏺 Contraste renforcé : text-rhum-gold et bordure plus visible */
+                                    className="inline-flex items-center gap-3 text-rhum-gold hover:text-white hover:border-white transition-all font-black text-[9px] md:text-[10px] uppercase tracking-[0.3em] border border-rhum-gold/30 px-8 py-4 rounded-sm hover:bg-white/5 cursor-pointer"
                                 >
-                                    Console Administrateur
+                                    <LockKeyhole size={12} className="text-rhum-gold" />
+                                    Console Administration
                                 </Link>
                             </div>
                         </footer>
