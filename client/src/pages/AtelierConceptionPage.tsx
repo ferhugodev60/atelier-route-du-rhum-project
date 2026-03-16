@@ -32,7 +32,7 @@ export default function AtelierConceptionPage() {
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="min-h-screen bg-[#0a1a14] pt-32 md:pt-48 pb-32 px-4 md:px-8 font-sans selection:bg-rhum-gold/30"
+            className="min-h-screen bg-[#0a1a14] pt-32 md:pt-48 pb-20 md:pb-32 px-4 md:px-8 font-sans selection:bg-rhum-gold/30"
         >
             <div className="max-w-6xl mx-auto">
                 <header className="text-center mb-20 md:mb-32">
@@ -45,7 +45,8 @@ export default function AtelierConceptionPage() {
                     </p>
                 </header>
 
-                <div className="relative space-y-12 md:space-y-24">
+                {/* 🏺 ESPACEMENT : Augmenté sur mobile (space-y-24) pour bien isoler chaque niveau */}
+                <div className="relative space-y-24 md:space-y-24">
                     <div className="absolute left-1/2 top-0 bottom-0 w-px bg-white/5 hidden lg:block -translate-x-1/2" />
 
                     {workshops.map((step, index) => {
@@ -103,7 +104,7 @@ export default function AtelierConceptionPage() {
                                             <h3 className={`text-3xl md:text-5xl font-serif uppercase tracking-tighter leading-none ${isLocked ? 'text-white/40' : 'text-white'}`}>
                                                 {step.title}
                                             </h3>
-                                            <p className="text-rhum-gold font-serif italic text-lg md:text-xl">
+                                            <p className="text-rhum-gold font-serif text-lg md:text-xl">
                                                 {isLocked ? "Contenu verrouillé" : `"${step.quote}"`}
                                             </p>
                                         </div>
@@ -132,7 +133,7 @@ export default function AtelierConceptionPage() {
                                         )}
 
                                         {isLocked && (
-                                            <div className="flex items-center gap-3 text-white/60 mt-auto"> {/* 🏺 Opacité passée de 20 à 60 */}
+                                            <div className="flex items-center gap-3 text-white/60 mt-auto">
                                                 <Lock size={12} className="text-rhum-gold/50" />
                                                 <span className="text-[9px] font-black uppercase tracking-[0.2em]">Validation du niveau précédent requise</span>
                                             </div>
@@ -146,15 +147,15 @@ export default function AtelierConceptionPage() {
                     })}
                 </div>
 
-                {/* --- 🏺 FOOTER INFO --- */}
-                <div className="mt-40 flex flex-col md:flex-row items-center gap-10 bg-white/[0.02] p-8 md:p-12 border border-white/5 rounded-sm">
+                {/* --- 🏺 FOOTER INFO : Marge réduite sur mobile (mt-24) pour combler le vide --- */}
+                <div className="mt-24 md:mt-40 flex flex-col md:flex-row items-center gap-10 bg-white/[0.02] p-8 md:p-12 border border-white/5 rounded-sm">
                     <div className="w-16 h-16 rounded-full border border-rhum-gold/20 flex items-center justify-center shrink-0">
                         <ShieldAlert className="text-rhum-gold" size={28} />
                     </div>
                     <div className="space-y-3 text-center md:text-left">
                         <h4 className="text-rhum-gold text-[10px] font-black uppercase tracking-[0.4em]">Note de Synchronisation</h4>
                         <p className="text-[11px] text-white/50 font-medium leading-relaxed uppercase tracking-widest">
-                            Si vous avez validé des formations avant l'ouverture du site, contactez l'Établissement pour synchroniser votre Registre.
+                            Si vous avez validé des ateliers avant l'ouverture du site, contactez l'Établissement pour synchroniser votre Registre.
                         </p>
                     </div>
                 </div>
