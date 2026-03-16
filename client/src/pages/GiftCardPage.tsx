@@ -133,7 +133,7 @@ export default function GiftCardPage() {
                             {/* Section 02 : Quantité (Ajustement chirurgical) */}
                             <div className="p-6 lg:p-10 flex-1 flex flex-col justify-between">
                                 <div className="space-y-8">
-                                    <h3 className="text-rhum-gold text-[11px] lg:text-[12px] font-black uppercase tracking-[0.4em]">2. Nombre de titres</h3>
+                                    <h3 className="text-rhum-gold text-[11px] lg:text-[12px] font-black uppercase tracking-[0.4em]">2. Nombre de carte(s)</h3>
 
                                     <div className="flex items-center justify-between py-6 px-6 bg-white/[0.02] border border-white/5 rounded-sm">
                                         <div className="flex items-center gap-6 lg:gap-8">

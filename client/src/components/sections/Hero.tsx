@@ -12,64 +12,67 @@ interface HeroProps {
 
 export default function Hero({
                                  title = "Devenez l'Alchimiste",
-                                 subtitle = "Entrez dans l’antre du Druide à Compiègne. Maîtrisez l’art de l’assemblage et créez votre propre nectar artisanal.",
+                                 subtitle = "Entrez dans l’univers de l'Établissement à Compiègne. Maîtrisez l’art de l’assemblage et créez votre propre nectar artisanal.",
                                  ctaPrimaryLabel = "Réserver mon atelier",
                                  ctaSecondaryLabel = "Découvrir nos bouteilles",
                              }: HeroProps) {
     return (
-        /* Architecture Grid Rows pour un contrôle total de l'espace vertical [cite: 2025-12-08] */
-        <section className="relative h-[100dvh] w-full overflow-hidden grid grid-rows-[auto_1fr_auto] bg-radial-dark">
+        /* 🏺 Grid adaptatif : Auto sur mobile pour la sécurité, VH sur Desktop pour l'élégance */
+        <section className="relative h-[100dvh] w-full overflow-hidden grid grid-rows-[80px_1fr_100px] md:grid-rows-[7vh_1fr_12vh] bg-radial-dark font-sans">
             <div className="absolute inset-0 bg-black/30 z-10" aria-hidden="true" />
 
-            {/* --- LIGNE 1 : ESPACE RÉSERVÉ NAVBAR --- */}
-            <div className="h-24 md:h-32 pointer-events-none z-0" />
+            {/* --- LIGNE 1 : ESPACE NAVBAR --- */}
+            <div className="pointer-events-none z-0" />
 
-            {/* --- LIGNE 2 : BLOC CENTRAL ÉLASTIQUE --- */}
-            <div className="relative z-20 flex items-center justify-center px-6 overflow-hidden">
+            {/* --- LIGNE 2 : CŒUR DE PAGE --- */}
+            <div className="relative z-20 flex items-center justify-center px-6 min-h-0">
                 <motion.div
                     variants={heroVariants}
                     initial="hidden"
                     animate="visible"
-                    className="max-w-4xl mx-auto w-full text-center flex flex-col items-center justify-center max-h-[75vh] md:max-h-full"
+                    /* 🏺 Gaps fixes sur mobile, élastiques sur desktop */
+                    className="max-w-6xl mx-auto w-full text-center flex flex-col items-center justify-center gap-4 md:gap-[clamp(1.5rem,2.5vh,2.5rem)]"
                 >
-                    {/* Logo adaptatif */}
-                    <div className="mb-4 md:mb-8 shrink min-h-0">
+                    {/* Logo : Taille sécurisée sur mobile, VH sur Mac */}
+                    <div className="shrink-0">
                         <img
                             src={logoImg}
-                            alt="Logo L'Atelier"
-                            className="max-h-[12vh] sm:max-h-[18vh] md:max-h-[22vh] w-auto h-auto mx-auto drop-shadow-custom"
+                            alt="Logo Prestige"
+                            className="h-[60px] sm:h-[80px] md:h-[clamp(100px,15vh,150px)] w-auto mx-auto drop-shadow-custom"
                             loading="eager"
                         />
                     </div>
 
-                    <div className="flex items-center justify-center gap-3 md:gap-4 mb-3 md:mb-6 shrink-0">
-                        <div className="h-px w-6 md:w-16 bg-rhum-gold/70" />
-                        <p className="text-rhum-gold font-sans tracking-[0.4em] uppercase text-[8px] md:text-xs font-bold">
+                    {/* Tagline */}
+                    <div className="flex items-center justify-center gap-3 md:gap-4 shrink-0">
+                        <div className="h-px w-6 md:w-12 bg-rhum-gold/60" />
+                        <p className="text-rhum-gold tracking-[0.4em] uppercase text-[8px] md:text-[clamp(9px,1vh,11px)] font-black">
                             Créateur de Saveurs
                         </p>
-                        <div className="h-px w-6 md:w-16 bg-rhum-gold/70" />
+                        <div className="h-px w-6 md:w-12 bg-rhum-gold/60" />
                     </div>
 
-                    <h1 className="text-2xl sm:text-4xl md:text-6xl lg:text-7xl font-serif text-white mb-3 md:mb-8 leading-tight drop-shadow-lg shrink-0">
+                    {/* Titre : Taille fixe mobile pour éviter le débordement, Clamp VH pour le Mac */}
+                    <h1 className="text-4xl sm:text-5xl md:text-[clamp(3rem,8vh,5rem)] font-serif text-white leading-[1.1] drop-shadow-lg shrink-0 uppercase tracking-tighter">
                         {title}
                     </h1>
 
-                    {/* --- SOUS-TITRE : Rendu visible sur mobile [cite: 2025-12-08] --- */}
-                    <p className="block text-[11px] sm:text-base md:text-xl text-white/90 font-sans max-w-2xl mx-auto mb-6 md:mb-10 leading-relaxed px-2">
+                    {/* Sous-titre : Clamp de sécurité pour la lecture */}
+                    <p className="block text-[11px] sm:text-base md:text-[clamp(0.9rem,1.8vh,1.1rem)] text-white/80 max-w-xl mx-auto leading-relaxed px-4 font-light">
                         {subtitle}
                     </p>
 
-                    {/* --- CTAs EN MAJUSCULES --- */}
-                    <div className="flex flex-col md:flex-row justify-center items-center gap-3 md:gap-6 w-full md:w-auto shrink-0">
+                    {/* CTAs : Paddings stables sur mobile, VH sur desktop */}
+                    <div className="flex flex-col md:flex-row justify-center items-center gap-3 md:gap-8 w-full md:w-auto mt-2 md:mt-[1.5vh]">
                         <a
                             href="#workshops"
-                            className="w-full md:w-auto px-8 md:px-14 py-3.5 md:py-4 bg-rhum-gold hover:bg-white text-rhum-green font-black rounded-sm transition-all uppercase tracking-widest text-[9px] md:text-xs text-center shadow-xl"
+                            className="w-full md:w-auto px-10 md:px-14 py-3.5 md:py-[clamp(12px,2vh,18px)] bg-rhum-gold hover:bg-white text-rhum-green font-black rounded-sm transition-all uppercase tracking-[0.25em] text-[10px] md:text-[clamp(10px,1.2vh,12px)] text-center shadow-2xl"
                         >
                             {ctaPrimaryLabel}
                         </a>
                         <Link
                             to="/boutique"
-                            className="w-full md:w-auto px-8 md:px-14 py-3.5 md:py-4 bg-transparent border border-white/40 text-white font-bold rounded-sm transition-all uppercase tracking-widest text-[9px] md:text-xs text-center backdrop-blur-sm hover:bg-rhum-gold/10 hover:border-rhum-gold"
+                            className="w-full md:w-auto px-10 md:px-14 py-3.5 md:py-[clamp(12px,2vh,18px)] bg-transparent border border-white/20 text-white font-bold rounded-sm transition-all uppercase tracking-[0.25em] text-[10px] md:text-[clamp(10px,1.2vh,12px)] text-center backdrop-blur-md hover:bg-rhum-gold/10 hover:border-rhum-gold"
                         >
                             {ctaSecondaryLabel}
                         </Link>
@@ -77,26 +80,24 @@ export default function Hero({
                 </motion.div>
             </div>
 
-            {/* --- LIGNE 3 : FOOTER EXPLORER --- */}
+            {/* --- LIGNE 3 : PIED DE PAGE --- */}
             <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2, duration: 0.8 }}
-                className="relative z-30 flex flex-col items-center justify-center py-6 md:py-10"
+                className="relative z-30 flex flex-col items-center justify-center shrink-0"
             >
-                <div className="pb-[env(safe-area-inset-bottom)]">
-                    <a href="#about" className="group flex flex-col items-center gap-1 md:gap-3 no-underline">
-                        <span className="text-rhum-gold/70 text-[8px] md:text-[9px] uppercase tracking-[0.4em] font-bold group-hover:text-rhum-gold transition-colors">
-                            Explorer l'atelier
-                        </span>
-                        <div className="w-9 h-9 md:w-12 md:h-12 rounded-full border border-rhum-gold/30 flex items-center justify-center group-hover:bg-rhum-gold/10 transition-all backdrop-blur-sm">
-                            <motion.svg animate={bounceAnimation} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-rhum-gold md:w-6 md:h-6">
-                                <line x1="12" y1="5" x2="12" y2="19" />
-                                <polyline points="19 12 12 19 5 12" />
-                            </motion.svg>
-                        </div>
-                    </a>
-                </div>
+                <a href="#about" className="group flex flex-col items-center gap-1 no-underline">
+                    <span className="text-rhum-gold/60 text-[8px] md:text-[clamp(8px,1vh,10px)] uppercase tracking-[0.4em] font-black group-hover:text-rhum-gold transition-colors">
+                        Explorer l'Atelier
+                    </span>
+                    <div className="w-8 h-8 md:w-[clamp(35px,4.5vh,50px)] md:h-[clamp(35px,4.5vh,50px)] rounded-full border border-rhum-gold/20 flex items-center justify-center group-hover:bg-rhum-gold/5 transition-all backdrop-blur-sm">
+                        <motion.svg animate={bounceAnimation} className="text-rhum-gold w-4 h-4 md:w-[1.8vh] md:h-[1.8vh]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <polyline points="19 12 12 19 5 12" />
+                        </motion.svg>
+                    </div>
+                </a>
             </motion.div>
         </section>
     );
