@@ -154,8 +154,8 @@ export default function AtelierConceptionPage() {
                     </div>
                     <div className="space-y-3 text-center md:text-left">
                         <h4 className="text-rhum-gold text-[10px] font-black uppercase tracking-[0.4em]">Note de Synchronisation</h4>
-                        <p className="text-[11px] text-white/50 font-medium leading-relaxed uppercase tracking-widest">
-                            Si vous avez validé des ateliers avant l'ouverture du site, contactez l'Établissement pour synchroniser votre Registre.
+                        <p className="text-[11px] text-white font-medium leading-relaxed uppercase tracking-widest">
+                            Si vous avez validé des niveaux avant l'ouverture du site, contactez l'Atelier pour synchroniser votre compte.
                         </p>
                     </div>
                 </div>
