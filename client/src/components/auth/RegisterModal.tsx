@@ -73,7 +73,7 @@ export default function RegisterModal() {
     };
 
     const labelStyle = "text-[9px] md:text-[11px] uppercase tracking-[0.25em] text-rhum-gold font-black mb-1.5 block ml-1";
-    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-3 md:py-4 px-4 md:px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-sm md:text-base placeholder:text-white/30 uppercase font-medium rounded-sm";
+    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-3 md:py-4 px-4 md:px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-sm md:text-base placeholder:text-white/30 font-medium rounded-sm";
 
     return (
         <AnimatePresence>

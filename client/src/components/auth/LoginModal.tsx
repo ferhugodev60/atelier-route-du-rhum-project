@@ -59,7 +59,7 @@ export default function LoginModal() {
 
     const labelStyle = "text-[10px] md:text-[11px] uppercase tracking-[0.25em] text-rhum-gold font-black block ml-1";
     /* 🏺 Placeholder : Opacité fixée à 30% pour une visibilité parfaite sans confusion */
-    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-4 px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-base placeholder:text-white/30 uppercase font-medium rounded-sm";
+    const inputStyle = "w-full bg-white/[0.03] border border-white/10 border-b-rhum-gold/50 py-4 px-5 text-white outline-none focus:border-rhum-gold focus:bg-white/[0.06] transition-all text-base placeholder:text-white/30 font-medium rounded-sm";
 
     return (
         <AnimatePresence>
