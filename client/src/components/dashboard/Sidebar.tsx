@@ -14,36 +14,59 @@ export default function Sidebar({ activeView, onViewChange, onLogout }: SidebarP
     ];
 
     return (
-        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-16 font-sans">
-            <nav className="flex lg:flex-col p-1 bg-white/[0.02] lg:bg-transparent rounded-sm gap-2">
+        <aside className="w-full lg:w-72 shrink-0 flex flex-col gap-12 lg:gap-16 font-sans">
+            {/* 🏺 NAVIGATION : Scrollable horizontalement sur mobile */}
+            <nav className="
+                flex lg:flex-col
+                overflow-x-auto lg:overflow-x-visible
+                p-1 bg-white/[0.02] lg:bg-transparent
+                rounded-sm gap-2
+                no-scrollbar
+            ">
                 {menuItems.map((item) => (
                     <button
                         key={item.id}
                         onClick={() => onViewChange(item.id as ViewType)}
-                        className={`flex-1 lg:flex-none flex items-center justify-center lg:justify-start gap-4 px-6 py-5 text-[10px] uppercase tracking-[0.25em] font-black transition-all rounded-sm border-l-2 ${
-                            activeView === item.id
-                                ? 'text-rhum-gold border-rhum-gold bg-white/[0.06] shadow-lg shadow-black/20'
-                                : 'text-white/40 border-transparent hover:text-white/70 hover:bg-white/[0.02]'
-                        }`}
+                        className={`
+                            flex-none lg:flex-none 
+                            whitespace-nowrap
+                            flex items-center justify-center lg:justify-start 
+                            gap-4 px-6 py-4 lg:py-5 
+                            text-[10px] uppercase tracking-[0.25em] font-black 
+                            transition-all rounded-sm 
+                            border-b-2 lg:border-b-0 lg:border-l-2
+                            ${activeView === item.id
+                            ? 'text-rhum-gold border-rhum-gold bg-white/[0.06] shadow-lg shadow-black/20'
+                            : 'text-white/40 border-transparent hover:text-white/70 hover:bg-white/[0.02]'
+                        }
+                        `}
                     >
                         <span>{item.label}</span>
                     </button>
                 ))}
             </nav>
 
+            {/* 🏺 BOUTON DÉCONNEXION DESKTOP (VUE HAUTE VISIBILITÉ) */}
             <button
                 onClick={onLogout}
-                className="hidden lg:flex items-center gap-5 px-6 py-5 text-[10px] uppercase tracking-[0.3em] font-black group transition-all border border-red-500/10 hover:border-red-500/30 hover:bg-red-500/5 rounded-sm"
+                className="
+                    hidden lg:flex items-center gap-5 px-6 py-5
+                    text-[10px] uppercase tracking-[0.3em] font-black
+                    transition-all duration-300
+                    text-red-500 border border-red-500/30 bg-red-500/[0.03]
+                    hover:bg-red-500 hover:text-white hover:border-red-500 hover:shadow-[0_0_20px_rgba(239,68,68,0.2)]
+                    rounded-sm group
+                "
             >
-                <LogoutIcon className="w-4 h-4 text-red-500/60 group-hover:text-red-500 transition-colors" />
-                <span className="text-red-500/60 group-hover:text-red-500 transition-colors">Déconnexion</span>
+                <LogoutIcon className="w-4 h-4 text-red-500 group-hover:text-white transition-colors" />
+                <span>Déconnexion</span>
             </button>
         </aside>
     );
 }
 
 /**
- * 🏺 Définition du composant LogoutIcon pour résoudre l'erreur TS2304
+ * 🏺 Icône de Déconnexion Certifiée
  */
 export function LogoutIcon({ className }: { className?: string }) {
     return (
@@ -51,7 +74,7 @@ export function LogoutIcon({ className }: { className?: string }) {
             xmlns="http://www.w3.org/2000/svg"
             fill="none"
             viewBox="0 0 24 24"
-            strokeWidth={1.5}
+            strokeWidth={2} // Augmentation de l'épaisseur du trait pour la visibilité
             stroke="currentColor"
             className={className}
         >

@@ -49,8 +49,9 @@ export default function SecuritySettings() {
     const renderInput = (id: keyof typeof passwords, label: string) => {
         const isVisible = visibleFields[id as keyof typeof visibleFields];
         return (
-            <div className="flex flex-col gap-4 border-b border-white/10 pb-6 relative group font-sans items-center">
-                <label className="text-rhum-gold text-[9px] uppercase tracking-[0.3em] font-black opacity-60 text-center">
+            <div className="flex flex-col gap-3 md:gap-4 border-b border-white/10 pb-6 relative group font-sans">
+                {/* 🏺 Opacité supprimée sur le label pour une lecture directe */}
+                <label className="text-rhum-gold text-[8px] md:text-[9px] uppercase tracking-[0.3em] font-black text-center">
                     {label}
                 </label>
                 <div className="flex items-center w-full relative">
@@ -59,13 +60,15 @@ export default function SecuritySettings() {
                         required
                         value={passwords[id]}
                         onChange={(e) => setPasswords({...passwords, [id]: e.target.value})}
-                        className="w-full bg-white/[0.03] border border-white/5 px-4 py-4 text-white font-sans text-lg lg:text-xl tracking-widest outline-none focus:border-rhum-gold transition-all placeholder:opacity-5 text-center"
+                        /* 🏺 Placeholder : Visibilité augmentée à 30% pour un guidage net */
+                        className="w-full bg-white/[0.03] border border-white/5 px-12 py-4 text-white font-sans text-base md:text-xl tracking-[0.2em] md:tracking-widest outline-none focus:border-rhum-gold transition-all placeholder:text-white/30 text-center rounded-sm"
                         placeholder="••••••••"
                     />
                     <button
                         type="button"
                         onClick={() => toggleVisibility(id as keyof typeof visibleFields)}
-                        className="absolute right-4 p-2 text-white/30 hover:text-rhum-gold transition-all duration-300"
+                        /* 🏺 Bouton œil plus contrasté (opacité 50%) */
+                        className="absolute right-2 md:right-4 p-2 text-white/50 hover:text-rhum-gold transition-all duration-300 z-10"
                     >
                         <AnimatePresence mode="wait" initial={false}>
                             <motion.div
@@ -85,21 +88,24 @@ export default function SecuritySettings() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto font-sans">
-            <header className="mb-16 border-b border-rhum-gold/10 pb-8 flex flex-col items-center text-center">
-                <h2 className="text-3xl lg:text-4xl font-serif text-white uppercase tracking-tight">Sécurité du compte</h2>
-                <p className="text-rhum-gold text-[9px] uppercase tracking-[0.4em] mt-3 font-black opacity-60">Gestion de votre mot de passe</p>
+        <div className="w-full max-w-2xl mx-auto font-sans px-2">
+            <header className="mb-10 md:mb-16 border-b border-rhum-gold/10 pb-6 md:pb-8 flex flex-col items-center text-center">
+                <h2 className="text-2xl md:text-4xl font-serif text-white uppercase tracking-tight">Sécurité du compte</h2>
+                {/* 🏺 Sous-titre : Opacité supprimée pour affirmer l'institutionnalité */}
+                <p className="text-rhum-gold text-[8px] md:text-[9px] uppercase tracking-[0.4em] mt-2 md:mt-3 font-black">Gestion de votre mot de passe</p>
             </header>
 
-            <form onSubmit={handleSubmit} className="space-y-12 max-w-lg mx-auto">
-                {renderInput('current', 'mot de passe actuel')}
-                {renderInput('new', 'Nouveau mot de passe')}
-                {renderInput('confirm', 'Confirmation du nouveau mot de passe')}
+            <form onSubmit={handleSubmit} className="space-y-8 md:space-y-12 max-w-lg mx-auto">
+                <div className="space-y-6 md:space-y-10">
+                    {renderInput('current', 'mot de passe actuel')}
+                    {renderInput('new', 'Nouveau mot de passe')}
+                    {renderInput('confirm', 'Confirmation du nouveau mot de passe')}
+                </div>
 
                 {status && (
                     <motion.p
-                        initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
-                        className={`text-[11px] uppercase tracking-[0.2em] font-bold p-5 border text-center rounded-sm ${
+                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                        className={`text-[10px] md:text-[11px] uppercase tracking-[0.15em] md:tracking-[0.2em] font-bold p-4 md:p-5 border text-center rounded-sm ${
                             status.type === 'success' ? 'text-rhum-gold border-rhum-gold/30 bg-rhum-gold/10' : 'text-red-500 border-red-500/30 bg-red-500/10'
                         }`}
                     >
@@ -107,10 +113,10 @@ export default function SecuritySettings() {
                     </motion.p>
                 )}
 
-                <div className="pt-8">
+                <div className="pt-4 md:pt-8">
                     <button
                         disabled={loading}
-                        className="w-full py-6 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.4em] text-[11px] hover:bg-white transition-all duration-500 shadow-2xl disabled:opacity-50 rounded-sm"
+                        className="w-full py-5 md:py-6 bg-rhum-gold text-rhum-green font-black uppercase tracking-[0.3em] md:tracking-[0.4em] text-[10px] md:text-[11px] hover:bg-white active:scale-[0.98] transition-all duration-500 shadow-2xl disabled:opacity-50 rounded-sm"
                     >
                         {loading ? "Mise à jour en cours..." : "Valider les modifications"}
                     </button>
