@@ -32,8 +32,6 @@ const ShopPage = lazy(() => import('./pages/ShopPage.tsx'));
 const ProductPage = lazy(() => import('./pages/ProductPage.tsx'));
 const AtelierConceptionPage = lazy(() => import('./pages/AtelierConceptionPage.tsx'));
 const WorkshopDetails = lazy(() => import('./pages/WorkshopDetails.tsx'));
-
-// 🏺 Nouveau : Page dédiée aux Titres au Porteur
 const GiftCardPage = lazy(() => import('./pages/GiftCardPage.tsx'));
 
 const Sections = {
@@ -45,16 +43,11 @@ const Sections = {
 };
 
 function HomePage() {
-    // 🏺 Correction : Workshops utilise désormais le store en interne, plus besoin de props.
     return (
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
-            <section id="workshops">
-                <ScrollReveal>
-                    <Sections.Workshops />
-                </ScrollReveal>
-            </section>
+            <section id="workshops"><ScrollReveal><Sections.Workshops /></ScrollReveal></section>
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
             <section id="contact"><ScrollReveal><Sections.Contact /></ScrollReveal></section>
         </main>
@@ -68,7 +61,7 @@ export default function App() {
         <BrowserRouter>
             <div className="min-h-screen bg-[#0a1a14] font-sans text-rhum-cream">
 
-                {/* --- 🏺 NAVBAR --- */}
+                {/* --- 🏺 NAVIGATION --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
@@ -88,15 +81,13 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
 
-                        {/* 🏺 Correction : ShopPage gère son propre état via Zustand */}
+                        {/* 🏺 ROUTES BOUTIQUE (Optimisation SEO Slugs) */}
                         <Route path="/boutique" element={<ShopPage />} />
-                        <Route path="/boutique/:id" element={<ProductPage />} />
-                        <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+                        <Route path="/boutique/:categorySlug/:productSlug" element={<ProductPage />} />
 
+                        <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
                         <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
                         <Route path="/ateliers/:id" element={<WorkshopDetails />} />
-
-                        {/* 🏺 Nouvelle Route : Fiche technique Carte Cadeau */}
                         <Route path="/carte-cadeau" element={<GiftCardPage />} />
 
                         <Route path="/mentions-legales" element={<LegalMentions />} />
@@ -104,7 +95,7 @@ export default function App() {
                         <Route path="/validate/:participantId" element={<ValidationPage />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
-                        {/* --- ROUTES ADMIN --- */}
+                        {/* --- REGISTRE ADMIN --- */}
                         <Route path="/admin" element={<AdminLogin />} />
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
@@ -125,7 +116,7 @@ export default function App() {
                 <PaymentSuccess />
                 <PaymentError />
 
-                {/* --- 🏺 PANIER --- */}
+                {/* --- 🏺 INTERFACE PANIER --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
@@ -143,7 +134,7 @@ export default function App() {
                     />
                 </Routes>
 
-                {/* --- 🏺 FOOTER --- */}
+                {/* --- 🏺 PIED DE PAGE --- */}
                 <Routes>
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />

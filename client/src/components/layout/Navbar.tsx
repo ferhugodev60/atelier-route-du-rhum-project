@@ -137,7 +137,7 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
                         {isAuthenticated ? (
                             <button onClick={() => navigate(profilePath)} className="flex items-center gap-3 px-8 py-3 text-[10px] font-black uppercase tracking-[0.2em] rounded-full border border-rhum-gold/30 hover:border-rhum-gold text-rhum-gold hover:text-white transition-all bg-white/5">
                                 <User size={14} />
-                                {isAdmin ? '🔧 GESTION' : isPro ? user?.companyName : user?.firstName}
+                                {isAdmin ? 'ADMIN' : isPro ? user?.companyName : user?.firstName}
                             </button>
                         ) : (
                             <button onClick={handleOpenLogin} className="px-10 py-3.5 text-[10px] font-black uppercase tracking-[0.25em] rounded-full border border-rhum-gold text-rhum-gold hover:bg-rhum-gold hover:text-[#0a1a14] transition-all">

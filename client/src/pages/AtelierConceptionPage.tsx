@@ -68,7 +68,7 @@ export default function AtelierConceptionPage() {
                                     <div
                                         className={`w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center border-2 transition-all duration-700 backdrop-blur-md
                                             ${isMastered ? 'border-rhum-gold shadow-[0_0_40px_rgba(197,158,95,0.2)]' :
-                                            isLocked ? 'border-white/10' : 'border-white'}`}
+                                            isLocked ? 'border-white' : 'border-white'}`}
                                         style={{
                                             backgroundColor: isMastered
                                                 ? 'rgba(197, 158, 95, 0.2)'
@@ -78,7 +78,7 @@ export default function AtelierConceptionPage() {
                                         {isMastered ? (
                                             <Check className="text-rhum-gold" size={28} />
                                         ) : isLocked ? (
-                                            <Lock className="text-white/20" size={20} />
+                                            <Lock className="text-white" size={20} />
                                         ) : (
                                             <span className="text-white font-serif text-3xl md:text-4xl leading-none flex items-center justify-center translate-y-[1px]">
                                                 {step.level}
@@ -134,7 +134,7 @@ export default function AtelierConceptionPage() {
 
                                         {isLocked && (
                                             <div className="flex items-center gap-3 text-white/60 mt-auto">
-                                                <Lock size={12} className="text-rhum-gold/50" />
+                                                <Lock size={12} className="text-rhum-gold" />
                                                 <span className="text-[9px] font-black uppercase tracking-[0.2em]">Validation du niveau précédent requise</span>
                                             </div>
                                         )}

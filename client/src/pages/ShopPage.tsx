@@ -26,7 +26,7 @@ export default function ShopPage() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
-        const fetchData = async () => {
+        const fetchRegistre = async () => {
             try {
                 const [productsRes, categoriesRes] = await Promise.all([
                     api.get('/products'),
@@ -35,12 +35,12 @@ export default function ShopPage() {
                 setProducts(productsRes.data);
                 setCategories(categoriesRes.data);
             } catch (err) {
-                console.error("Échec technique :", err);
+                console.error("Interruption du Registre :", err);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchData();
+        fetchRegistre();
     }, []);
 
     const processedProducts = useMemo(() => {
@@ -58,7 +58,7 @@ export default function ShopPage() {
         return (
             <div className="min-h-screen bg-[#0a1a14] flex items-center justify-center">
                 <p className="text-rhum-gold font-serif italic animate-pulse tracking-[0.4em] uppercase text-[12px] font-black">
-                    Consultation du Registre...
+                    Chargemement en cours...
                 </p>
             </div>
         );
@@ -74,11 +74,9 @@ export default function ShopPage() {
             <div className="relative w-full h-screen h-[100dvh] overflow-hidden border-b border-white/10 z-0 grid grid-rows-[auto_1fr_auto]">
 
                 <motion.div style={{ y: yHero, opacity: opacityHero }} className="absolute inset-0 z-0">
-                    <img src={heroShop} className="w-full h-full object-cover" alt="Bannière" loading="eager" />
-
-                    {/* 🏺 RENFORCEMENT DES FILTRES VERT ÉTABLISSEMENT */}
-                    <div className="absolute inset-0 bg-[#0a1a14]/80 mix-blend-multiply" />
-                    <div className="absolute inset-0 bg-[#0a1a14]/70" /> {/* Opacité augmentée pour le contraste */}
+                    <img src={heroShop} className="w-full h-full object-cover" alt="L'Établissement" loading="eager" />
+                    <div className="absolute inset-0 bg-black/60 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-[#0a1a14]/80" />
                 </motion.div>
 
                 <div className="h-24 md:h-32 pointer-events-none z-0" />
@@ -103,31 +101,29 @@ export default function ShopPage() {
                     transition={{ delay: 1, duration: 0.8 }}
                     className="relative z-30 flex flex-col items-center justify-center py-6 md:py-10"
                 >
-                    <div className="pb-[env(safe-area-inset-bottom)]">
-                        <a href="#collection" className="group flex flex-col items-center gap-1 md:gap-3 no-underline">
-                            <span className="text-rhum-gold/70 text-[8px] md:text-[9px] uppercase tracking-[0.4em] font-bold group-hover:text-rhum-gold transition-colors">
-                                Découvrir la collection
-                            </span>
-                            <div className="w-9 h-9 md:w-12 md:h-12 rounded-full border border-rhum-gold/30 flex items-center justify-center group-hover:bg-rhum-gold/10 transition-all backdrop-blur-sm">
-                                <motion.svg
-                                    animate={bounceAnimation}
-                                    width="16" height="16"
-                                    viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" strokeWidth="1.5"
-                                    className="text-rhum-gold md:w-6 md:h-6"
-                                >
-                                    <line x1="12" y1="5" x2="12" y2="19" />
-                                    <polyline points="19 12 12 19 5 12" />
-                                </motion.svg>
-                            </div>
-                        </a>
-                    </div>
+                    <a href="#collection" className="group flex flex-col items-center gap-1 md:gap-3 no-underline">
+                        <span className="text-rhum-gold/70 text-[8px] md:text-[9px] uppercase tracking-[0.4em] font-bold group-hover:text-rhum-gold transition-colors">
+                            Explorer les bouteilles
+                        </span>
+                        <div className="w-9 h-9 md:w-12 md:h-12 rounded-full border border-rhum-gold/30 flex items-center justify-center group-hover:bg-rhum-gold/10 transition-all backdrop-blur-sm">
+                            <motion.svg
+                                animate={bounceAnimation}
+                                width="16" height="16"
+                                viewBox="0 0 24 24" fill="none"
+                                stroke="currentColor" strokeWidth="1.5"
+                                className="text-rhum-gold md:w-6 md:h-6"
+                            >
+                                <line x1="12" y1="5" x2="12" y2="19" />
+                                <polyline points="19 12 12 19 5 12" />
+                            </motion.svg>
+                        </div>
+                    </a>
                 </motion.div>
             </div>
 
-            <div className="w-full h-[1px] bg-white/10 z-30" />
+            <div className="w-full h-px bg-white/10 z-30" />
 
-            {/* --- 🏺 SECTION 2 : TERRITOIRE DES ESSENCES --- */}
+            {/* --- 🏺 SECTION 2 : LE REGISTRE DES ESSENCES --- */}
             <div id="collection" className="relative z-20 bg-[#0a1a14] pt-16 md:pt-24 pb-20 px-4 md:px-6">
                 <div className="max-w-7xl mx-auto">
                     <ScrollReveal>
@@ -163,7 +159,7 @@ export default function ShopPage() {
                     {processedProducts.length === 0 && (
                         <div className="py-32 text-center border border-white/10 bg-white/5 rounded-sm">
                             <p className="font-serif italic text-white text-2xl tracking-widest uppercase">
-                                Aucune référence disponible dans le Registre.
+                                Aucune référence certifiée pour le moment.
                             </p>
                         </div>
                     )}

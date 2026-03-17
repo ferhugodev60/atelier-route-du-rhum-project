@@ -169,7 +169,7 @@ export default function GiftCardPage() {
                                     </button>
                                     <div className="flex items-center justify-center gap-3 text-white/30">
                                         <ShieldCheck size={16} />
-                                        <span className="text-[9px] font-black uppercase tracking-[0.3em]">Scellé par Stripe</span>
+                                        <span className="text-[9px] font-black uppercase tracking-[0.3em]">Paiement sécurisé via Stripe</span>
                                     </div>
                                 </div>
                             </div>

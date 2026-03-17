@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Helmet } from 'react-helmet-async';
-import { ShieldCheck } from 'lucide-react';
+import { MapPin, ShieldCheck } from 'lucide-react';
 import api from '../api/axiosInstance';
 import { Product, ProductVolume } from '../types/shop';
 import { useCartStore } from '../store/cartStore';
@@ -11,8 +11,10 @@ import ProductCard from '../components/shop/ProductCard';
 import ShopReassurance from "../components/shop/ShopReassurance.tsx";
 
 export default function ProductPage() {
-    const { id } = useParams();
+    // 🏺 On extrait le productSlug (qui peut être un ID ou un Slug réel)
+    const { categorySlug, productSlug } = useParams();
     const navigate = useNavigate();
+
     const [product, setProduct] = useState<Product | null>(null);
     const [recommendations, setRecommendations] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
@@ -25,23 +27,46 @@ export default function ProductPage() {
 
     useEffect(() => {
         window.scrollTo(0, 0);
+
         const fetchProductData = async () => {
             try {
-                const { data } = await api.get(`/products/${id}`);
+                // 🏺 PROTOCOLE DE DÉTECTION : ID technique vs Slug sémantique
+                // Vérifie si le paramètre correspond au format standard UUID
+                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productSlug || "");
+
+                let response;
+                if (isUUID) {
+                    // Si c'est un ID, on utilise la route standard du Registre
+                    response = await api.get(`/products/${productSlug}`);
+                } else {
+                    // Si c'est un nom sémantique, on utilise la route SEO
+                    response = await api.get(`/products/slug/${productSlug}`);
+                }
+
+                const data = response.data;
                 setProduct(data);
+
                 if (data.volumes.length > 0) setSelectedVol(data.volumes[0]);
 
+                // Récupération des recommandations basées sur la catégorie scellée
                 const productsRes = await api.get('/products');
                 const filtered = productsRes.data
                     .filter((p: Product) => p.categoryId === data.categoryId && p.id !== data.id)
                     .slice(0, 3);
                 setRecommendations(filtered);
 
-            } catch (err) { navigate('/boutique'); }
-            finally { setLoading(false); }
+            } catch (err) {
+                console.error("Échec de synchronisation : Produit introuvable.");
+                navigate('/boutique');
+            } finally {
+                setLoading(false);
+            }
         };
-        fetchProductData();
-    }, [id, navigate]);
+
+        if (productSlug) {
+            fetchProductData();
+        }
+    }, [productSlug, navigate]);
 
     /**
      * 🏺 SCELLAGE DE LA DESCRIPTION COURTE
@@ -66,16 +91,17 @@ export default function ProductPage() {
     return (
         <>
             <Helmet>
-                <title>{`${product.name} | L'Établissement de la Route du Rhum`}</title>
+                <title>{`${product.name} | ${product.category.name} | L'Établissement`}</title>
                 <meta name="description" content={product.description} />
             </Helmet>
 
-            <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-8 font-sans">
+            <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-8 font-sans selection:bg-rhum-gold selection:text-black">
                 <div className="max-w-6xl mx-auto">
 
+                    {/* 🏺 FIL D'ARIANE SEO */}
                     <nav className="flex gap-2 text-[10px] uppercase tracking-[0.2em] text-white mb-8 font-black">
                         <Link to="/" className="hover:text-rhum-gold">ACCUEIL</Link> /
-                        <Link to="/boutique" className="hover:text-rhum-gold">{product.category.name}</Link> /
+                        <Link to={`/boutique?collection=${categorySlug}`} className="hover:text-rhum-gold">{product.category.name}</Link> /
                         <span className="text-rhum-gold">{product.name}</span>
                     </nav>
 
@@ -85,7 +111,7 @@ export default function ProductPage() {
                         </div>
 
                         <div className="flex flex-col">
-                            <h1 className="text-4xl md:text-5xl font-serif text-white uppercase mb-4 tracking-tighter">
+                            <h1 className="text-4xl md:text-5xl font-serif text-white uppercase mb-4 tracking-tighter leading-none">
                                 {product.name}
                             </h1>
 
@@ -98,7 +124,6 @@ export default function ProductPage() {
                                 <span className="text-[10px] text-white block mt-2 font-sans uppercase tracking-[0.2em]">Prix TTC</span>
                             </div>
 
-                            {/* 🏺 APERÇU DE LA DESCRIPTION (SHORT) */}
                             <p className="text-white text-base leading-relaxed mb-10 font-serif italic border-l-2 border-rhum-gold pl-6">
                                 "{shortDescription}"
                             </p>
@@ -127,14 +152,22 @@ export default function ProductPage() {
                                 </button>
                             </div>
 
-                            <div className="flex items-center gap-4 text-white pt-8 border-t border-white/10">
-                                <ShieldCheck size={16} className="text-rhum-gold" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Paiement 100% sécurisé via Stripe</span>
+                            {/* RÉASSURANCE : Stripe & Retrait Établissement */}
+                            <div className="pt-8 border-t border-white/10 space-y-4">
+                                <div className="flex items-center gap-4 text-white">
+                                    <ShieldCheck size={16} className="text-rhum-gold" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Paiement 100% sécurisé via Stripe</span>
+                                </div>
+                                <div className="flex items-center gap-4 text-white">
+                                    <MapPin size={16} className="text-rhum-gold" />
+                                    <span className="text-[10px] font-black uppercase tracking-widest">Retrait à l'Établissement</span>
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
-                    {/* 🏺 SYSTÈME D'ONGLETS (DESCRIPTION ENTIÈRE ICI) */}
+                    {/* SYSTÈME D'ONGLETS */}
                     <div className="border-t border-white/10 mb-24">
                         <div className="flex justify-center gap-8 md:gap-16 -mt-[1px]">
                             {['description', 'details'].map((tab) => (
@@ -156,9 +189,12 @@ export default function ProductPage() {
                                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
                                     className="text-white font-serif text-xl md:text-2xl leading-relaxed"
                                 >
-                                    {/* 🏺 ON AFFICHE L'INTÉGRALITÉ DU REGISTRE ICI */}
                                     {activeTab === 'description' && product.description}
-                                    {activeTab === 'details' && `Volume: ${selectedVol?.size}${selectedVol?.unit} | Alcool: 50% | Provenance du rhum: Guadeloupe`}
+                                    {activeTab === 'details' && (
+                                        <span className="text-white/80 text-lg md:text-xl font-sans uppercase tracking-widest font-bold">
+                                            Volume: {selectedVol?.size}{selectedVol?.unit} | Degré: 50% vol. | Origine: Sélection de l'Établissement
+                                        </span>
+                                    )}
                                 </motion.div>
                             </AnimatePresence>
                         </div>
