@@ -156,10 +156,6 @@ export default function RegisterModal() {
                                     width="100%"
                                     text="signup_with"
                                 />
-                                <div className="relative w-full text-center">
-                                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
-                                    <span className="relative bg-[#0a1a14] px-4 text-[8px] text-white/20 uppercase tracking-[0.4em] font-black italic">Ou par voie manuscrite</span>
-                                </div>
                             </div>
                         )}
 
@@ -237,7 +233,7 @@ export default function RegisterModal() {
 
                                     <div className="space-y-1.5">
                                         <label className={labelStyle}>Email</label>
-                                        <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
+                                        <input name="email" type="email" required placeholder="votre@email.com" className={inputStyle} />
                                     </div>
 
                                     <div className="space-y-1.5">

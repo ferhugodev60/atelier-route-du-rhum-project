@@ -107,7 +107,7 @@ export default function CartDrawer({ isOpen, onClose, items, onRemove }: CartDra
                         <div className="flex-1 overflow-y-auto p-8 space-y-8 custom-scrollbar">
                             {items.length === 0 ? (
                                 <div className="h-full flex flex-col items-center justify-center text-center">
-                                    <p className="text-white/20 uppercase tracking-[0.3em] font-black text-xs">Votre registre est vide.</p>
+                                    <p className="text-white/20 uppercase tracking-[0.3em] font-black text-xs">Votre panier est vide.</p>
                                 </div>
                             ) : (
                                 items.map((item) => (

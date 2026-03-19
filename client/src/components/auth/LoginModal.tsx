@@ -145,14 +145,14 @@ export default function LoginModal() {
 
                             <div className="relative w-full flex items-center justify-center">
                                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
-                                <span className="relative bg-[#0a1a14] px-4 text-[9px] text-white/20 uppercase tracking-[0.4em] font-black">Ou via vos secrets</span>
+                                <span className="relative bg-[#0a1a14] px-4 text-[9px] text-white uppercase tracking-[0.4em] font-black">Ou</span>
                             </div>
                         </div>
 
                         <form onSubmit={handleFormSubmit} className="space-y-8 flex-1">
                             <div className="space-y-3">
                                 <label htmlFor="email" className={labelStyle}>Identifiant (Email)</label>
-                                <input id="email" name="email" type="email" required className={inputStyle} placeholder="VOTRE@EMAIL.COM" />
+                                <input id="email" name="email" type="email" required className={inputStyle} placeholder="votre@email.com" />
                             </div>
 
                             <div className="space-y-3">
