@@ -34,6 +34,9 @@ const AtelierConceptionPage = lazy(() => import('./pages/AtelierConceptionPage.t
 const WorkshopDetails = lazy(() => import('./pages/WorkshopDetails.tsx'));
 const GiftCardPage = lazy(() => import('./pages/GiftCardPage.tsx'));
 
+// 🏺 Sas de Qualification Professionnelle
+const CompleteProfile = lazy(() => import('./pages/CompleteProfile.tsx'));
+
 const Sections = {
     Hero: lazy(() => import('./components/sections/Hero.tsx')),
     About: lazy(() => import('./components/sections/About.tsx')),
@@ -66,6 +69,7 @@ export default function App() {
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
                     <Route path="/reset-password/*" element={null} />
+                    <Route path="/completer-profil" element={null} />
                     <Route
                         path="*"
                         element={
@@ -81,21 +85,29 @@ export default function App() {
                     <Routes>
                         <Route path="/" element={<HomePage />} />
 
-                        {/* 🏺 ROUTES BOUTIQUE (Optimisation SEO Slugs) */}
+                        {/* 🏺 ROUTES PUBLIQUES : Tout visiteur peut y accéder librement */}
                         <Route path="/boutique" element={<ShopPage />} />
                         <Route path="/boutique/:categorySlug/:productSlug" element={<ProductPage />} />
-
-                        <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
-                        <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
                         <Route path="/ateliers/:id" element={<WorkshopDetails />} />
                         <Route path="/carte-cadeau" element={<GiftCardPage />} />
+                        <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
 
+                        {/* 🏺 SAS DE QUALIFICATION : Uniquement pour les membres connectés non-qualifiés */}
+                        <Route
+                            path="/completer-profil"
+                            element={<ProtectedRoute><CompleteProfile /></ProtectedRoute>}
+                        />
+
+                        {/* 🏺 ROUTES PRIVÉES : Requiert impérativement un matricule et une session active */}
+                        <Route path="/mon-compte" element={<ProtectedRoute><CustomerDashboard /></ProtectedRoute>} />
+
+                        {/* 🏺 DOCUMENTS INSTITUTIONNELS */}
                         <Route path="/mentions-legales" element={<LegalMentions />} />
                         <Route path="/cgv" element={<TermsAndConditions />} />
                         <Route path="/validate/:participantId" element={<ValidationPage />} />
                         <Route path="/reset-password" element={<ResetPassword />} />
 
-                        {/* --- REGISTRE ADMIN --- */}
+                        {/* --- 🛡️ REGISTRE ADMINISTRATION --- */}
                         <Route path="/admin" element={<AdminLogin />} />
                         <Route path="/admin" element={<AdminLayout />}>
                             <Route path="dashboard" element={<AdminDashboard />} />
@@ -106,10 +118,12 @@ export default function App() {
                             <Route path="orders" element={<AdminOrders />} />
                             <Route path="gift-cards" element={<AdminGiftCards />} />
                         </Route>
+
                         <Route path="*" element={<NotFound />} />
                     </Routes>
                 </Suspense>
 
+                {/* --- 🏺 INTERFACES ÉPHÉMÈRES --- */}
                 <ToastContainer />
                 <LoginModal />
                 <RegisterModal />
@@ -121,6 +135,7 @@ export default function App() {
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
                     <Route path="/reset-password/*" element={null} />
+                    <Route path="/completer-profil" element={null} />
                     <Route
                         path="*"
                         element={
@@ -139,6 +154,7 @@ export default function App() {
                     <Route path="/admin/*" element={null} />
                     <Route path="/validate/*" element={null} />
                     <Route path="/reset-password/*" element={null} />
+                    <Route path="/completer-profil" element={null} />
                     <Route path="*" element={<Footer />} />
                 </Routes>
             </div>

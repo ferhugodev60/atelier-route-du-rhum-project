@@ -1,42 +1,53 @@
 /**
- * 🏛️ Interface globale pour le membre
- * Centralisée pour garantir l'intégrité des données au sein du Cursus.
- * Mise à jour : Intégration du statut Bénéficiaire CE et du volet Professionnel.
+ * 🏛️ REGISTRE DE L'IDENTITÉ NUMÉRIQUE
+ * Interface centrale garantissant l'intégrité des données au sein de l'Établissement.
+ * Version : 2.0 - Intégration du Scellage Google et de la Qualification de Profil.
  */
 export interface User {
     id: string;
     email: string;
+
+    /** 🏺 Sceau Google : Identifiant unique si le membre utilise la connexion sociale */
+    googleId?: string | null;
+
     firstName: string;
     lastName: string;
-    /** 🏺 Identifiant unique certifié par l'établissement (ex: RR-26-XXXX) */
-    memberCode: string;
+
+    /** 🏺 Matricule certifié par l'Établissement (Format : RR-26-XXXX) */
+    memberCode: string | null;
     phone?: string | null;
 
-    /** 🏺 Statut au sein de l'Établissement */
+    /** 🏺 Rang Institutionnel */
     role: 'USER' | 'PRO' | 'ADMIN';
 
-    /** 🏺 Nouveau : Identifie le particulier rattaché à un Comité d'Entreprise */
+    /** 🛡️ État de Qualification : Définit si le membre a validé son rang (Lambda/Pro) */
+    isProfileComplete: boolean;
+
+    /** 🏺 Statut CSE : Identifie le particulier rattaché à une entité partenaire */
     isEmployee: boolean;
 
-    /** 🏺 Attributs Professionnels (Remplis pour les PRO ou les salariés bénéficiaires) */
+    /** 🏺 Attributs Professionnels (Certifiés pour les PRO ou les bénéficiaires CSE) */
     companyName?: string | null;
-    siret?: string | null; // Format certifié de 14 chiffres
+    siret?: string | null; // Registre de 14 chiffres
 
-    /** 🏺 Palier technique actuel validé par le membre */
+    /** 🏺 Niveau de l'Espace de conception actuellement validé */
     conceptionLevel: number;
+
     createdAt?: string;
 }
 
 /**
- * 🏛️ Interface pour les mises à jour de profil
- * Note : Le memberCode reste immuable.
- * Le SIRET et la Raison Sociale sont inclus pour permettre au salarié de corriger son rattachement.
+ * 🏛️ PROTOCOLE DE MISE À JOUR DU PROFIL
+ * Permet au membre de rectifier ses informations au Registre.
+ * Note : Le Matricule (memberCode) et l'ID Google restent immuables.
  */
 export interface UserProfileUpdate {
     firstName: string;
     lastName: string;
     email: string;
     phone: string;
+
+    /** 🏺 Champs de qualification (Accessibles si le membre souhaite certifier son rang PRO) */
     companyName?: string | null;
     siret?: string | null;
 }

@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api/axiosInstance';
 import { useAuthStore } from '../../store/authStore';
 import { Eye, EyeOff, ShieldCheck, Landmark, User as UserIcon } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function RegisterModal() {
+    const navigate = useNavigate();
     const { isRegisterOpen, setRegisterOpen, setLoginOpen, setAuth } = useAuthStore();
+
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
@@ -40,6 +44,34 @@ export default function RegisterModal() {
             document.body.style.position = '';
         };
     }, [isRegisterOpen]);
+
+    /**
+     * 🏺 SCELLAGE GOOGLE
+     * Permet une inscription instantanée suivie d'une qualification différée.
+     */
+    const handleGoogleSuccess = async (credentialResponse: any) => {
+        setError(null);
+        setIsPending(true);
+        try {
+            const response = await api.post('/auth/google', {
+                idToken: credentialResponse.credential
+            });
+
+            const { user, token, isNewUser } = response.data;
+
+            setAuth(user, token);
+            setRegisterOpen(false);
+
+            // Si c'est un nouveau compte, on l'envoie vers le choix du rang (Pro/Lambda)
+            if (isNewUser) {
+                navigate('/completer-profil');
+            }
+        } catch (err: any) {
+            setError("Le Registre n'a pas pu valider l'inscription Google.");
+        } finally {
+            setIsPending(false);
+        }
+    };
 
     const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -89,8 +121,8 @@ export default function RegisterModal() {
                     />
 
                     <motion.div
-                        initial={{ opacity: 0, y: 0, scale: 1 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
                         exit={{ opacity: 0 }}
                         className={`
                             relative z-10 bg-[#0a1a14] flex flex-col min-h-screen w-full
@@ -108,29 +140,28 @@ export default function RegisterModal() {
                             &times;
                         </button>
 
-                        <header className="text-center mb-10 md:mb-12">
+                        <header className="text-center mb-8 md:mb-10">
                             <span className="text-rhum-gold text-[8px] md:text-[10px] uppercase tracking-[0.5em] mb-3 block font-black">Accès Client</span>
                             <h2 className="text-2xl md:text-5xl font-serif text-white uppercase tracking-tighter">Créer un Compte</h2>
-
-                            <div className="flex flex-row items-center justify-center gap-2 md:gap-4 mt-8 md:mt-10">
-                                <button
-                                    type="button"
-                                    onClick={() => { setIsPro(false); setIsEmployee(false); }}
-                                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
-                                >
-                                    <UserIcon size={12} className="md:w-[14px]" />
-                                    Individuel
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { setIsPro(true); setIsEmployee(false); }}
-                                    className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
-                                >
-                                    <Landmark size={12} className="md:w-[14px]" />
-                                    Pro
-                                </button>
-                            </div>
                         </header>
+
+                        {/* 🏺 SECTION GOOGLE : Inscription Flash */}
+                        {!success && (
+                            <div className="mb-10 flex flex-col items-center gap-6 border-b border-white/5 pb-10">
+                                <GoogleLogin
+                                    onSuccess={handleGoogleSuccess}
+                                    onError={() => setError("Inscription Google interrompue.")}
+                                    theme="filled_black"
+                                    shape="square"
+                                    width="100%"
+                                    text="signup_with"
+                                />
+                                <div className="relative w-full text-center">
+                                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
+                                    <span className="relative bg-[#0a1a14] px-4 text-[8px] text-white/20 uppercase tracking-[0.4em] font-black italic">Ou par voie manuscrite</span>
+                                </div>
+                            </div>
+                        )}
 
                         {success ? (
                             <div className="py-16 text-center space-y-6 flex-1 flex flex-col justify-center">
@@ -141,97 +172,116 @@ export default function RegisterModal() {
                                 <p className="text-[9px] md:text-[11px] text-white/40 uppercase tracking-[0.3em] font-black">Ouverture de votre espace...</p>
                             </div>
                         ) : (
-                            <form onSubmit={handleRegister} className="space-y-6 md:space-y-8 flex-1">
-                                {!isPro && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                                        <div className="space-y-1.5">
-                                            <label className={labelStyle}>Prénom</label>
-                                            <input name="firstName" required placeholder="EX: JEAN" className={inputStyle} />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className={labelStyle}>Nom</label>
-                                            <input name="lastName" required placeholder="EX: DUPONT" className={inputStyle} />
-                                        </div>
-                                    </div>
-                                )}
-
-                                {!isPro && (
-                                    <div className="py-3 px-4 md:px-6 bg-white/[0.02] border border-white/5 rounded-sm">
-                                        <label className="flex items-center gap-4 md:gap-5 cursor-pointer group">
-                                            <div
-                                                onClick={() => setIsEmployee(!isEmployee)}
-                                                className={`w-10 h-5 md:w-12 md:h-6 rounded-full relative transition-all duration-300 border ${isEmployee ? 'bg-rhum-gold border-rhum-gold' : 'bg-transparent border-white/20'}`}
-                                            >
-                                                <div className={`absolute top-0.5 md:top-1 w-3.5 h-3.5 rounded-full bg-white transition-all duration-300 ${isEmployee ? 'left-6 md:left-7' : 'left-0.5 md:left-1'}`} />
-                                            </div>
-                                            <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-[0.15em] font-black group-hover:text-rhum-gold transition-colors">
-                                                Bénéficiaire d'un Comité d'Entreprise
-                                            </span>
-                                        </label>
-                                    </div>
-                                )}
-
-                                {(isPro || (!isPro && isEmployee)) && (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 md:space-y-8 bg-rhum-gold/5 p-5 md:p-8 border-l-2 border-rhum-gold/40">
-                                        <div className="space-y-1.5">
-                                            <label className={labelStyle}>Raison Sociale</label>
-                                            <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className={inputStyle} />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <label className={labelStyle}>SIRET</label>
-                                            <input name="siret" required pattern="[0-9]{14}" placeholder="000 000 000 00000" className={inputStyle} />
-                                        </div>
-                                    </motion.div>
-                                )}
-
-                                {/* 🏺 EMAIL : Toute la largeur pour un confort de saisie optimal */}
-                                <div className="space-y-1.5">
-                                    <label className={labelStyle}>Email</label>
-                                    <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
-                                </div>
-
-                                {/* 🏺 TÉLÉPHONE : Sur sa propre ligne également pour la cohérence visuelle */}
-                                <div className="space-y-1.5">
-                                    <label className={labelStyle}>Téléphone</label>
-                                    <input name="phone" type="tel" placeholder="06 00 00 00 00" className={inputStyle} />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className={labelStyle}>Mot de passe</label>
-                                    <div className="relative group">
-                                        <input
-                                            name="password"
-                                            type={showPassword ? "text" : "password"}
-                                            required
-                                            placeholder="••••••••••••"
-                                            className={`${inputStyle} pr-12 md:pr-14`}
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setShowPassword(!showPassword)}
-                                            className="absolute right-4 md:right-5 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
-                                        >
-                                            {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {error && (
-                                    <p className="text-red-400 text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-center bg-red-400/5 py-4 border border-red-400/20 font-black">
-                                        {error}
-                                    </p>
-                                )}
-
-                                <div className="pt-4 md:pt-6 space-y-5 md:space-y-6">
+                            <>
+                                <div className="flex flex-row items-center justify-center gap-2 md:gap-4 mb-8">
                                     <button
-                                        type="submit"
-                                        disabled={isPending}
-                                        className={`w-full bg-rhum-gold text-rhum-green py-5 md:py-6 font-black uppercase tracking-[0.3em] text-[11px] md:text-[12px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-[0.98]'}`}
+                                        type="button"
+                                        onClick={() => { setIsPro(false); setIsEmployee(false); }}
+                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${!isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
                                     >
-                                        {isPending ? 'VALIDATION...' : "Créer mon compte"}
+                                        <UserIcon size={12} className="md:w-[14px]" />
+                                        Individuel
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => { setIsPro(true); setIsEmployee(false); }}
+                                        className={`flex-1 sm:flex-none flex items-center justify-center gap-2 text-[8px] md:text-[10px] uppercase tracking-[0.15em] px-4 md:px-8 py-3 md:py-4 border transition-all cursor-pointer font-black ${isPro ? 'bg-rhum-gold text-rhum-green border-rhum-gold shadow-lg' : 'border-white/10 text-white/30 hover:border-white/20'}`}
+                                    >
+                                        <Landmark size={12} className="md:w-[14px]" />
+                                        Pro / CSE
                                     </button>
                                 </div>
-                            </form>
+
+                                <form onSubmit={handleRegister} className="space-y-6 md:space-y-8 flex-1">
+                                    {!isPro && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                                            <div className="space-y-1.5">
+                                                <label className={labelStyle}>Prénom</label>
+                                                <input name="firstName" required placeholder="EX: JEAN" className={inputStyle} />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className={labelStyle}>Nom</label>
+                                                <input name="lastName" required placeholder="EX: DUPONT" className={inputStyle} />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!isPro && (
+                                        <div className="py-3 px-4 md:px-6 bg-white/[0.02] border border-white/5 rounded-sm">
+                                            <label className="flex items-center gap-4 md:gap-5 cursor-pointer group">
+                                                <div
+                                                    onClick={() => setIsEmployee(!isEmployee)}
+                                                    className={`w-10 h-5 md:w-12 md:h-6 rounded-full relative transition-all duration-300 border ${isEmployee ? 'bg-rhum-gold border-rhum-gold' : 'bg-transparent border-white/20'}`}
+                                                >
+                                                    <div className={`absolute top-0.5 md:top-1 w-3.5 h-3.5 rounded-full bg-white transition-all duration-300 ${isEmployee ? 'left-6 md:left-7' : 'left-0.5 md:left-1'}`} />
+                                                </div>
+                                                <span className="text-[8px] md:text-[10px] text-white/40 uppercase tracking-[0.15em] font-black group-hover:text-rhum-gold transition-colors">
+                                                    Bénéficiaire d'un Comité d'Entreprise
+                                                </span>
+                                            </label>
+                                        </div>
+                                    )}
+
+                                    {(isPro || (!isPro && isEmployee)) && (
+                                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6 md:space-y-8 bg-rhum-gold/5 p-5 md:p-8 border-l-2 border-rhum-gold/40">
+                                            <div className="space-y-1.5">
+                                                <label className={labelStyle}>Raison Sociale</label>
+                                                <input name="companyName" required placeholder="NOM DE L'ENTREPRISE" className={inputStyle} />
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className={labelStyle}>SIRET</label>
+                                                <input name="siret" required pattern="[0-9]{14}" placeholder="000 000 000 00000" className={inputStyle} />
+                                            </div>
+                                        </motion.div>
+                                    )}
+
+                                    <div className="space-y-1.5">
+                                        <label className={labelStyle}>Email</label>
+                                        <input name="email" type="email" required placeholder="VOTRE@EMAIL.COM" className={inputStyle} />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className={labelStyle}>Téléphone</label>
+                                        <input name="phone" type="tel" placeholder="06 00 00 00 00" className={inputStyle} />
+                                    </div>
+
+                                    <div className="space-y-1.5">
+                                        <label className={labelStyle}>Mot de passe</label>
+                                        <div className="relative group">
+                                            <input
+                                                name="password"
+                                                type={showPassword ? "text" : "password"}
+                                                required
+                                                placeholder="••••••••••••"
+                                                className={`${inputStyle} pr-12 md:pr-14`}
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowPassword(!showPassword)}
+                                                className="absolute right-4 md:right-5 top-1/2 -translate-y-1/2 text-rhum-gold/40 hover:text-rhum-gold transition-colors cursor-pointer"
+                                            >
+                                                {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {error && (
+                                        <p className="text-red-400 text-[10px] md:text-[11px] uppercase tracking-[0.2em] text-center bg-red-400/5 py-4 border border-red-400/20 font-black italic">
+                                            {error}
+                                        </p>
+                                    )}
+
+                                    <div className="pt-4 md:pt-6">
+                                        <button
+                                            type="submit"
+                                            disabled={isPending}
+                                            className={`w-full bg-rhum-gold text-rhum-green py-5 md:py-6 font-black uppercase tracking-[0.3em] text-[11px] md:text-[12px] hover:bg-white transition-all shadow-2xl rounded-sm ${isPending ? 'cursor-not-allowed opacity-50' : 'cursor-pointer active:scale-[0.98]'}`}
+                                        >
+                                            {isPending ? 'SCELLAGE EN COURS...' : "Créer mon compte"}
+                                        </button>
+                                    </div>
+                                </form>
+                            </>
                         )}
 
                         <footer className="mt-12 md:mt-16 text-center border-t border-white/5 pt-10 pb-10 md:pb-0">

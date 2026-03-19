@@ -23,7 +23,7 @@ interface AuthState {
 
 /**
  * 🏛️ Magasin d'Authentification Centralisé
- * Gère l'identité des membres, qu'ils soient Particuliers, Bénéficiaires CE ou Professionnels.
+ * Gère l'identité des membres et assure la persistance du sceau numérique.
  */
 export const useAuthStore = create<AuthState>()(
     persist(
@@ -35,22 +35,31 @@ export const useAuthStore = create<AuthState>()(
 
             /**
              * 🏺 Ouverture de Session
-             * Enregistre l'identité du membre et son jeton d'accès certifié.
+             * Scelle l'identité du membre et son jeton d'accès au sein du magasin.
              */
-            setAuth: (user, token) => set({
-                user,
-                token,
-                isLoginOpen: false,
-                isRegisterOpen: false
-            }),
+            setAuth: (user, token) => {
+                // On s'assure de réinitialiser les modales lors d'un scellage réussi
+                set({
+                    user,
+                    token,
+                    isLoginOpen: false,
+                    isRegisterOpen: false
+                });
+            },
 
             /**
              * 🏺 Clôture de Session
-             * Réinitialise les accès et nettoie le stockage local du navigateur.
+             * Réinitialise les accès et purge le stockage local du navigateur de manière stricte.
              */
             logout: () => {
-                localStorage.removeItem('rhum-atlier-auth');
+                // 🏺 CORRECTION : Suppression de la clé correcte définie dans la config 'persist'
+                localStorage.removeItem('rhum-member-session');
+
+                // Réinitialisation de l'état mémoire
                 set({ user: null, token: null });
+
+                // Optionnel : Redirection vers l'accueil pour un nettoyage complet du cycle de vie React
+                window.location.href = '/';
             },
 
             // Gestion de la visibilité des interfaces d'accès
@@ -59,11 +68,8 @@ export const useAuthStore = create<AuthState>()(
 
             /**
              * 🏛️ Synchronisation avec le Registre
-             * Met à jour les informations du membre en temps réel, incluant :
-             * - Son rôle (USER, PRO, ADMIN)
-             * - Son statut de bénéficiaire CE (isEmployee)
-             * - Son palier technique (conceptionLevel)
-             * - Ses attributs pro (SIRET, Raison Sociale)
+             * Rafraîchit les attributs du membre (Rôle, SIRET, Qualification)
+             * pour garantir que l'interface reflète l'état actuel en base de données.
              */
             checkAuth: async () => {
                 try {
@@ -71,27 +77,26 @@ export const useAuthStore = create<AuthState>()(
                     if (response.data) {
                         set({ user: response.data });
 
-                        // Identification du type de profil selon les directives [cite: 2026-02-12]
+                        // Identification sémantique du profil
                         let profileType = 'Particulier';
-
                         if (response.data.role === 'PRO') {
                             profileType = 'Professionnel';
                         } else if (response.data.isEmployee) {
                             profileType = 'Bénéficiaire CE';
                         }
 
-                        console.log(`🏛️ Profil ${profileType} synchronisé avec succès.`);
+                        console.log(`📡 [REGISTRE] Profil ${profileType} synchronisé.`);
                     }
                 } catch (error) {
-                    console.error("❌ Échec de la synchronisation avec le Registre central.");
-                    // En cas d'erreur critique de session, on déconnecte par sécurité
+                    console.error("❌ Échec de la synchronisation. Session révoquée.");
+                    // En cas d'échec de synchronisation (Token expiré par ex.), on purge par sécurité.
                     set({ user: null, token: null });
                 }
             },
         }),
         {
-            name: 'rhum-member-session',
-            version: 3 // 🏺 Version 3 : Intégration du statut bénéficiaire CE (isEmployee)
+            name: 'rhum-member-session', // 🏺 Le nom unique de votre sceau local
+            version: 4 // 🏺 Passage en V4 : Intégration de la qualification 'isProfileComplete'
         }
     )
 );

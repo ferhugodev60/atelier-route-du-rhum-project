@@ -10,17 +10,20 @@ datasource db {
 }
 
 model User {
-  id        String  @id @default(cuid())
-  email     String  @unique
-  password  String
+  id       String  @id @default(cuid())
+  email    String  @unique
+  password String?
+  googleId String? @unique
+
   firstName String
   lastName  String
   phone     String?
 
   // 🏺 Statut Institutionnel
-  role       String  @default("USER") // "USER", "PRO", "ADMIN"
-  isEmployee Boolean @default(false) // 🏺 Nouveau : Identifie le particulier rattaché à un CE
-  memberCode String? @unique
+  role              String  @default("USER") // "USER", "PRO", "ADMIN"
+  isEmployee        Boolean @default(false) // 🏺 Nouveau : Identifie le particulier rattaché à un CE
+  isProfileComplete Boolean @default(true)
+  memberCode        String? @unique
 
   // 🏺 Attributs Professionnels (CE)
   companyName String?
