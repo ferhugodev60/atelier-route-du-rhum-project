@@ -1,0 +1,8 @@
+User-agent: *
+Disallow: /mon-compte
+Disallow: /admin/
+Disallow: /completer-profil
+Disallow: /reset-password
+Disallow: /validate/
+
+Sitemap: https://atelier-route-du-rhum-project-seven.vercel.app/sitemap-index.xml

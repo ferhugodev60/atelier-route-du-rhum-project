@@ -1,5 +1,6 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Navbar, Footer } from './components/layout';
 import ScrollReveal from './components/animations/ScrollReveal.tsx';
 import CartDrawer from './components/shop/CartDrawer.tsx';
@@ -46,7 +47,30 @@ const Sections = {
 };
 
 function HomePage() {
+    const siteUrl = import.meta.env.VITE_FRONTEND_URL;
     return (
+        <>
+        <Helmet>
+            <title>L'Atelier de la Route du Rhum — Ateliers & Boutique Rhum</title>
+            <meta name="description" content="Découvrez l'Atelier de la Route du Rhum : ateliers de dégustation, cursus de conception en 4 niveaux et boutique de rhums d'exception." />
+            <meta name="robots" content="index, follow" />
+            <link rel="canonical" href={siteUrl} />
+            <meta property="og:type" content="website" />
+            <meta property="og:title" content="L'Atelier de la Route du Rhum" />
+            <meta property="og:description" content="Ateliers de dégustation, cursus de conception en 4 niveaux et boutique de rhums d'exception." />
+            <meta property="og:url" content={siteUrl} />
+            <script type="application/ld+json">{JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "WebSite",
+                "name": "L'Atelier de la Route du Rhum",
+                "url": siteUrl,
+                "publisher": {
+                    "@type": "Organization",
+                    "name": "L'Atelier de la Route du Rhum",
+                    "logo": { "@type": "ImageObject", "url": `${siteUrl}/logo.svg` }
+                }
+            })}</script>
+        </Helmet>
         <main>
             <section id="home"><Sections.Hero /></section>
             <section id="about"><ScrollReveal><Sections.About /></ScrollReveal></section>
@@ -54,6 +78,7 @@ function HomePage() {
             <section id="testimonials"><ScrollReveal><Sections.Testimonials /></ScrollReveal></section>
             <section id="contact"><ScrollReveal><Sections.Contact /></ScrollReveal></section>
         </main>
+        </>
     );
 }
 

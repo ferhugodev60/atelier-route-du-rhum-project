@@ -79,8 +79,31 @@ export default function ProductPage() {
     return (
         <>
             <Helmet>
-                <title>{`${product.name} | ${product.category.name} | L'Établissement`}</title>
-                <meta name="description" content={product.description} />
+                <title>{`${product.name} | ${product.category.name} | L'Atelier de la Route du Rhum`}</title>
+                <meta name="description" content={product.description?.slice(0, 160)} />
+                <meta name="robots" content="index, follow" />
+                <link rel="canonical" href={`${import.meta.env.VITE_FRONTEND_URL}/boutique/${productSlug}`} />
+                <meta property="og:type" content="product" />
+                <meta property="og:title" content={`${product.name} | L'Atelier de la Route du Rhum`} />
+                <meta property="og:description" content={product.description?.slice(0, 160)} />
+                {product.image && <meta property="og:image" content={product.image} />}
+                <meta property="og:url" content={`${import.meta.env.VITE_FRONTEND_URL}/boutique/${productSlug}`} />
+                <script type="application/ld+json">{JSON.stringify({
+                    "@context": "https://schema.org",
+                    "@type": "Product",
+                    "name": product.name,
+                    "image": product.image,
+                    "description": product.description,
+                    "brand": { "@type": "Brand", "name": "L'Atelier de la Route du Rhum" },
+                    "offers": selectedVol ? {
+                        "@type": "Offer",
+                        "url": `${import.meta.env.VITE_FRONTEND_URL}/boutique/${productSlug}`,
+                        "priceCurrency": "EUR",
+                        "price": selectedVol.price.toFixed(2),
+                        "availability": selectedVol.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+                        "itemCondition": "https://schema.org/NewCondition"
+                    } : undefined
+                })}</script>
             </Helmet>
 
             <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] pt-32 pb-20 px-4 md:px-8 font-sans selection:bg-rhum-gold selection:text-black">
@@ -95,7 +118,7 @@ export default function ProductPage() {
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start mb-24">
                         <div className="relative aspect-square bg-white/5 border border-white/10 rounded-sm overflow-hidden shadow-2xl">
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            <img src={product.image} alt={`${product.name} - ${product.category.name} | L'Atelier de la Route du Rhum`} className="w-full h-full object-cover" />
                         </div>
 
                         <div className="flex flex-col">

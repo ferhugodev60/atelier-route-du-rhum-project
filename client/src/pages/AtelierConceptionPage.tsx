@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
 import { Check, Lock, ShieldAlert, Clock, Flame, ArrowRight } from 'lucide-react';
 import api from '../api/axiosInstance';
 import { Workshop } from '../types/workshop';
@@ -28,7 +29,20 @@ export default function AtelierConceptionPage() {
 
     if (loading) return <div className="min-h-screen bg-[#0a1a14]" />;
 
+    const siteUrl = import.meta.env.VITE_FRONTEND_URL;
+
     return (
+        <>
+        <Helmet>
+            <title>Atelier Conception — Cursus en 4 niveaux | L'Atelier de la Route du Rhum</title>
+            <meta name="description" content="Maîtrisez l'art de l'assemblage du rhum en 4 paliers techniques. Rejoignez le cursus Atelier Conception de l'Établissement." />
+            <meta name="robots" content="index, follow" />
+            <link rel="canonical" href={`${siteUrl}/atelier-conception`} />
+            <meta property="og:type" content="website" />
+            <meta property="og:title" content="Atelier Conception | L'Atelier de la Route du Rhum" />
+            <meta property="og:description" content="Maîtrisez l'art de l'assemblage du rhum en 4 paliers techniques." />
+            <meta property="og:url" content={`${siteUrl}/atelier-conception`} />
+        </Helmet>
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -161,5 +175,6 @@ export default function AtelierConceptionPage() {
                 </div>
             </div>
         </motion.main>
+        </>
     );
 }

@@ -10,9 +10,11 @@ import categoryRoutes from "./categoryRoutes";
 import workshopRoutes from "./workshopRoutes";
 import participantRoutes from "./participantRoutes";
 import giftRoutes from "./giftRoutes";
+import sitemapRoutes from "./sitemapRoutes";
 
 const router = Router();
 
+router.use("/sitemaps", sitemapRoutes);
 router.use("/auth", authRoutes);
 router.use("/orders", orderRoutes);
 router.use('/public/participants', participantRoutes);

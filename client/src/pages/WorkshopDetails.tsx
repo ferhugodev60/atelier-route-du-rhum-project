@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import {
     Clock,
     Calendar,
@@ -50,6 +51,12 @@ export default function WorkshopDetails() {
 
     if (loading || !workshop) return <div className="min-h-screen bg-[#0a1a14]" />;
 
+    const siteUrl = import.meta.env.VITE_FRONTEND_URL;
+    const canonicalUrl = workshop.level === 0 ? `${siteUrl}/ateliers/decouverte` : `${siteUrl}/ateliers/conception/${workshop.level}`;
+    const pageTitle = workshop.level === 0
+        ? `Atelier Découverte | L'Atelier de la Route du Rhum`
+        : `Atelier Conception Niveau ${workshop.level} — ${workshop.title} | L'Atelier de la Route du Rhum`;
+
     const isLockedForUser = workshop.level > 0 && !isPro && (user?.conceptionLevel || 0) < workshop.level - 1;
     const displayPrice = (user?.isEmployee || isPro) ? workshop.priceInstitutional : workshop.price;
 
@@ -67,6 +74,36 @@ export default function WorkshopDetails() {
     };
 
     return (
+        <>
+        <Helmet>
+            <title>{pageTitle}</title>
+            <meta name="description" content={workshop.description?.slice(0, 160)} />
+            <meta name="robots" content="index, follow" />
+            <link rel="canonical" href={canonicalUrl} />
+            <meta property="og:type" content="website" />
+            <meta property="og:title" content={pageTitle} />
+            <meta property="og:description" content={workshop.description?.slice(0, 160)} />
+            {workshop.image && <meta property="og:image" content={workshop.image} />}
+            <meta property="og:url" content={canonicalUrl} />
+            <script type="application/ld+json">{JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "Service",
+                "name": workshop.title,
+                "description": workshop.fullDescription || workshop.description,
+                "image": workshop.image,
+                "url": canonicalUrl,
+                "provider": {
+                    "@type": "Organization",
+                    "name": "L'Atelier de la Route du Rhum"
+                },
+                "offers": {
+                    "@type": "Offer",
+                    "priceCurrency": "EUR",
+                    "price": workshop.price.toFixed(2),
+                    "availability": "https://schema.org/InStock"
+                }
+            })}</script>
+        </Helmet>
         <motion.main initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-screen bg-[#0a1a14] font-sans selection:bg-rhum-gold selection:text-black">
 
             {/* --- 🏺 HERO HEADER : Lisibilité Renforcée --- */}
@@ -187,5 +224,6 @@ export default function WorkshopDetails() {
                 )}
             </AnimatePresence>
         </motion.main>
+        </>
     );
 }

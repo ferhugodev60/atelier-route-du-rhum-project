@@ -54,6 +54,10 @@ app.use((req, res, next) => {
 // 4. ROUTES DU REGISTRE
 app.use("/api", router);
 
+// Sitemap index à la racine (pour robots.txt)
+import { getSitemapIndex } from './controllers/sitemapController';
+app.get('/sitemap-index.xml', getSitemapIndex);
+
 // Route de diagnostic simple
 app.get("/api/health", (req, res) => {
     res.json({ status: "success", message: "Le serveur est opérationnel." });

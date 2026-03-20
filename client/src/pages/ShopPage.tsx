@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { Helmet } from 'react-helmet-async';
 import api from '../api/axiosInstance';
 import { Product } from '../types/shop';
 
@@ -64,7 +65,34 @@ export default function ShopPage() {
         );
     }
 
+    const siteUrl = import.meta.env.VITE_FRONTEND_URL;
+
     return (
+        <>
+        <Helmet>
+            <title>Boutique Rhum | L'Atelier de la Route du Rhum</title>
+            <meta name="description" content="Découvrez la sélection de rhums et rums arrangés de l'Établissement. Livraison ou retrait sur place." />
+            <meta name="robots" content="index, follow" />
+            <link rel="canonical" href={`${siteUrl}/boutique`} />
+            <meta property="og:type" content="website" />
+            <meta property="og:title" content="Boutique Rhum | L'Atelier de la Route du Rhum" />
+            <meta property="og:description" content="Découvrez la sélection de rhums et rhums arrangés de l'Atelier de la Route du Rhum." />
+            <meta property="og:url" content={`${siteUrl}/boutique`} />
+            <script type="application/ld+json">{JSON.stringify({
+                "@context": "https://schema.org",
+                "@type": "CollectionPage",
+                "name": "Boutique - L'Atelier de la Route du Rhum",
+                "description": "Sélection de rhums et rhums arrangés.",
+                "url": `${siteUrl}/boutique`,
+                "breadcrumb": {
+                    "@type": "BreadcrumbList",
+                    "itemListElement": [
+                        { "@type": "ListItem", "position": 1, "name": "Accueil", "item": siteUrl },
+                        { "@type": "ListItem", "position": 2, "name": "Boutique", "item": `${siteUrl}/boutique` }
+                    ]
+                }
+            })}</script>
+        </Helmet>
         <motion.main
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -168,5 +196,6 @@ export default function ShopPage() {
                 </div>
             </div>
         </motion.main>
+        </>
     );
 }
