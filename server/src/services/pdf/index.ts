@@ -35,10 +35,17 @@ export const generateOrderPDF = async (order: any) => {
     }
 
     const bottles = order.items.filter((i: any) => i.volumeId);
-    if (bottles.length > 0) {
-        console.log(`   ➡️ Boutique détectée : ${bottles.length} flacons. Création d'une page...`);
+    // Le bon de retrait n'est généré qu'en mode PICKUP.
+    // En livraison à domicile, le colis part directement — aucun document de retrait n'est nécessaire.
+    if (bottles.length > 0 && order.deliveryMethod !== 'DELIVERY') {
+        console.log(`   ➡️ Boutique détectée (retrait) : ${bottles.length} flacons. Création d'une page...`);
         const bPage = pdfDoc.addPage(PAGE_SIZE);
         renderBoutiquePageContent(bPage, order, bottles, logoImage, fontBold, fontRegular);
+    }
+
+    if (pdfDoc.getPageCount() === 0) {
+        console.log("🏺 [PDF_INDEX] Aucune page générée (livraison à domicile sans atelier ni carte cadeau) — PDF ignoré.");
+        return null;
     }
 
     console.log("🏺 [PDF_INDEX] Finalisation et sauvegarde du document...");

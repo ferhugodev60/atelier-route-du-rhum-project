@@ -106,6 +106,10 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         const finalTotal = subTotal - discountAmount; // Le frais de port est sélectionné par le client sur Stripe et enregistré via le webhook
         const isOrderBusiness = processedItems.some(i => i.isBusiness);
 
+        // La livraison ne concerne que les produits physiques (bouteilles).
+        // Les ateliers et cartes cadeaux n'ont pas besoin d'adresse de livraison.
+        const hasPhysicalProducts = processedItems.some(i => i.type === 'PRODUCT');
+
         // --- 🏺 3. CRÉATION DE LA COMMANDE ---
         const pendingOrder = await prisma.order.create({
             data: {
@@ -160,14 +164,15 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         if (stripeCouponId) {
             // Coupon appliqué : on utilise discounts, pas de shipping_options (limitation Stripe)
             sessionParams.discounts = [{ coupon: stripeCouponId }];
-        } else {
-            // Pas de coupon : on peut afficher le sélecteur de livraison
+        } else if (hasPhysicalProducts) {
+            // Produits physiques sans coupon : on affiche le sélecteur de livraison
             sessionParams.shipping_address_collection = { allowed_countries: ['FR'] };
             sessionParams.shipping_options = [
                 { shipping_rate: pickupRateId },
                 { shipping_rate: deliveryRateId }
             ];
         }
+        // Ateliers / cartes cadeaux uniquement : pas de livraison, PDF + QR code généré à la confirmation
 
         const session = await stripe.checkout.sessions.create(sessionParams);
 

@@ -9,29 +9,34 @@ const FROM_EMAIL = 'Atelier de la Route du Rhum - Compiègne <onboarding@resend.
  * Envoie le récapitulatif des flux et les certificats de Séance joints.
  */
 export const sendOrderConfirmationEmail = async (userEmail: string, orderData: any) => {
-    const isBusiness = orderData.isBusiness;
-
     try {
-        // Appelle le chef d'orchestre global qui traite tous les items
         const pdfBytes = await pdfService.generateOrderPDF(orderData);
-        const pdfBuffer = Buffer.from(pdfBytes);
+        const hasPdf = pdfBytes !== null;
+        const pdfBuffer = hasPdf ? Buffer.from(pdfBytes) : null;
+
+        const isDelivery = orderData.deliveryMethod === 'DELIVERY';
+        const bodyMessage = hasPdf
+            ? 'Votre dossier de vente est désormais scellé. <strong>Vos documents de Séance sont joints à ce message.</strong>'
+            : isDelivery
+                ? 'Votre commande est confirmée. <strong>Votre colis sera expédié à l\'adresse indiquée lors du paiement.</strong>'
+                : 'Votre dossier de vente est désormais scellé.';
 
         await resend.emails.send({
             from: FROM_EMAIL,
             to: userEmail,
             subject: `Validation du Registre - Réf : ${orderData.reference}`,
-            attachments: [
-                {
+            ...(hasPdf && pdfBuffer ? {
+                attachments: [{
                     filename: `Certificats_${orderData.reference}.pdf`,
                     content: pdfBuffer,
-                },
-            ],
+                }]
+            } : {}),
             html: `
                 <div style="font-family: Arial, sans-serif; color: #0a1a14; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee;">
                     <h2 style="text-align: center; color: #D4AF37; text-transform: uppercase;">Validation du Registre</h2>
                     <p>Bonjour,</p>
-                    <p>Votre dossier de vente est désormais scellé. <strong>Vos documents de Séance sont joints à ce message.</strong></p>
-                    </div>
+                    <p>${bodyMessage}</p>
+                </div>
             `
         });
     } catch (error) {

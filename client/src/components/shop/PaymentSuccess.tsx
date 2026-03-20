@@ -35,6 +35,10 @@ export default function PaymentSuccess() {
         }
     }, [isSuccess, checkAuth, clearCart, addToast]);
 
+    // Un PDF existe uniquement si la commande contient des ateliers, des cartes cadeaux,
+    // ou des bouteilles en mode retrait. Une livraison à domicile de bouteilles n'en génère pas.
+    const hasPdfDocument = lastOrder && lastOrder.deliveryMethod !== 'DELIVERY';
+
     const handleDownloadPDF = async () => {
         if (!lastOrder) return;
         try {
@@ -73,7 +77,7 @@ export default function PaymentSuccess() {
                 </p>
 
                 <div className="space-y-4">
-                    {lastOrder && (
+                    {hasPdfDocument && (
                         <button
                             onClick={handleDownloadPDF}
                             className="w-full border border-rhum-gold text-rhum-gold py-4 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-rhum-gold/10 transition-all shadow-xl"

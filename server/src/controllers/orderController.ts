@@ -253,8 +253,8 @@ export const downloadOrderPDF = async (req: AuthRequest, res: Response) => {
         const pdfBytes = await pdfService.generateOrderPDF(order);
 
         if (!pdfBytes || pdfBytes.length === 0) {
-            console.error("📡 [API_DOWNLOAD] Le PDF retourné est VIDE !");
-            return res.status(500).json({ error: "Génération vide." });
+            console.log("📡 [API_DOWNLOAD] Aucun document à générer pour cette commande (livraison à domicile sans atelier).");
+            return res.status(404).json({ error: "Aucun document disponible pour cette commande." });
         }
 
         res.setHeader('Content-Type', 'application/pdf');
