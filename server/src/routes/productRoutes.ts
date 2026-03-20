@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import { getShopProducts, getProductById, createProduct } from '../controllers/productController';
+import { getShopProducts, getProductById, getProductBySlug, createProduct } from '../controllers/productController';
 import { getWorkshops, createWorkshop } from '../controllers/workshopController';
 import { getMe } from '../controllers/userController';
 import { authenticateToken, isAdmin } from '../middleware/authMiddleware';
@@ -28,6 +28,7 @@ router.get('/me', authenticateToken, getMe);
 // --- 🛍️ CATALOGUE ---
 router.get('/', optionalAuth, getShopProducts);
 router.post('/', authenticateToken, isAdmin, upload.single('image'), createProduct);
+router.get('/slug/:slug', optionalAuth, getProductBySlug);
 router.get('/:id', optionalAuth, getProductById);
 
 export default router;

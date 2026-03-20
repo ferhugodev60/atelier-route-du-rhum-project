@@ -15,20 +15,14 @@ export default function ProductCard({ product }: ProductCardProps) {
         ? Math.min(...product.volumes.map(v => v.price))
         : 0;
 
-    /**
-     * 🏺 CONSTRUCTION DE L'URL SÉMANTIQUE DYNAMIQUE
-     * 1. On utilise le slug de la catégorie s'il existe.
-     * 2. Sinon, on transforme le nom de la catégorie (minuscules + tirets).
-     * 3. Fallback final sur 'boutique' pour éviter une URL cassée.
-     */
-    const categoryPath = product.category?.slug ||
-        product.category?.name?.toLowerCase().trim().replace(/\s+/g, '-') ||
-        'boutique';
+    const productSlug = product.name
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
 
-    // On utilise le slug du produit ou son ID technique
-    const productPath = product.slug || product.id;
-
-    const finalUrl = `/boutique/${categoryPath}/${productPath}`;
+    const finalUrl = `/boutique/${productSlug}`;
 
     return (
         <Link to={finalUrl} className="group flex flex-col font-sans cursor-pointer">

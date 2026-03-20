@@ -11,8 +11,7 @@ import ProductCard from '../components/shop/ProductCard';
 import ShopReassurance from "../components/shop/ShopReassurance.tsx";
 
 export default function ProductPage() {
-    // 🏺 On extrait le productSlug (qui peut être un ID ou un Slug réel)
-    const { categorySlug, productSlug } = useParams();
+    const { productSlug } = useParams();
     const navigate = useNavigate();
 
     const [product, setProduct] = useState<Product | null>(null);
@@ -30,7 +29,7 @@ export default function ProductPage() {
 
         const fetchProductData = async () => {
             try {
-                const response = await api.get(`/products/${productSlug}`);
+                const response = await api.get(`/products/slug/${productSlug}`);
 
                 const data = response.data;
                 setProduct(data);
@@ -90,7 +89,7 @@ export default function ProductPage() {
                     {/* 🏺 FIL D'ARIANE SEO */}
                     <nav className="flex gap-2 text-[10px] uppercase tracking-[0.2em] text-white mb-8 font-black">
                         <Link to="/" className="hover:text-rhum-gold">ACCUEIL</Link> /
-                        <Link to={`/boutique?collection=${categorySlug}`} className="hover:text-rhum-gold">{product.category.name}</Link> /
+                        <Link to={`/boutique`} className="hover:text-rhum-gold">{product.category.name}</Link> /
                         <span className="text-rhum-gold">{product.name}</span>
                     </nav>
 

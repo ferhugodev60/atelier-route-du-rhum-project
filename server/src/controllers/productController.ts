@@ -57,6 +57,49 @@ export const getShopProducts = async (req: RequestWithFile, res: Response) => {
 };
 
 /**
+ * 🏺 Utilitaire de slugification (identique côté frontend)
+ */
+const slugify = (name: string) =>
+    name.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+/**
+ * 🏺 Lecture d'une Fiche Produit par slug sémantique
+ */
+export const getProductBySlug = async (req: RequestWithFile, res: Response) => {
+    const slug = req.params.slug as string;
+    const userId = req.user?.userId;
+
+    try {
+        let isInstitutional = false;
+        if (userId) {
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            isInstitutional = user?.role === 'PRO' || user?.isEmployee === true;
+        }
+
+        const products = await prisma.product.findMany({
+            include: { volumes: true, category: true }
+        });
+
+        const product = products.find(p => slugify(p.name) === slug);
+
+        if (!product) {
+            return res.status(404).json({ message: "Référence introuvable." });
+        }
+
+        res.json({
+            ...product,
+            volumes: applyInstitutionalPricing(product.volumes, isInstitutional)
+        });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de l'extraction de la fiche." });
+    }
+};
+
+/**
  * 🏺 Lecture d'une Fiche Produit unique (Scellage SEO)
  */
 export const getProductById = async (req: RequestWithFile, res: Response) => {

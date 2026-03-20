@@ -87,7 +87,7 @@ export default function App() {
 
                         {/* 🏺 ROUTES PUBLIQUES : Tout visiteur peut y accéder librement */}
                         <Route path="/boutique" element={<ShopPage />} />
-                        <Route path="/boutique/:categorySlug/:productSlug" element={<ProductPage />} />
+                        <Route path="/boutique/:productSlug" element={<ProductPage />} />
                         <Route path="/ateliers/:id" element={<WorkshopDetails />} />
                         <Route path="/carte-cadeau" element={<GiftCardPage />} />
                         <Route path="/atelier-conception" element={<AtelierConceptionPage />} />
