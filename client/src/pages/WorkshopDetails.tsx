@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     Clock,
@@ -19,7 +19,8 @@ import ReservationModal from '../components/sections/Workshops/ReservationModal.
 import BusinessReservationModal from '../components/sections/Workshops/BusinessReservationModal.tsx';
 
 export default function WorkshopDetails() {
-    const { id } = useParams();
+    const { level } = useParams();
+    const location = useLocation();
     const navigate = useNavigate();
     const { user, setLoginOpen } = useAuthStore();
     const { addItem } = useCartStore();
@@ -35,13 +36,17 @@ export default function WorkshopDetails() {
         window.scrollTo(0, 0);
         const fetchDetails = async () => {
             try {
-                const { data } = await api.get(`/workshops/${id}`);
+                const isDecouverte = location.pathname === '/ateliers/decouverte';
+                const endpoint = isDecouverte
+                    ? '/workshops/decouverte'
+                    : `/workshops/conception/${level}`;
+                const { data } = await api.get(endpoint);
                 setWorkshop(data);
             } catch (err) { navigate('/'); }
             finally { setLoading(false); }
         };
         fetchDetails();
-    }, [id, navigate]);
+    }, [location.pathname, level, navigate]);
 
     if (loading || !workshop) return <div className="min-h-screen bg-[#0a1a14]" />;
 

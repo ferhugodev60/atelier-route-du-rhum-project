@@ -35,28 +35,42 @@ export const getWorkshops = async (req: Request, res: Response) => {
     }
 };
 
-// --- 🔍 LECTURE INDIVIDUELLE ---
+// --- 🔍 LECTURE INDIVIDUELLE PAR ID ---
 export const getWorkshopById = async (req: Request, res: Response) => {
     const id = req.params.id as string;
 
     try {
-        const workshop = await prisma.workshop.findUnique({
-            where: { id }
-        });
-
+        const workshop = await prisma.workshop.findUnique({ where: { id } });
         if (!workshop) {
             return res.status(404).json({ error: "Ce palier technique n'existe pas dans le Registre." });
         }
+        const isConception = workshop.level > 0;
+        res.json({ ...workshop, validityDays: isConception ? 180 : 30, validityPeriod: isConception ? "6 mois" : "30 jours" });
+    } catch (error) {
+        res.status(500).json({ error: "Erreur lors de la lecture du cursus." });
+    }
+};
 
-        // 🏺 On applique la même logique de validité pour la page "Détails"
-        const isConception = workshop.level > 0 || workshop.title.toLowerCase().includes('conception');
-        const enrichedWorkshop = {
-            ...workshop,
-            validityDays: isConception ? 180 : 30,
-            validityPeriod: isConception ? "6 mois" : "30 jours"
-        };
+// --- 🔍 LECTURE PAR NIVEAU SÉMANTIQUE ---
+// GET /workshops/decouverte       → level 0
+// GET /workshops/conception/:level → level 1-4
+export const getWorkshopBySlug = async (req: Request, res: Response) => {
+    const { level } = req.params;
+    const targetLevel = level === undefined ? 0 : parseInt(level);
 
-        res.json(enrichedWorkshop);
+    if (isNaN(targetLevel)) {
+        return res.status(400).json({ error: "Niveau invalide." });
+    }
+
+    try {
+        const workshop = await prisma.workshop.findFirst({
+            where: { level: targetLevel }
+        });
+        if (!workshop) {
+            return res.status(404).json({ error: "Atelier introuvable." });
+        }
+        const isConception = workshop.level > 0;
+        res.json({ ...workshop, validityDays: isConception ? 180 : 30, validityPeriod: isConception ? "6 mois" : "30 jours" });
     } catch (error) {
         res.status(500).json({ error: "Erreur lors de la lecture du cursus." });
     }

@@ -46,7 +46,7 @@ export default function WorkshopCard({ workshop }: WorkshopCardProps) {
                 <div className="mt-auto">
                     {/* 🏺 Transition vers la page de détails du Cursus */}
                     <Link
-                        to={`/ateliers/${workshop.id}`}
+                        to={workshop.level === 0 ? '/ateliers/decouverte' : `/ateliers/conception/${workshop.level}`}
                         className="block w-full text-center bg-rhum-gold text-rhum-green py-4 md:py-5 font-black uppercase tracking-[0.3em] text-[10px] md:text-xs hover:bg-white transition-all shadow-xl rounded-sm"
                     >
                         En Savoir plus

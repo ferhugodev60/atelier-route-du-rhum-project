@@ -123,7 +123,7 @@ export default function AtelierConceptionPage() {
                                                 </div>
 
                                                 <button
-                                                    onClick={() => navigate(`/ateliers/${step.id}`)}
+                                                    onClick={() => navigate(`/ateliers/conception/${step.level}`)}
                                                     className="w-full md:w-auto px-10 py-5 bg-rhum-gold text-rhum-green text-[10px] font-black uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:bg-white transition-all group/btn"
                                                 >
                                                     {isMastered ? 'Réserver à nouveau' : 'En savoir plus'}

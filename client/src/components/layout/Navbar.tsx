@@ -70,7 +70,7 @@ export default function Navbar({ cartCount, onOpenCart }: NavbarProps) {
     };
 
     const prestationLinks = [
-        { name: 'Atelier Découverte', href: '/ateliers/3ad0dde3-f4a8-4770-b87f-385429b1ecf7' },
+        { name: 'Atelier Découverte', href: '/ateliers/decouverte' },
         { name: 'Atelier Conception', href: '/atelier-conception' },
         { name: 'Achat de bouteilles', href: '/boutique' },
         { name: 'Carte Cadeau', href: '/carte-cadeau' },

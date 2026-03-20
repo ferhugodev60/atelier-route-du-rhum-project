@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import {
     getWorkshops,
-    getWorkshopById, // 🏺 Nouvelle importation
+    getWorkshopById,
+    getWorkshopBySlug,
     createWorkshop,
     updateWorkshop,
     deleteWorkshop
@@ -12,10 +13,12 @@ import { upload } from '../config/cloudinary';
 const router = Router();
 
 // --- 📋 ACCÈS PUBLIC ---
-// Pour l'affichage de la liste globale des cursus
 router.get('/', getWorkshops);
 
-// 🏺 ESSENTIEL : Pour alimenter la page "Détails" (Savoir plus)
+// Routes sémantiques (avant /:id pour éviter le shadowing)
+router.get('/decouverte', getWorkshopBySlug);
+router.get('/conception/:level', getWorkshopBySlug);
+
 router.get('/:id', getWorkshopById);
 
 // --- ⚖️ ACCÈS ADMINISTRATIF ---
