@@ -81,8 +81,9 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             };
         }));
 
-        // --- 🏺 2. CALCULS ET QUOTAS (Code identique au précédent) ---
+        // --- 🏺 2. CALCULS ET QUOTAS ---
         const subTotal = processedItems.reduce((acc, i) => acc + (i.price * i.quantity), 0);
+
         let discountAmount = 0;
         let giftCardIdUsed = null;
         let stripeCouponId: string | undefined = undefined;
@@ -102,7 +103,7 @@ export const createCheckoutSession = async (req: any, res: Response) => {
             }
         }
 
-        const finalTotal = subTotal - discountAmount;
+        const finalTotal = subTotal - discountAmount; // Le frais de port est sélectionné par le client sur Stripe et enregistré via le webhook
         const isOrderBusiness = processedItems.some(i => i.isBusiness);
 
         // --- 🏺 3. CRÉATION DE LA COMMANDE ---
@@ -127,7 +128,15 @@ export const createCheckoutSession = async (req: any, res: Response) => {
         });
 
         // --- 4. SESSION STRIPE ---
-        const session = await stripe.checkout.sessions.create({
+        const pickupRateId = process.env.STRIPE_SHIPPING_RATE_PICKUP;
+        const deliveryRateId = process.env.STRIPE_SHIPPING_RATE_DELIVERY;
+        if (!pickupRateId || !deliveryRateId) {
+            throw new Error("Variables STRIPE_SHIPPING_RATE_PICKUP / STRIPE_SHIPPING_RATE_DELIVERY manquantes. Redémarrez le serveur.");
+        }
+
+        // Stripe interdit de combiner shipping_options et discounts dans le même appel.
+        // On construit l'objet de session dynamiquement pour n'inclure que l'un ou l'autre.
+        const sessionParams: Stripe.Checkout.SessionCreateParams = {
             payment_method_types: ['card'],
             line_items: processedItems.map((item) => ({
                 price_data: {
@@ -141,13 +150,26 @@ export const createCheckoutSession = async (req: any, res: Response) => {
                 },
                 quantity: item.quantity,
             })),
-            discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : [],
             mode: 'payment',
             success_url: `${process.env.FRONTEND_URL}/mon-compte?payment_success=true&orderId=${pendingOrder.id}`,
             cancel_url: `${process.env.FRONTEND_URL}/boutique`,
             customer_email: user.email,
             metadata: { orderId: pendingOrder.id, giftCardIdUsed, discountApplied: discountAmount.toString() }
-        });
+        };
+
+        if (stripeCouponId) {
+            // Coupon appliqué : on utilise discounts, pas de shipping_options (limitation Stripe)
+            sessionParams.discounts = [{ coupon: stripeCouponId }];
+        } else {
+            // Pas de coupon : on peut afficher le sélecteur de livraison
+            sessionParams.shipping_address_collection = { allowed_countries: ['FR'] };
+            sessionParams.shipping_options = [
+                { shipping_rate: pickupRateId },
+                { shipping_rate: deliveryRateId }
+            ];
+        }
+
+        const session = await stripe.checkout.sessions.create(sessionParams);
 
         res.status(200).json({ url: session.url });
     } catch (error: any) {
@@ -189,6 +211,20 @@ export const handleWebhook = async (req: Request, res: Response) => {
         try {
             console.log("🏺 [DEBUG_DB] Ouverture de la transaction Prisma...");
 
+            // --- 🏺 EXTRACTION DES DONNÉES DE LIVRAISON STRIPE ---
+            const shippingAmountCents = session.shipping_cost?.amount_total ?? 0;
+            const shippingRateId = typeof session.shipping_cost?.shipping_rate === 'string'
+                ? session.shipping_cost.shipping_rate
+                : session.shipping_cost?.shipping_rate?.id;
+            const deliveryMethodFromStripe: 'PICKUP' | 'DELIVERY' =
+                shippingRateId === process.env.STRIPE_SHIPPING_RATE_DELIVERY ? 'DELIVERY' : 'PICKUP';
+            const shippingCostFromStripe = shippingAmountCents / 100;
+            const addr = (session as any).shipping_details?.address;
+            const shippingAddressFromStripe = addr
+                ? JSON.stringify({ street: addr.line1, zip: addr.postal_code, city: addr.city })
+                : null;
+            console.log(`🏺 [DEBUG_SHIPPING] Méthode: ${deliveryMethodFromStripe} | Coût: ${shippingCostFromStripe}€`);
+
             await prisma.$transaction(async (tx) => {
 
                 // 1. DÉBIT DU CRÉDIT (Si applicable)
@@ -204,11 +240,17 @@ export const handleWebhook = async (req: Request, res: Response) => {
                     }
                 }
 
-                // 2. MISE À JOUR DU STATUT DU DOSSIER
+                // 2. MISE À JOUR DU STATUT ET DES INFOS DE LIVRAISON
                 console.log(`   ➡️ [DB_STEP_1] Passage du dossier ${orderId} au statut PAYÉ...`);
                 const order = await tx.order.update({
                     where: { id: orderId },
-                    data: { status: "PAYÉ" },
+                    data: {
+                        status: "PAYÉ",
+                        deliveryMethod: deliveryMethodFromStripe,
+                        shippingCost: shippingCostFromStripe,
+                        shippingAddress: shippingAddressFromStripe,
+                        total: { increment: shippingCostFromStripe }
+                    },
                     include: { items: { include: { workshop: true } }, user: true }
                 });
                 console.log(`   ✅ [DB_SUCCESS] Statut scellé pour ${order.reference}`);
