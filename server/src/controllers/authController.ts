@@ -99,7 +99,11 @@ export const login = async (req: Request, res: Response) => {
                     lastName: user.lastName,
                     email: user.email,
                     role: user.role,
-                    isProfileComplete: user.isProfileComplete
+                    isProfileComplete: user.isProfileComplete,
+                    conceptionLevel: user.conceptionLevel,
+                    isEmployee: user.isEmployee,
+                    companyName: user.companyName,
+                    phone: user.phone
                 }
             });
         }
@@ -115,6 +119,11 @@ export const login = async (req: Request, res: Response) => {
  */
 export const googleLogin = async (req: Request, res: Response) => {
     const { idToken } = req.body;
+    console.log("🔍 [AUTH] Tentative de scellage Google reçue.");
+
+    // Vérification des secrets système
+    if (!process.env.GOOGLE_CLIENT_ID) console.error("❌ [ENV] GOOGLE_CLIENT_ID est manquant dans le .env backend.");
+    if (!process.env.JWT_SECRET) console.error("❌ [ENV] JWT_SECRET est manquant dans le .env backend.");
 
     try {
         const ticket = await client.verifyIdToken({
@@ -124,19 +133,20 @@ export const googleLogin = async (req: Request, res: Response) => {
         const payload = ticket.getPayload();
 
         if (!payload || !payload.email_verified) {
+            console.warn("⚠️ [AUTH] Échec de vérification du payload Google.");
             return res.status(401).json({ error: "Authentification Google invalide." });
         }
 
         const { email, sub: googleId, given_name, family_name } = payload;
         const lowerEmail = email!.toLowerCase();
+        console.log(`🔍 [AUTH] Recherche du membre : ${lowerEmail}`);
 
-        // 🛡️ SOUDURE : Recherche insensible pour lier au compte existant
         let user = await prisma.user.findFirst({
             where: { email: { equals: lowerEmail, mode: 'insensitive' } }
         });
 
         if (user) {
-            // Mise à jour du googleId si le compte existait mais n'était pas lié
+            console.log("🔍 [AUTH] Membre existant trouvé, mise à jour du sceau Google.");
             if (!user.googleId) {
                 user = await prisma.user.update({
                     where: { id: user.id },
@@ -144,7 +154,7 @@ export const googleLogin = async (req: Request, res: Response) => {
                 });
             }
         } else {
-            // Création d'un nouveau membre (Profil à compléter)
+            console.log("🔍 [AUTH] Nouveau membre détecté, création au Registre.");
             const memberCode = generateMemberCode();
             user = await prisma.user.create({
                 data: {
@@ -166,6 +176,7 @@ export const googleLogin = async (req: Request, res: Response) => {
             { expiresIn: '24h' }
         );
 
+        console.log("✅ [AUTH] Scellage réussi pour :", lowerEmail);
         return res.status(200).json({
             token,
             isNewUser: !user.isProfileComplete,
@@ -176,14 +187,16 @@ export const googleLogin = async (req: Request, res: Response) => {
                 isProfileComplete: user.isProfileComplete,
                 firstName: user.firstName,
                 lastName: user.lastName,
-                memberCode: user.memberCode, // 🏺 AJOUT : Le matricule pour le passeport
-                isEmployee: user.isEmployee, // 🏺 AJOUT : Le statut CE
+                memberCode: user.memberCode,
+                conceptionLevel: user.conceptionLevel,
+                isEmployee: user.isEmployee,
                 companyName: user.companyName,
-                siret: user.siret
+                phone: user.phone
             }
         });
-    } catch (error) {
-        return res.status(500).json({ error: "Échec technique du scellage Google." });
+    } catch (error: any) {
+        console.error("❌ [AUTH ERROR 500] Détails bruts :", error);
+        return res.status(500).json({ error: "Échec technique du scellage Google.", details: error.message });
     }
 };
 
@@ -207,6 +220,20 @@ export const completeProfile = async (req: any, res: Response) => {
                 companyName: companyName || null,
                 siret: siret || null,
                 isProfileComplete: true
+            },
+            select: {
+                id: true,
+                memberCode: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                role: true,
+                isEmployee: true,
+                isProfileComplete: true,
+                companyName: true,
+                siret: true,
+                conceptionLevel: true
             }
         });
 

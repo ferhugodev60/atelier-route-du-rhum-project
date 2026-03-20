@@ -132,13 +132,19 @@ export default function LoginModal() {
 
                         {/* 🏺 SECTION GOOGLE : La Porte de Bronze */}
                         <div className="mb-10 flex flex-col items-center gap-6">
-                            <div className="w-full">
+                            <div className="w-full justify-center items-center flex">
                                 <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
-                                    onError={() => setError("Connexion Google interrompue.")}
+                                    onSuccess={(response) => {
+                                        console.log("🔍 [FRONT-AUTH] Jeton reçu de Google, envoi au serveur...");
+                                        handleGoogleSuccess(response);
+                                    }}
+                                    onError={() => {
+                                        console.error("❌ [FRONT-AUTH] Google a refusé d'ouvrir la porte.");
+                                        setError("Connexion Google interrompue.");
+                                    }}
                                     theme="filled_black"
                                     shape="square"
-                                    width="100%"
+                                    width={350}
                                     text="continue_with"
                                 />
                             </div>

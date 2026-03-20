@@ -34,7 +34,11 @@ interface Order {
     items: OrderItem[];
 }
 
-export default function OrderHistory() {
+interface OrderHistoryProps {
+    paymentSuccess?: boolean;
+}
+
+export default function OrderHistory({ paymentSuccess }: OrderHistoryProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -43,26 +47,32 @@ export default function OrderHistory() {
     const { user } = useAuthStore();
     const addToast = useToastStore(state => state.addToast);
 
+    const fetchOrders = async () => {
+        try {
+            const response = await api.get('/orders');
+            const validatedOrders = response.data.filter((order: Order) => {
+                const status = order.status ? order.status.trim().toUpperCase() : '';
+                return status === 'PAYÉ' || status === 'EN PRÉPARATION' || status === 'EN_ATTENTE_PAIEMENT';
+            });
+            setOrders(validatedOrders);
+        } catch (err: any) {
+            setError("Impossible d'accéder au registre de vos commandes.");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
-        const fetchOrders = async () => {
-            try {
-                const response = await api.get('/orders');
-
-                // 🏺 SCELLAGE DU FILTRE : On ignore les dossiers non validés
-                const validatedOrders = response.data.filter((order: Order) => {
-                    const status = order.status ? order.status.trim().toUpperCase() : '';
-                    return status === 'PAYÉ' || status === 'EN PRÉPARATION';
-                });
-
-                setOrders(validatedOrders);
-            } catch (err: any) {
-                setError("Impossible d'accéder au registre de vos commandes.");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchOrders();
     }, []);
+
+    // Re-fetch si l'utilisateur revient d'un paiement Stripe (webhook peut être asynchrone)
+    useEffect(() => {
+        if (paymentSuccess) {
+            setLoading(true);
+            fetchOrders();
+        }
+    }, [paymentSuccess]);
 
     const handleDownloadPDF = async (orderId: string, reference: string) => {
         setDownloadingId(orderId);
@@ -104,8 +114,14 @@ export default function OrderHistory() {
         switch (s) {
             case 'PAYÉ': return 'border-green-500/40 text-green-400 bg-green-500/5';
             case 'EN PRÉPARATION': return 'border-rhum-gold/40 text-rhum-gold bg-rhum-gold/5';
+            case 'EN_ATTENTE_PAIEMENT': return 'border-white/20 text-white/40 bg-white/5';
             default: return 'border-white/20 text-white/60';
         }
+    };
+
+    const getStatusLabel = (status: string) => {
+        if (status.trim().toUpperCase() === 'EN_ATTENTE_PAIEMENT') return 'EN ATTENTE DE CONFIRMATION';
+        return status;
     };
 
     if (loading) return <div className="text-rhum-gold animate-pulse text-[10px] uppercase tracking-widest p-10 font-black">Extraction du registre...</div>;
@@ -150,7 +166,7 @@ export default function OrderHistory() {
                                 {/* ACTIONS : Empilement intelligent sur mobile */}
                                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
                                     <div className={`text-[9px] px-4 py-2 border font-black uppercase tracking-[0.2em] rounded-sm text-center ${getStatusStyle(order.status)}`}>
-                                        {order.status}
+                                        {getStatusLabel(order.status)}
                                     </div>
                                     <button
                                         onClick={() => handleDownloadPDF(order.id, order.reference)}

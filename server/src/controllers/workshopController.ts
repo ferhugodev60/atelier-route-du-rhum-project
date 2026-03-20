@@ -12,10 +12,12 @@ interface RequestWithFile extends Request {
 
 // --- 📋 LECTURE (Enrichie) ---
 export const getWorkshops = async (req: Request, res: Response) => {
+    console.log("🔍 [DATABASE] Tentative d'extraction des paliers techniques...");
     try {
         const workshops = await prisma.workshop.findMany({
             orderBy: { level: 'asc' }
         });
+        console.log(`✅ [DATABASE] ${workshops.length} paliers extraits.`);
 
         const enrichedWorkshops = workshops.map(ws => {
             const isConception = ws.level > 0 || ws.title.toLowerCase().includes('conception');
@@ -27,8 +29,9 @@ export const getWorkshops = async (req: Request, res: Response) => {
         });
 
         res.json(enrichedWorkshops);
-    } catch (error) {
-        res.status(500).json({ error: "Erreur lors de la récupération des paliers techniques." });
+    } catch (error: any) {
+        console.error("❌ [DATABASE ERROR 500] Échec Prisma :", error.message);
+        res.status(500).json({ error: "Erreur lors de la récupération des paliers techniques.", details: error.message });
     }
 };
 

@@ -149,12 +149,18 @@ export default function RegisterModal() {
                         {!success && (
                             <div className="mb-10 flex flex-col items-center gap-6 border-b border-white/5 pb-10">
                                 <GoogleLogin
-                                    onSuccess={handleGoogleSuccess}
-                                    onError={() => setError("Inscription Google interrompue.")}
+                                    onSuccess={(response) => {
+                                        console.log("🔍 [FRONT-AUTH] Jeton reçu de Google, envoi au serveur...");
+                                        handleGoogleSuccess(response);
+                                    }}
+                                    onError={() => {
+                                        console.error("❌ [FRONT-AUTH] Google a refusé d'ouvrir la porte.");
+                                        setError("Connexion Google interrompue.");
+                                    }}
                                     theme="filled_black"
                                     shape="square"
-                                    width="100%"
-                                    text="signup_with"
+                                    width={350} // 🏺 CORRECTION : Nombre pur pour éviter l'erreur de log
+                                    text="continue_with"
                                 />
                             </div>
                         )}

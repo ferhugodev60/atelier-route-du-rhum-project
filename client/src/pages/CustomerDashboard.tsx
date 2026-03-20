@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 
 import Sidebar, { LogoutIcon } from "../components/dashboard/Sidebar.tsx";
@@ -10,8 +10,10 @@ import ProfileInfo from "../components/dashboard/ProfileInfo.tsx";
 
 export default function CustomerDashboard() {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { user, logout } = useAuthStore();
     const [activeView, setActiveView] = useState<'orders' | 'security' | 'profile'>('orders');
+    const paymentSuccess = searchParams.get('payment_success') === 'true';
 
     useEffect(() => {
         if (!user) navigate('/');
@@ -116,7 +118,7 @@ export default function CustomerDashboard() {
                                 transition={{ duration: 0.3 }}
                                 className="relative z-10"
                             >
-                                {activeView === 'orders' && <OrderHistory />}
+                                {activeView === 'orders' && <OrderHistory paymentSuccess={paymentSuccess} />}
                                 {activeView === 'security' && <SecuritySettings />}
                                 {activeView === 'profile' && <ProfileInfo />}
                             </motion.div>

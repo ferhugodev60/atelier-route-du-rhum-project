@@ -22,6 +22,8 @@ export const getMe = async (req: Request, res: Response) => {
                 phone: true,
                 conceptionLevel: true,
                 role: true,
+                isProfileComplete: true,
+                isEmployee: true,
                 createdAt: true,
                 companyName: true,
                 siret: true
@@ -99,7 +101,20 @@ export const getUserDetails = async (req: Request, res: Response) => {
     try {
         const customer = await prisma.user.findUnique({
             where: { id },
-            include: {
+            select: {
+                id: true,
+                memberCode: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                role: true,
+                isEmployee: true,
+                isProfileComplete: true,
+                companyName: true,
+                siret: true,
+                conceptionLevel: true,
+                createdAt: true,
                 orders: {
                     orderBy: { createdAt: 'desc' }
                 }
@@ -130,6 +145,21 @@ export const updateUserProfile = async (req: Request, res: Response) => {
                 conceptionLevel: (conceptionLevel !== undefined && conceptionLevel !== null)
                     ? parseInt(String(conceptionLevel))
                     : undefined
+            },
+            select: {
+                id: true,
+                memberCode: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                phone: true,
+                role: true,
+                isEmployee: true,
+                isProfileComplete: true,
+                companyName: true,
+                siret: true,
+                conceptionLevel: true,
+                createdAt: true
             }
         });
         res.json(updatedUser);

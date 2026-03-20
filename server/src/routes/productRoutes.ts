@@ -18,17 +18,16 @@ const optionalAuth = (req: any, res: any, next: any) => {
     next();
 };
 
-// --- 🛍️ CATALOGUE ---
-router.get('/', optionalAuth, getShopProducts);
-router.get('/:id', optionalAuth, getProductById); // 🏺 Route pour la page détail SEO
-
-router.post('/', authenticateToken, isAdmin, upload.single('image'), createProduct);
-
-// --- 🎓 CURSUS ---
+// --- 🎓 CURSUS (avant /:id pour éviter le shadowing) ---
 router.get('/workshops', optionalAuth, getWorkshops);
 router.post('/workshops', authenticateToken, isAdmin, upload.single('image'), createWorkshop);
 
-// --- 👤 COMPTE ---
+// --- 👤 COMPTE (avant /:id pour éviter le shadowing) ---
 router.get('/me', authenticateToken, getMe);
+
+// --- 🛍️ CATALOGUE ---
+router.get('/', optionalAuth, getShopProducts);
+router.post('/', authenticateToken, isAdmin, upload.single('image'), createProduct);
+router.get('/:id', optionalAuth, getProductById);
 
 export default router;

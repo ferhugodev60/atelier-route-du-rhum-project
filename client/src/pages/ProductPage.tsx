@@ -30,18 +30,7 @@ export default function ProductPage() {
 
         const fetchProductData = async () => {
             try {
-                // 🏺 PROTOCOLE DE DÉTECTION : ID technique vs Slug sémantique
-                // Vérifie si le paramètre correspond au format standard UUID
-                const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(productSlug || "");
-
-                let response;
-                if (isUUID) {
-                    // Si c'est un ID, on utilise la route standard du Registre
-                    response = await api.get(`/products/${productSlug}`);
-                } else {
-                    // Si c'est un nom sémantique, on utilise la route SEO
-                    response = await api.get(`/products/slug/${productSlug}`);
-                }
+                const response = await api.get(`/products/${productSlug}`);
 
                 const data = response.data;
                 setProduct(data);

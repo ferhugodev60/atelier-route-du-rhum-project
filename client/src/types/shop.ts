@@ -11,14 +11,14 @@ export interface ProductVolume {
 export interface Category {
     id: string;
     name: string;
-    slug: string;
+    slug?: string;
     description?: string;
 }
 
 export interface Product {
     id: string;
     name: string;
-    slug: string;
+    slug?: string;
     description: string;
     image: string;
     categoryId: string;
