@@ -49,8 +49,8 @@ export const getStats = async (req: Request, res: Response) => {
                 where: { stock: { lt: 5 } },
                 include: { product: true }
             }),
-            // 🚫 GLOBAL : Dossiers urgents "À TRAITER"
-            prisma.order.count({ where: { status: 'À TRAITER' } }),
+            // 🚫 GLOBAL : Dossiers urgents en attente de traitement
+            prisma.order.count({ where: { status: { in: ['EN_ATTENTE_PAIEMENT', 'PAYÉ'] } } }),
             // 🚫 GLOBAL : Répertoire Clients total
             prisma.user.count()
         ]);
@@ -194,11 +194,14 @@ export const getAllUsers = async (req: Request, res: Response) => {
                 firstName: true,
                 lastName: true,
                 email: true,
+                phone: true,
                 role: true,
                 isEmployee: true,
                 memberCode: true,
                 conceptionLevel: true,
-                createdAt: true
+                companyName: true,
+                createdAt: true,
+                _count: { select: { orders: true } }
             },
             orderBy: { createdAt: 'desc' }
         });

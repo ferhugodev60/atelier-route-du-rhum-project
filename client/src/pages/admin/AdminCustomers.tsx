@@ -26,7 +26,7 @@ export default function AdminCustomers() {
      */
     const fetchCustomers = () => {
         setLoading(true);
-        api.get('/users')
+        api.get('/admin/users')
             .then(res => {
                 setCustomers(res.data);
                 setLoading(false);

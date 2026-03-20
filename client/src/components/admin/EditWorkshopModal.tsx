@@ -78,10 +78,22 @@ export default function EditWorkshopModal({ isOpen, onClose, onRefresh, workshop
                         </div>
                     </div>
 
+                    {/* 🏺 Citation */}
+                    <div className="space-y-3">
+                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Citation (affichée en page d'atelier)</label>
+                        <input name="quote" defaultValue={workshop.quote} placeholder="ex: L'art de l'assemblage..." className="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-black font-bold outline-none focus:border-emerald-600 transition-all text-sm italic" />
+                    </div>
+
                     {/* 🏺 Contenu */}
                     <div className="space-y-3">
-                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Programme</label>
-                        <textarea name="description" rows={5} defaultValue={workshop.description} className="w-full bg-slate-50 border-2 border-slate-200 p-6 rounded-2xl text-slate-900 font-bold outline-none focus:border-emerald-600 transition-all text-sm leading-relaxed" />
+                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Programme (courte description)</label>
+                        <textarea name="description" rows={3} defaultValue={workshop.description} className="w-full bg-slate-50 border-2 border-slate-200 p-6 rounded-2xl text-slate-900 font-bold outline-none focus:border-emerald-600 transition-all text-sm leading-relaxed" />
+                    </div>
+
+                    {/* 🏺 Description complète */}
+                    <div className="space-y-3">
+                        <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Note de l'Atelier (description complète)</label>
+                        <textarea name="fullDescription" rows={5} defaultValue={workshop.fullDescription} placeholder="Description détaillée affichée dans la page de l'atelier..." className="w-full bg-slate-50 border-2 border-slate-200 p-6 rounded-2xl text-slate-900 font-bold outline-none focus:border-emerald-600 transition-all text-sm leading-relaxed" />
                     </div>
 
                     {/* 🏺 Visuel */}

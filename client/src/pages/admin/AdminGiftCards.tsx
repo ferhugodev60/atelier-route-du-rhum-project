@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import api from '../../api/axiosInstance';
-import { Search, Gift, ArrowDownCircle, Loader2, Calendar, History } from 'lucide-react';
+import { Search, Gift, ArrowDownCircle, Loader2, Calendar, History, Plus, X } from 'lucide-react';
 import AdminPagination from '../../components/admin/AdminPagination';
 import { useToastStore } from '../../store/toastStore';
 
@@ -14,6 +14,9 @@ export default function AdminGiftCards() {
     const [loading, setLoading] = useState(false);
     const [currentPage, setCurrentPage] = useState(1);
     const [debitAmounts, setDebitAmounts] = useState<Record<string, string>>({});
+    const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [createAmount, setCreateAmount] = useState('');
+    const [isCreating, setIsCreating] = useState(false);
     const itemsPerPage = 10;
     const addToast = useToastStore(state => state.addToast);
 
@@ -69,6 +72,23 @@ export default function AdminGiftCards() {
         }
     };
 
+    const handleCreate = async () => {
+        const amount = parseFloat(createAmount);
+        if (!amount || amount <= 0) { addToast("Montant invalide.", "error"); return; }
+        setIsCreating(true);
+        try {
+            await api.post('/gift-cards', { amount });
+            addToast(`Titre de cursus de ${amount}€ scellé au Registre.`);
+            setIsCreateOpen(false);
+            setCreateAmount('');
+            if (searchTerm.length >= 2) handleSearch();
+        } catch (error: any) {
+            addToast(error.response?.data?.error || "Erreur lors de la création.", "error");
+        } finally {
+            setIsCreating(false);
+        }
+    };
+
     const totalPages = Math.ceil(giftCards.length / itemsPerPage);
     const displayedCards = useMemo(() => {
         const start = (currentPage - 1) * itemsPerPage;
@@ -95,6 +115,13 @@ export default function AdminGiftCards() {
                             onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
                         />
                     </div>
+                    <button
+                        onClick={() => setIsCreateOpen(true)}
+                        className="flex items-center gap-3 px-8 py-4 bg-black text-white text-[11px] uppercase tracking-widest font-black hover:bg-emerald-600 transition-all rounded-2xl shadow-lg shrink-0"
+                    >
+                        <Plus size={16} strokeWidth={3} />
+                        Émettre un titre
+                    </button>
                 </div>
             </header>
 
@@ -200,6 +227,47 @@ export default function AdminGiftCards() {
                     totalPages={totalPages}
                     onPageChange={(page: number) => setCurrentPage(page)}
                 />
+            )}
+
+            {/* --- MODALE D'ÉMISSION --- */}
+            {isCreateOpen && (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center p-6 bg-slate-950/60 backdrop-blur-md font-sans">
+                    <div className="bg-white border-4 border-slate-200 w-full max-w-md p-12 rounded-3xl shadow-[0_0_60px_rgba(0,0,0,0.3)] relative">
+                        <button onClick={() => setIsCreateOpen(false)} className="absolute top-8 right-8 text-black hover:text-emerald-600 transition-colors">
+                            <X size={28} strokeWidth={3} />
+                        </button>
+                        <header className="mb-10 text-center border-b-2 border-slate-50 pb-8">
+                            <h2 className="text-3xl font-black text-black uppercase tracking-tighter">Émettre un titre</h2>
+                            <p className="text-[10px] text-slate-400 font-black uppercase tracking-widest mt-2">Validité automatique : 12 mois</p>
+                        </header>
+                        <div className="space-y-6">
+                            <div className="space-y-3">
+                                <label className="text-[11px] uppercase tracking-widest text-black font-black ml-1">Montant (€)</label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    min="1"
+                                    value={createAmount}
+                                    onChange={(e) => setCreateAmount(e.target.value)}
+                                    placeholder="ex: 50.00"
+                                    className="w-full bg-slate-50 border-2 border-slate-200 p-4 rounded-xl text-black font-black outline-none focus:border-emerald-600 transition-all text-2xl text-center"
+                                />
+                            </div>
+                            <button
+                                onClick={handleCreate}
+                                disabled={isCreating}
+                                className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-[12px] hover:bg-black shadow-2xl transition-all flex items-center justify-center gap-4"
+                            >
+                                {isCreating ? 'ÉMISSION EN COURS...' : (
+                                    <>
+                                        <Gift size={18} strokeWidth={3} />
+                                        Sceller le titre
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </section>
     );
