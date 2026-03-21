@@ -8,6 +8,7 @@ import ProtectedRoute from "./components/auth/ProtectedRoute.tsx";
 import CustomerDashboard from "./pages/CustomerDashboard.tsx";
 import LoginModal from './components/auth/LoginModal';
 import RegisterModal from './components/auth/RegisterModal';
+import ForgotPasswordModal from './components/auth/ForgotPasswordModal';
 import PaymentSuccess from "./components/shop/PaymentSuccess.tsx";
 import PaymentError from "./components/shop/PaymentError.tsx";
 import { useCartStore } from './store/cartStore';
@@ -153,6 +154,7 @@ export default function App() {
                 <ToastContainer />
                 <LoginModal />
                 <RegisterModal />
+                <ForgotPasswordModal />
                 <PaymentSuccess />
                 <PaymentError />
 

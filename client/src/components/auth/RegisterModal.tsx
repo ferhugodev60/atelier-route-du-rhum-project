@@ -147,7 +147,7 @@ export default function RegisterModal() {
 
                         {/* 🏺 SECTION GOOGLE : Inscription Flash */}
                         {!success && (
-                            <div className="mb-10 flex flex-col items-center gap-6 border-b border-white/5 pb-10">
+                            <div className="mb-10 flex flex-col items-center gap-6">
                                 <GoogleLogin
                                     onSuccess={(response) => {
                                         console.log("🔍 [FRONT-AUTH] Jeton reçu de Google, envoi au serveur...");
@@ -162,7 +162,13 @@ export default function RegisterModal() {
                                     width={350} // 🏺 CORRECTION : Nombre pur pour éviter l'erreur de log
                                     text="continue_with"
                                 />
+
+                                <div className="relative w-full flex items-center justify-center">
+                                    <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
+                                    <span className="relative bg-[#0a1a14] px-4 text-[9px] text-white uppercase tracking-[0.4em] font-black">Ou</span>
+                                </div>
                             </div>
+
                         )}
 
                         {success ? (

@@ -124,7 +124,7 @@ export default function TermsAndConditions() {
             {/* Footer de Certification */}
             <footer className="py-20 border-t border-white/10 bg-black/40 text-center">
                 <p className="text-white/40 text-[9px] md:text-[10px] uppercase tracking-[0.4em] mb-6 font-medium">
-                    Document édité le 12 Mars 2026 — L'Atelier de la Route du Rhum
+                    Document édité le 12 Mars 2026
                 </p>
                 <button
                     onClick={() => window.print()}

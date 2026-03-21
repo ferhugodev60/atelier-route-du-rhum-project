@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import api from '../api/axiosInstance';
+import { useAuthStore } from '../store/authStore';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
+    const { setLoginOpen } = useAuthStore();
     const token = searchParams.get('token');
 
     const [formData, setFormData] = useState({ password: '', confirm: '' });
@@ -21,12 +23,8 @@ export default function ResetPassword() {
 
         setStatus('loading');
         try {
-            await api.post('/auth/setup-final-password', {
-                token,
-                password: formData.password
-            });
+            await api.post('/auth/reset-password', { token, password: formData.password });
             setStatus('success');
-            setTimeout(() => navigate('/connexion'), 3000);
         } catch (err: any) {
             setStatus('error');
             setError(err.response?.data?.error || "Le Registre refuse ce changement.");
@@ -49,10 +47,18 @@ export default function ResetPassword() {
                 </header>
 
                 {status === 'success' ? (
-                    <div className="text-center py-10 space-y-6">
+                    <div className="text-center py-10 space-y-8">
                         <div className="w-16 h-16 border border-rhum-gold rounded-full flex items-center justify-center mx-auto text-rhum-gold text-2xl">✓</div>
-                        <p className="text-rhum-gold font-black uppercase tracking-widest text-xs">Secret Scellé avec succès</p>
-                        <p className="text-white/40 text-[10px] uppercase">Redirection vers l'espace membre...</p>
+                        <div className="space-y-3">
+                            <p className="text-rhum-gold font-black uppercase tracking-widest text-xs">Secret Scellé avec succès</p>
+                            <p className="text-white/40 text-[10px] uppercase tracking-widest">Votre nouveau mot de passe est actif.</p>
+                        </div>
+                        <button
+                            onClick={() => { navigate('/'); setLoginOpen(true); }}
+                            className="inline-block bg-rhum-gold text-[#0a1a14] px-10 py-4 font-black uppercase tracking-[0.3em] text-[10px] hover:bg-white transition-all rounded-sm cursor-pointer"
+                        >
+                            Se connecter
+                        </button>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="space-y-8">

@@ -8,6 +8,7 @@ interface AuthState {
     token: string | null;
     isLoginOpen: boolean;
     isRegisterOpen: boolean;
+    isForgotPasswordOpen: boolean;
 
     // Actions de gestion de session
     setAuth: (user: User, token: string) => void;
@@ -16,6 +17,7 @@ interface AuthState {
     // Pilotage des accès (Modales)
     setLoginOpen: (open: boolean) => void;
     setRegisterOpen: (open: boolean) => void;
+    setForgotPasswordOpen: (open: boolean) => void;
 
     // Synchronisation institutionnelle
     checkAuth: () => Promise<void>;
@@ -32,6 +34,7 @@ export const useAuthStore = create<AuthState>()(
             token: null,
             isLoginOpen: false,
             isRegisterOpen: false,
+            isForgotPasswordOpen: false,
 
             /**
              * 🏺 Ouverture de Session
@@ -63,8 +66,9 @@ export const useAuthStore = create<AuthState>()(
             },
 
             // Gestion de la visibilité des interfaces d'accès
-            setLoginOpen: (open) => set({ isLoginOpen: open, isRegisterOpen: false }),
-            setRegisterOpen: (open) => set({ isRegisterOpen: open, isLoginOpen: false }),
+            setLoginOpen: (open) => set({ isLoginOpen: open, isRegisterOpen: false, isForgotPasswordOpen: false }),
+            setRegisterOpen: (open) => set({ isRegisterOpen: open, isLoginOpen: false, isForgotPasswordOpen: false }),
+            setForgotPasswordOpen: (open) => set({ isForgotPasswordOpen: open, isLoginOpen: false, isRegisterOpen: false }),
 
             /**
              * 🏛️ Synchronisation avec le Registre

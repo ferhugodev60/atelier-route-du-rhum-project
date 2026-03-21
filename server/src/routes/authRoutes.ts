@@ -5,7 +5,9 @@ import {
     googleLogin,
     completeProfile,
     changePassword,
-    setupFinalPassword
+    setupFinalPassword,
+    forgotPassword,
+    resetPassword
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/authMiddleware';
 
@@ -41,6 +43,18 @@ router.post('/complete-profile', authenticateToken, completeProfile);
  * Route publique pour définir le mot de passe via un jeton (QR Code ou Réinitialisation).
  */
 router.post('/setup-final-password', setupFinalPassword);
+
+/**
+ * PROCÉDURE DE RÉINITIALISATION DU SECRET
+ * Déclenche l'envoi du lien par email (route publique).
+ */
+router.post('/forgot-password', forgotPassword);
+
+/**
+ * APPLICATION DU NOUVEAU SECRET
+ * Vérifie le token et enregistre le nouveau mot de passe (route publique).
+ */
+router.post('/reset-password', resetPassword);
 
 /**
  * MODIFICATION DU SECRET (Connecté)

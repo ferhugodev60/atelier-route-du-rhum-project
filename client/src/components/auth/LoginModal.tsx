@@ -8,7 +8,7 @@ import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginModal() {
     const navigate = useNavigate();
-    const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth } = useAuthStore();
+    const { isLoginOpen, setLoginOpen, setRegisterOpen, setAuth, setForgotPasswordOpen } = useAuthStore();
 
     const [isPending, setIsPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -164,7 +164,7 @@ export default function LoginModal() {
                             <div className="space-y-3">
                                 <div className="flex justify-between items-baseline mb-1">
                                     <label htmlFor="password" className={labelStyle}>Mot de passe</label>
-                                    <button type="button" className="text-[9px] uppercase tracking-widest text-rhum-gold hover:text-white transition-colors font-black cursor-pointer">Oublié ?</button>
+                                    <button type="button" onClick={() => setForgotPasswordOpen(true)} className="text-[9px] uppercase tracking-widest text-rhum-gold hover:text-white transition-colors font-black cursor-pointer">Oublié ?</button>
                                 </div>
                                 <div className="relative group">
                                     <input id="password" name="password" type={showPassword ? "text" : "password"} required className={`${inputStyle} pr-14`} placeholder="••••••••••••" />

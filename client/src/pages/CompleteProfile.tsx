@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { ShieldCheck, Landmark, User as UserIcon, ArrowRight } from 'lucide-react';
+import { Landmark, User as UserIcon, ArrowRight } from 'lucide-react';
 import {useAuthStore} from "../store/authStore.ts";
 import api from "../api/axiosInstance.ts";
 
@@ -67,13 +67,10 @@ export default function CompleteProfile() {
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-rhum-gold/40 to-transparent" />
 
                 <header className="text-center mb-12">
-                    <span className="text-rhum-gold text-[10px] uppercase tracking-[0.6em] mb-4 block font-black">Finalisation du Registre</span>
+                    <span className="text-rhum-gold text-[10px] uppercase tracking-[0.6em] mb-4 block font-black">Accès client</span>
                     <h1 className="text-3xl md:text-5xl font-serif text-white uppercase tracking-tighter leading-none">
-                        Certifiez votre <span className="text-rhum-gold">Rang</span>
+                        Sélectionnez votre <span className="text-rhum-gold">Statut</span>
                     </h1>
-                    <p className="text-white/40 text-[10px] md:text-[12px] mt-6 uppercase tracking-[0.2em] italic font-medium">
-                        "Pour accéder aux essences de la collection, l'Établissement doit connaître votre identité métier."
-                    </p>
                 </header>
 
                 <form onSubmit={handleSubmit} className="space-y-10">
@@ -145,20 +142,15 @@ export default function CompleteProfile() {
                             disabled={isPending}
                             className={`w-full bg-rhum-gold text-rhum-green py-6 font-black uppercase tracking-[0.4em] text-[12px] hover:bg-white transition-all flex items-center justify-center gap-4 group ${isPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
                         >
-                            {isPending ? 'SCELLAGE DU PROFIL...' : (
+                            {isPending ? 'CHARGEMENT...' : (
                                 <>
-                                    Confirmer mon statut
+                                    Confirmer
                                     <ArrowRight size={16} className="group-hover:translate-x-2 transition-transform" />
                                 </>
                             )}
                         </button>
                     </div>
                 </form>
-
-                <footer className="mt-16 pt-10 border-t border-white/5 flex items-center justify-center gap-3">
-                    <ShieldCheck size={14} className="text-rhum-gold/40" />
-                    <span className="text-[9px] text-white/20 uppercase tracking-[0.3em] font-medium">Certification sécurisée par le Registre de l'Établissement</span>
-                </footer>
             </motion.div>
         </div>
     );

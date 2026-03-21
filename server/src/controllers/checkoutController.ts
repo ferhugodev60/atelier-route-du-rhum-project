@@ -347,10 +347,17 @@ export const handleWebhook = async (req: Request, res: Response) => {
             });
 
             if (finalOrder) {
-                // Ici, finalOrder.items[x].name contiendra désormais "TITRE DE CURSUS : RHUM-XXXX"
-                console.log(`🏺 [DEBUG_SEND] Lancement du moteur d'email global pour ${finalOrder.user.email}`);
-                await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
-                console.log("✅ [FINAL] Dossier global expédié.");
+                // Si la commande ne contient QUE des cartes cadeaux, le client a déjà reçu
+                // un email dédié par carte cadeau (avec PDF). On évite le doublon.
+                const isOnlyGiftCards = finalOrder.items.every(item => item.groupNames === 'GIFT_CARD');
+
+                if (!isOnlyGiftCards) {
+                    console.log(`🏺 [DEBUG_SEND] Envoi de la confirmation de commande à ${finalOrder.user.email}`);
+                    await sendOrderConfirmationEmail(finalOrder.user.email, finalOrder);
+                    console.log("✅ [FINAL] Confirmation de commande expédiée.");
+                } else {
+                    console.log("ℹ️ [FINAL] Commande 100% carte cadeau — confirmation globale omise (déjà envoyée).");
+                }
             }
 
         } catch (error: any) {

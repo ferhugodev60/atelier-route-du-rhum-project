@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'node:crypto';
 import { OAuth2Client } from 'google-auth-library';
+import { sendForgotPasswordEmail } from '../services/emailService';
 
 // 🏺 Initialisation du client Google
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -268,6 +269,79 @@ export const changePassword = async (req: any, res: Response) => {
         return res.status(200).json({ message: "Le secret a été mis à jour." });
     } catch (error: any) {
         return res.status(500).json({ error: "Échec technique du changement de secret." });
+    }
+};
+
+/**
+ * 📜 DEMANDE DE RÉINITIALISATION DU SECRET
+ * Génère un token, l'enregistre en base et envoie le lien par email.
+ */
+export const forgotPassword = async (req: Request, res: Response) => {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: "Un identifiant email est requis." });
+
+    try {
+        const user = await prisma.user.findFirst({
+            where: { email: { equals: email.toLowerCase(), mode: 'insensitive' } }
+        });
+
+        // Réponse générique pour ne pas révéler l'existence du compte
+        if (!user) {
+            return res.status(200).json({ message: "Si ce compte existe, un lien a été envoyé." });
+        }
+
+        if (!user.password) {
+            return res.status(200).json({ message: "Si ce compte existe, un lien a été envoyé." });
+        }
+
+        const token = crypto.randomBytes(32).toString('hex');
+        const expires = new Date(Date.now() + 60 * 60 * 1000); // +1 heure
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: { resetToken: token, resetTokenExpires: expires }
+        });
+
+        await sendForgotPasswordEmail(user.email, user.firstName, token);
+
+        return res.status(200).json({ message: "Si ce compte existe, un lien a été envoyé." });
+    } catch (error) {
+        return res.status(500).json({ error: "Échec technique de la procédure." });
+    }
+};
+
+/**
+ * 📜 RÉINITIALISATION DU SECRET VIA TOKEN
+ * Vérifie le token, met à jour le mot de passe et purge les champs de réinitialisation.
+ */
+export const resetPassword = async (req: Request, res: Response) => {
+    const { token, password } = req.body;
+    if (!token || !password) return res.status(400).json({ error: "Données de scellage incomplètes." });
+
+    try {
+        const user = await prisma.user.findFirst({
+            where: {
+                resetToken: token,
+                resetTokenExpires: { gt: new Date() }
+            }
+        });
+
+        if (!user) return res.status(400).json({ error: "Le lien est expiré ou invalide." });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                password: hashedPassword,
+                resetToken: null,
+                resetTokenExpires: null,
+                isProfileComplete: true,
+            }
+        });
+
+        return res.status(200).json({ message: "Votre secret a été réinitialisé avec succès." });
+    } catch (error) {
+        return res.status(500).json({ error: "Échec technique du Registre." });
     }
 };
 
